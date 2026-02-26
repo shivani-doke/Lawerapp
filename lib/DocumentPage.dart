@@ -61,6 +61,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          /// Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -79,9 +80,10 @@ class _DocumentsPageState extends State<DocumentsPage> {
               )
             ],
           ),
+
           const SizedBox(height: 20),
 
-          /// Category Buttons
+          /// Category Chips
           Wrap(
             spacing: 10,
             children: categories.map((category) {
@@ -99,7 +101,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
 
           const SizedBox(height: 20),
 
-          /// Document Cards Grid
+          /// Grid
           Expanded(
             child: GridView.builder(
               itemCount: filteredDocs.length,
@@ -108,10 +110,11 @@ class _DocumentsPageState extends State<DocumentsPage> {
                 crossAxisCount: 3,
                 crossAxisSpacing: 20,
                 mainAxisSpacing: 20,
-                childAspectRatio: 1.4,
+                childAspectRatio: 1.1, // slightly taller
               ),
               itemBuilder: (context, index) {
                 final doc = filteredDocs[index];
+
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -119,30 +122,43 @@ class _DocumentsPageState extends State<DocumentsPage> {
                     border: Border.all(color: Colors.grey.shade300),
                   ),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min, // IMPORTANT
                     crossAxisAlignment:
                         CrossAxisAlignment.start,
                     children: [
                       const Icon(Icons.description,
                           size: 40, color: Colors.grey),
+
                       const SizedBox(height: 10),
+
                       Text(
                         doc.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold),
                       ),
+
                       const SizedBox(height: 6),
+
                       Text(
                         doc.category.toUpperCase(),
                         style: const TextStyle(
                             color: Colors.orange,
                             fontSize: 12),
                       ),
+
                       const SizedBox(height: 10),
-                      Text(
-                        doc.description,
-                        style: const TextStyle(
-                            color: Colors.grey),
+
+                      Expanded( // prevents overflow
+                        child: Text(
+                          doc.description,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: Colors.grey),
+                        ),
                       ),
                     ],
                   ),
