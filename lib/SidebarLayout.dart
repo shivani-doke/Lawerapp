@@ -3,7 +3,10 @@ import 'package:chatbot/DashboardPage.dart';
 import 'package:chatbot/DocumentPage.dart';
 import 'package:flutter/material.dart';
 import 'LegalAiPage.dart';
-
+import 'SaleDeedPage.dart';
+import 'RentalAgreementPage.dart';
+import 'PowerOfAttorneyPage.dart';
+import 'PartnershipDeedPage.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -15,7 +18,6 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int selectedIndex = 0;
 
-
   late final List<Widget> pages;
 
   @override
@@ -24,10 +26,19 @@ class _MainLayoutState extends State<MainLayout> {
     pages = [
       DashboardPage(onNavigate: _changePage),
       const LegalAIPage(),
-      const DocumentsPage(),
+      DocumentsPage(onNavigate: _changePage), // const DocumentsPage(),
       const ClientsPage(),
+      const SaleDeedPage(), // 4
+      const RentalAgreementPage(), // 5
+      const PowerOfAttorneyPage(), // 6
+      PartnershipDeedPage(), // 7
+      // const AffidavitPage(),                  // 8
+      // const WillTestamentPage(),              // 9
+      // const BailApplicationPage(),            // 10
+      // const LoanAgreementPage(),
     ];
   }
+
   void _changePage(int index) {
     setState(() {
       selectedIndex = index;
