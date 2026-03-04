@@ -6,6 +6,8 @@ from config import Config
 
 from routes.email_routes import email_bp
 from routes.client_routes import client_bp  # NEW
+from routes.document_routes import document_bp
+
 
 def create_app():
     app = Flask(__name__)
@@ -20,6 +22,7 @@ def create_app():
     # Register blueprints
     app.register_blueprint(email_bp)
     app.register_blueprint(client_bp)  # NEW
+    app.register_blueprint(document_bp)
 
     return app
 

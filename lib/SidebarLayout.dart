@@ -7,6 +7,10 @@ import 'SaleDeedPage.dart';
 import 'RentalAgreementPage.dart';
 import 'PowerOfAttorneyPage.dart';
 import 'PartnershipDeedPage.dart';
+import 'AffidavitPage.dart';
+import 'WillTestamentPage.dart';
+import 'BailApplicationPage.dart';
+import 'LoanAgreementPage.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -30,12 +34,12 @@ class _MainLayoutState extends State<MainLayout> {
       const ClientsPage(),
       const SaleDeedPage(), // 4
       const RentalAgreementPage(), // 5
-      const PowerOfAttorneyPage(), // 6
+      PowerOfAttorneyPage(), // 6
       PartnershipDeedPage(), // 7
-      // const AffidavitPage(),                  // 8
-      // const WillTestamentPage(),              // 9
-      // const BailApplicationPage(),            // 10
-      // const LoanAgreementPage(),
+      const AffidavitPage(), // 8
+      const WillTestamentPage(), // 9
+      const BailApplicationPage(), // 10
+      LoanAgreementPage(),
     ];
   }
 

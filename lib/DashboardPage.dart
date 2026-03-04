@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'LegalAiPage.dart';
+import 'Clientside.dart';
+import 'DocumentPage.dart';
 
 class DashboardPage extends StatelessWidget {
   final Function(int)? onNavigate;
@@ -125,7 +127,7 @@ class DashboardPage extends StatelessWidget {
             const Color(0xff1e293b),
             Colors.white,
             () {
-              onNavigate?.call(1);
+              onNavigate?.call(1); // Navigate to Chat tab
             },
           ),
           const SizedBox(height: 15),
@@ -134,7 +136,9 @@ class DashboardPage extends StatelessWidget {
             Icons.description,
             Colors.amber,
             Colors.black,
-            () {},
+            () {
+              onNavigate?.call(2);
+            },
           ),
           const SizedBox(height: 15),
           _actionButton(
@@ -142,7 +146,10 @@ class DashboardPage extends StatelessWidget {
             Icons.people_outline,
             Colors.grey.shade200,
             Colors.black,
-            () {},
+            () {
+              onNavigate
+                  ?.call(3); // Navigate to Clients tab (adjust index if needed)
+            },
           ),
           const SizedBox(height: 15),
           _actionButton(

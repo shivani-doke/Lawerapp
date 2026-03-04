@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LegalAIPage extends StatefulWidget {
   const LegalAIPage({super.key});
@@ -16,38 +15,7 @@ class _LegalAIPageState extends State<LegalAIPage> {
   final List<Map<String, String>> _messages = [];
   bool _isLoading = false;
 
-  final String apiKey = "AIzaSyCZ24GzxkB3_UkOepNjHHbeEPyfgo2R5QA";
-
-  @override
-  void initState() {
-    super.initState();
-    _loadHistory();
-  }
-
-  // ================= SAVE HISTORY =================
-
-  Future<void> _saveHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setString("chat_history", jsonEncode(_messages));
-  }
-
-  // ================= LOAD HISTORY =================
-
-  Future<void> _loadHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString("chat_history");
-
-    if (saved != null) {
-      final List decoded = jsonDecode(saved);
-      setState(() {
-        _messages.addAll(
-          decoded.map((e) => Map<String, String>.from(e)).toList(),
-        );
-      });
-    }
-  }
-
-  // ================= SEND MESSAGE =================
+  final String apiKey = "AIzaSyDXfF-7D40mpwtYx2zkPhgPbGxu_mWqmdc";
 
   Future<void> _sendMessage([String? quickText]) async {
     final text = quickText ?? _controller.text.trim();
@@ -57,8 +25,6 @@ class _LegalAIPageState extends State<LegalAIPage> {
       _messages.add({"role": "user", "text": text});
       _isLoading = true;
     });
-
-    await _saveHistory();
 
     _controller.clear();
 
@@ -73,15 +39,8 @@ class _LegalAIPageState extends State<LegalAIPage> {
           "system_instruction": {
             "parts": [
               {
-                "text": "You are a specialized Indian Legal Assistant. "
-                    "Answer only legal questions. "
-                    "When possible, base your answers on Indian legal news and case law. "
-                    "Prefer referencing these sources: "
-                    "barandbench.com, verdictum.in, scconline.com, and livemint.com. "
-                    "If relevant, mention the source name in your answer like: "
-                    "'As reported by Bar & Bench...' or "
-                    "'According to SCC Online...'. "
-                    "If no specific case reference is available, clearly state that it is a general legal explanation."
+                "text":
+                    "You are a specialized Legal Assistant. Only answer legal questions."
               }
             ]
           },
@@ -104,24 +63,18 @@ class _LegalAIPageState extends State<LegalAIPage> {
         setState(() {
           _messages.add({"role": "ai", "text": aiReply ?? "No response"});
         });
-
-        await _saveHistory();
       } else {
         setState(() {
           _messages.add({
             "role": "ai",
-            "text": "ERROR ${response.statusCode}\n${response.body}"
+            "text": "ERROR ${response.statusCode}"
           });
         });
-
-        await _saveHistory();
       }
     } catch (e) {
       setState(() {
         _messages.add({"role": "ai", "text": "NETWORK ERROR: $e"});
       });
-
-      await _saveHistory();
     } finally {
       setState(() => _isLoading = false);
     }
@@ -142,7 +95,8 @@ class _LegalAIPageState extends State<LegalAIPage> {
       children: [
         _buildHeader(),
         Expanded(
-          child: _messages.isEmpty ? _buildWelcome() : _buildMessages(),
+          child:
+              _messages.isEmpty ? _buildWelcome() : _buildMessages(),
         ),
         _buildInputBar(),
       ],
@@ -155,7 +109,8 @@ class _LegalAIPageState extends State<LegalAIPage> {
       alignment: Alignment.centerLeft,
       child: const Text(
         "Legal AI Assistant",
-        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        style:
+            TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -171,13 +126,14 @@ class _LegalAIPageState extends State<LegalAIPage> {
               color: Color(0xFF1F2A44),
               shape: BoxShape.circle,
             ),
-            child:
-                const Icon(Icons.auto_awesome, color: Colors.amber, size: 40),
+            child: const Icon(Icons.auto_awesome,
+                color: Colors.amber, size: 40),
           ),
           const SizedBox(height: 20),
           const Text(
             "How can I help you today?",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style:
+                TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
           const Text(
@@ -192,10 +148,12 @@ class _LegalAIPageState extends State<LegalAIPage> {
             children: [
               _suggestionCard(
                   "Draft a rental agreement for a residential property in Mumbai"),
-              _suggestionCard("What are the key clauses in a sale deed?"),
+              _suggestionCard(
+                  "What are the key clauses in a sale deed?"),
               _suggestionCard(
                   "Explain Section 138 of the Negotiable Instruments Act"),
-              _suggestionCard("Help me prepare a power of attorney document"),
+              _suggestionCard(
+                  "Help me prepare a power of attorney document"),
             ],
           ),
         ],
@@ -221,7 +179,6 @@ class _LegalAIPageState extends State<LegalAIPage> {
 
   Widget _buildMessages() {
     return ListView.builder(
-      controller: _scrollController,
       padding: const EdgeInsets.all(20),
       itemCount: _messages.length,
       itemBuilder: (context, index) {
@@ -229,13 +186,16 @@ class _LegalAIPageState extends State<LegalAIPage> {
         bool isUser = message["role"] == "user";
 
         return Align(
-          alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+          alignment:
+              isUser ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 6),
             padding: const EdgeInsets.all(14),
-            constraints: const BoxConstraints(maxWidth: 600),
+            constraints:
+                const BoxConstraints(maxWidth: 600),
             decoration: BoxDecoration(
-              color: isUser ? Colors.amber[200] : Colors.white,
+              color:
+                  isUser ? Colors.amber[200] : Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(message["text"] ?? ""),
@@ -255,11 +215,13 @@ class _LegalAIPageState extends State<LegalAIPage> {
             child: TextField(
               controller: _controller,
               decoration: InputDecoration(
-                hintText: "Ask about legal matters, draft documents...",
+                hintText:
+                    "Ask about legal matters, draft documents...",
                 filled: true,
                 fillColor: const Color(0xFFF1F3F6),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius:
+                      BorderRadius.circular(30),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -272,7 +234,8 @@ class _LegalAIPageState extends State<LegalAIPage> {
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white),
+              icon: const Icon(Icons.send,
+                  color: Colors.white),
               onPressed: () => _sendMessage(),
             ),
           )

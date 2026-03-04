@@ -4,3 +4,4 @@ flask-sqlalchemy
 sendgrid
 apscheduler
 python-dotenv
+google genai

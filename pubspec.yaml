@@ -10,14 +10,24 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.1.0
-  shared_preferences: ^2.2.2
+  file_picker: ^8.0.0+1
+  http_parser: ^4.0.2
+  path_provider: ^2.1.5
+  pdf: ^3.10.7
+  universal_html: ^2.2.4 
+  universal_io: ^2.2.2 
+  docx_template: ^0.4.0
+  archive: ^3.4.0
+   # For reading DOCX
 
   
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/templates/poa_template.docx

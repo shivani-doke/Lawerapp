@@ -23,14 +23,14 @@ class DocumentField {
   });
 }
 
-class SaleDeedPage extends StatefulWidget {
-  const SaleDeedPage({super.key});
+class AffidavitPage extends StatefulWidget {
+  const AffidavitPage({super.key});
 
   @override
-  State<SaleDeedPage> createState() => _SaleDeedPageState();
+  State<AffidavitPage> createState() => _AffidavitPageState();
 }
 
-class _SaleDeedPageState extends State<SaleDeedPage> {
+class _AffidavitPageState extends State<AffidavitPage> {
   static const Color accentColor = Color(0xffE0A800);
 
   // Dynamic fields (from extraction or default)
@@ -59,31 +59,35 @@ class _SaleDeedPageState extends State<SaleDeedPage> {
     super.dispose();
   }
 
-  // Default fields for a Sale Deed (used when extraction fails or no file)
+  // Default fields for an Affidavit (used when extraction fails or no file)
   void _resetToDefaultFields() {
     _fields = [
       DocumentField(
-          name: 'seller',
-          label: "Seller's Full Name",
-          hint: 'e.g. Rajesh Kumar Sharma'),
+          name: 'affiant',
+          label: "Affiant's Full Name",
+          hint: 'e.g. Rajesh Kumar'),
       DocumentField(
-          name: 'buyer', label: "Buyer's Full Name", hint: 'e.g. Priya Patel'),
-      DocumentField(
-          name: 'property_address',
-          label: 'Property Address',
+          name: 'address',
+          label: "Address",
           type: 'multiline',
-          hint: 'Full address of the property'),
+          hint: 'Current residential address'),
       DocumentField(
-          name: 'sale_amount',
-          label: 'Sale Amount (₹)',
-          hint: 'e.g. 50,00,000'),
-      DocumentField(
-          name: 'execution_date', label: 'Date of Execution', type: 'date'),
-      DocumentField(
-          name: 'terms',
-          label: 'Additional Terms & Conditions',
+          name: 'statement',
+          label: "Statement / Declaration",
           type: 'multiline',
-          hint: 'Any special conditions for this sale...'),
+          hint: 'Describe the facts you are swearing to...'),
+      DocumentField(
+          name: 'date',
+          label: "Date of Swearing",
+          type: 'date',
+          hint: 'dd-mm-yyyy'),
+      DocumentField(
+          name: 'place', label: "Place of Execution", hint: 'e.g. New Delhi'),
+      DocumentField(
+          name: 'witness',
+          label: "Witness Name (if any)",
+          required: false,
+          hint: 'Optional'),
     ];
     _rebuildControllers();
   }
@@ -126,7 +130,7 @@ class _SaleDeedPageState extends State<SaleDeedPage> {
       try {
         final extractedFields = await ApiService().extractFieldsFromReference(
           _referenceFile!,
-          documentType: 'sale_deed', // document type for sale deed
+          documentType: 'affidavit', // document type for affidavit
         );
 
         setState(() {
@@ -203,7 +207,7 @@ class _SaleDeedPageState extends State<SaleDeedPage> {
       };
 
       final response = await ApiService().generateDocument(
-        documentType: 'sale_deed',
+        documentType: 'affidavit',
         fields: fields,
         referenceFile: _referenceFile!,
       );
@@ -299,7 +303,7 @@ class _SaleDeedPageState extends State<SaleDeedPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // LEFT SIDE – Field input form (with the original Sale Deed header)
+          // LEFT SIDE – Field input form (with Affidavit header)
           Expanded(
             flex: 2,
             child: Container(
@@ -314,7 +318,7 @@ class _SaleDeedPageState extends State<SaleDeedPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "PROPERTY",
+                      "LEGAL",
                       style: TextStyle(
                         color: accentColor,
                         fontWeight: FontWeight.w600,
@@ -323,7 +327,7 @@ class _SaleDeedPageState extends State<SaleDeedPage> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      "Sale Deed",
+                      "Affidavit",
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
@@ -415,7 +419,7 @@ class _SaleDeedPageState extends State<SaleDeedPage> {
 
           const SizedBox(width: 30),
 
-          // RIGHT SIDE – Document viewer/editor (replaces the static placeholder)
+          // RIGHT SIDE – Document viewer/editor
           Expanded(
             flex: 2,
             child: Container(
@@ -512,7 +516,7 @@ class _SaleDeedPageState extends State<SaleDeedPage> {
     }
   }
 
-  // Placeholder shown before any document is generated (matches original Sale Deed placeholder)
+  // Placeholder shown before any document is generated
   Widget _buildPlaceholder() {
     return const Center(
       child: Column(
@@ -529,7 +533,7 @@ class _SaleDeedPageState extends State<SaleDeedPage> {
           ),
           SizedBox(height: 8),
           Text(
-            "Fill in the details on the left, then click\n\"Generate Document with AI\" to create your Sale Deed.",
+            "Fill in the details on the left, then click\n\"Generate Document with AI\" to create your Affidavit.",
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey),
           ),
@@ -607,219 +611,3 @@ class _SaleDeedPageState extends State<SaleDeedPage> {
     );
   }
 }
-// import 'package:flutter/material.dart';
-
-// class SaleDeedPage extends StatefulWidget {
-//   const SaleDeedPage({super.key});
-
-//   @override
-//   State<SaleDeedPage> createState() => _SaleDeedPageState();
-// }
-
-// class _SaleDeedPageState extends State<SaleDeedPage> {
-//   final TextEditingController sellerController = TextEditingController();
-//   final TextEditingController buyerController = TextEditingController();
-//   final TextEditingController addressController = TextEditingController();
-//   final TextEditingController amountController = TextEditingController();
-//   final TextEditingController termsController = TextEditingController();
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       color: const Color(0xfff5f6f8),
-//       padding: const EdgeInsets.all(30),
-//       child: Row(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           /// ================= LEFT SIDE FORM =================
-//           Expanded(
-//             flex: 2,
-//             child: Container(
-//               padding: const EdgeInsets.all(24),
-//               decoration: BoxDecoration(
-//                 color: Colors.white,
-//                 borderRadius: BorderRadius.circular(16),
-//                 border: Border.all(color: Colors.grey.shade200),
-//               ),
-//               child: SingleChildScrollView(
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     const Text(
-//                       "PROPERTY",
-//                       style: TextStyle(
-//                         color: Color(0xffE0A800),
-//                         fontWeight: FontWeight.w600,
-//                         fontSize: 12,
-//                       ),
-//                     ),
-
-//                     const SizedBox(height: 6),
-
-//                     const Text(
-//                       "Sale Deed",
-//                       style: TextStyle(
-//                         fontSize: 26,
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-
-//                     const SizedBox(height: 20),
-
-//                     _inputField("Seller's Full Name", sellerController,
-//                         hint: "e.g. Rajesh Kumar Sharma"),
-
-//                     _inputField("Buyer's Full Name", buyerController,
-//                         hint: "e.g. Priya Patel"),
-
-//                     _multiLineField("Property Address", addressController,
-//                         hint: "Full address of the property"),
-
-//                     _inputField("Sale Amount (₹)", amountController,
-//                         hint: "e.g. 50,00,000"),
-
-//                     _inputField("Date of Execution", TextEditingController(),
-//                         hint: "dd-mm-yyyy"),
-
-//                     _multiLineField(
-//                         "Additional Terms & Conditions", termsController,
-//                         hint: "Any special conditions for this sale..."),
-
-//                     const SizedBox(height: 20),
-
-//                     /// ===== NEW BUTTON: ADD REFERENCE DOCUMENT =====
-//                     SizedBox(
-//                       width: double.infinity,
-//                       child: OutlinedButton.icon(
-//                         onPressed: () {},
-//                         icon: const Icon(Icons.attach_file),
-//                         label: const Text("Add Reference Document"),
-//                         style: OutlinedButton.styleFrom(
-//                           padding: const EdgeInsets.symmetric(vertical: 16),
-//                           side: const BorderSide(
-//                               color: Color(0xffE0A800), width: 1.5),
-//                           shape: RoundedRectangleBorder(
-//                             borderRadius: BorderRadius.circular(12),
-//                           ),
-//                           foregroundColor: const Color(0xffE0A800),
-//                         ),
-//                       ),
-//                     ),
-
-//                     const SizedBox(height: 15),
-
-//                     /// ===== GENERATE BUTTON =====
-//                     SizedBox(
-//                       width: double.infinity,
-//                       child: ElevatedButton.icon(
-//                         onPressed: () {},
-//                         icon: const Icon(Icons.auto_awesome),
-//                         label: const Text("Generate Document with AI"),
-//                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: const Color(0xffE0A800),
-//                           padding: const EdgeInsets.symmetric(vertical: 16),
-//                           shape: RoundedRectangleBorder(
-//                             borderRadius: BorderRadius.circular(12),
-//                           ),
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ),
-
-//           const SizedBox(width: 30),
-
-//           /// ================= RIGHT SIDE PREVIEW =================
-//           Expanded(
-//             flex: 2,
-//             child: Container(
-//               padding: const EdgeInsets.all(24),
-//               height: 700,
-//               decoration: BoxDecoration(
-//                 color: Colors.white,
-//                 borderRadius: BorderRadius.circular(16),
-//                 border: Border.all(color: Colors.grey.shade200),
-//               ),
-//               child: const Center(
-//                 child: Column(
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   children: [
-//                     Icon(Icons.auto_awesome, size: 50, color: Colors.grey),
-//                     SizedBox(height: 20),
-//                     Text(
-//                       "Ready to Generate",
-//                       style: TextStyle(
-//                         fontSize: 18,
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                     SizedBox(height: 8),
-//                     Text(
-//                       "Fill in the details on the left, then click\n\"Generate Document with AI\" to create your Sale Deed.",
-//                       textAlign: TextAlign.center,
-//                       style: TextStyle(color: Colors.grey),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _inputField(String label, TextEditingController controller,
-//       {String? hint}) {
-//     return Padding(
-//       padding: const EdgeInsets.only(bottom: 18),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Text(label),
-//           const SizedBox(height: 6),
-//           TextField(
-//             controller: controller,
-//             decoration: InputDecoration(
-//               hintText: hint,
-//               filled: true,
-//               fillColor: const Color(0xfff9fafb),
-//               border: OutlineInputBorder(
-//                 borderRadius: BorderRadius.circular(12),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _multiLineField(String label, TextEditingController controller,
-//       {String? hint}) {
-//     return Padding(
-//       padding: const EdgeInsets.only(bottom: 18),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Text(label),
-//           const SizedBox(height: 6),
-//           TextField(
-//             controller: controller,
-//             maxLines: 3,
-//             decoration: InputDecoration(
-//               hintText: hint,
-//               filled: true,
-//               fillColor: const Color(0xfff9fafb),
-//               border: OutlineInputBorder(
-//                 borderRadius: BorderRadius.circular(12),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
