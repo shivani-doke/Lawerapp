@@ -1,0 +1,474 @@
+{
+  "b427bc76-d0ec-4e74-8546-bb5dba8b9bcc": {
+    "original_name": "Bodekar POWER OF ATTORNEY.docx",
+    "filename": "b427bc76-d0ec-4e74-8546-bb5dba8b9bcc.docx",
+    "document_type": "power_of_attorney",
+    "fields": [
+      {
+        "name": "principal_name",
+        "label": "Principal Full Name",
+        "type": "text",
+        "hint": "Enter principal full name",
+        "required": true
+      },
+      {
+        "name": "principal_age",
+        "label": "Principal Age",
+        "type": "number",
+        "hint": "Enter principal age in years",
+        "required": true
+      },
+      {
+        "name": "principal_occupation",
+        "label": "Principal Occupation",
+        "type": "text",
+        "hint": "Enter principal occupation",
+        "required": true
+      },
+      {
+        "name": "principal_pan",
+        "label": "Principal PAN Number",
+        "type": "text",
+        "hint": "Enter principal PAN number",
+        "required": true
+      },
+      {
+        "name": "principal_aadhar",
+        "label": "Principal Aadhaar Number",
+        "type": "text",
+        "hint": "Enter principal Aadhaar number",
+        "required": true
+      },
+      {
+        "name": "principal_address",
+        "label": "Principal Address",
+        "type": "text",
+        "hint": "Enter principal full address",
+        "required": true
+      },
+      {
+        "name": "principal_reason",
+        "label": "Reason for Power of Attorney",
+        "type": "text",
+        "hint": "Enter reason for granting power of attorney",
+        "required": false
+      },
+      {
+        "name": "agent_name",
+        "label": "Agent Full Name",
+        "type": "text",
+        "hint": "Enter agent full name",
+        "required": true
+      },
+      {
+        "name": "agent_age",
+        "label": "Agent Age",
+        "type": "number",
+        "hint": "Enter agent age in years",
+        "required": true
+      },
+      {
+        "name": "agent_occupation",
+        "label": "Agent Occupation",
+        "type": "text",
+        "hint": "Enter agent occupation",
+        "required": true
+      },
+      {
+        "name": "agent_pan",
+        "label": "Agent PAN Number",
+        "type": "text",
+        "hint": "Enter agent PAN number",
+        "required": true
+      },
+      {
+        "name": "agent_aadhar",
+        "label": "Agent Aadhaar Number",
+        "type": "text",
+        "hint": "Enter agent Aadhaar number",
+        "required": true
+      },
+      {
+        "name": "agent_address",
+        "label": "Agent Address",
+        "type": "text",
+        "hint": "Enter agent full address",
+        "required": true
+      },
+      {
+        "name": "flat_number",
+        "label": "Flat Number",
+        "type": "text",
+        "hint": "Enter flat number",
+        "required": true
+      },
+      {
+        "name": "building_name",
+        "label": "Building Name",
+        "type": "text",
+        "hint": "Enter building name",
+        "required": true
+      },
+      {
+        "name": "floor",
+        "label": "Floor",
+        "type": "text",
+        "hint": "Enter floor number",
+        "required": true
+      },
+      {
+        "name": "builtup_area_sqft",
+        "label": "Built-up Area (sq ft)",
+        "type": "number",
+        "hint": "Enter built-up area in square feet",
+        "required": true
+      },
+      {
+        "name": "garden_area_sqft",
+        "label": "Garden Area (sq ft)",
+        "type": "number",
+        "hint": "Enter garden area in square feet",
+        "required": false
+      },
+      {
+        "name": "survey_number",
+        "label": "Survey Number",
+        "type": "text",
+        "hint": "Enter survey number",
+        "required": true
+      },
+      {
+        "name": "hissa_number",
+        "label": "Hissa Number",
+        "type": "text",
+        "hint": "Enter hissa number",
+        "required": true
+      },
+      {
+        "name": "boundary_east",
+        "label": "Boundary East",
+        "type": "text",
+        "hint": "Enter east boundary description",
+        "required": true
+      },
+      {
+        "name": "boundary_south",
+        "label": "Boundary South",
+        "type": "text",
+        "hint": "Enter south boundary description",
+        "required": true
+      },
+      {
+        "name": "boundary_west",
+        "label": "Boundary West",
+        "type": "text",
+        "hint": "Enter west boundary description",
+        "required": true
+      },
+      {
+        "name": "boundary_north",
+        "label": "Boundary North",
+        "type": "text",
+        "hint": "Enter north boundary description",
+        "required": true
+      },
+      {
+        "name": "city",
+        "label": "Signing City",
+        "type": "text",
+        "hint": "Enter city where document is signed",
+        "required": true
+      },
+      {
+        "name": "execution_date",
+        "label": "Execution Date",
+        "type": "date",
+        "hint": "Select the date of execution",
+        "required": true
+      },
+      {
+        "name": "witness1_name",
+        "label": "Witness 1 Name",
+        "type": "text",
+        "hint": "Enter Witness 1 full name",
+        "required": true
+      },
+      {
+        "name": "witness1_address",
+        "label": "Witness 1 Address",
+        "type": "text",
+        "hint": "Enter Witness 1 full address",
+        "required": true
+      },
+      {
+        "name": "witness2_name",
+        "label": "Witness 2 Name",
+        "type": "text",
+        "hint": "Enter Witness 2 full name",
+        "required": true
+      },
+      {
+        "name": "witness2_address",
+        "label": "Witness 2 Address",
+        "type": "text",
+        "hint": "Enter Witness 2 full address",
+        "required": true
+      }
+    ],
+    "timestamp": "2026-03-16T11:35:20.355433"
+  },
+  "279c0895-2d28-4537-a155-9ff36f99e520": {
+    "original_name": "Gift Deed Tamane.docx",
+    "filename": "279c0895-2d28-4537-a155-9ff36f99e520.docx",
+    "document_type": "sale_deed",
+    "fields": [
+      {
+        "name": "execution_date",
+        "label": "Execution Date",
+        "type": "date",
+        "hint": "Select the date of execution",
+        "required": true
+      },
+      {
+        "name": "principal_name",
+        "label": "Donor's Full Name",
+        "type": "text",
+        "hint": "Enter Donor's full name",
+        "required": true
+      },
+      {
+        "name": "principal_age",
+        "label": "Donor's Age",
+        "type": "number",
+        "hint": "Enter Donor's age in years",
+        "required": true
+      },
+      {
+        "name": "principal_occupation",
+        "label": "Donor's Occupation",
+        "type": "text",
+        "hint": "Enter Donor's occupation",
+        "required": true
+      },
+      {
+        "name": "principal_address",
+        "label": "Donor's Address",
+        "type": "text",
+        "hint": "Enter Donor's full address",
+        "required": true
+      },
+      {
+        "name": "principal_pan",
+        "label": "Donor's PAN Number",
+        "type": "text",
+        "hint": "Enter Donor's PAN number",
+        "required": true
+      },
+      {
+        "name": "principal_aadhaar",
+        "label": "Donor's Aadhaar Number",
+        "type": "text",
+        "hint": "Enter Donor's Aadhaar number",
+        "required": true
+      },
+      {
+        "name": "donee_name",
+        "label": "Donee's Full Name",
+        "type": "text",
+        "hint": "Enter Donee's full name",
+        "required": true
+      },
+      {
+        "name": "donee_age",
+        "label": "Donee's Age",
+        "type": "number",
+        "hint": "Enter Donee's age in years",
+        "required": true
+      },
+      {
+        "name": "donee_occupation",
+        "label": "Donee's Occupation",
+        "type": "text",
+        "hint": "Enter Donee's occupation",
+        "required": true
+      },
+      {
+        "name": "donee_address",
+        "label": "Donee's Address",
+        "type": "text",
+        "hint": "Enter Donee's full address",
+        "required": true
+      },
+      {
+        "name": "donee_pan",
+        "label": "Donee's PAN Number",
+        "type": "text",
+        "hint": "Enter Donee's PAN number",
+        "required": true
+      },
+      {
+        "name": "donee_aadhaar",
+        "label": "Donee's Aadhaar Number",
+        "type": "text",
+        "hint": "Enter Donee's Aadhaar number",
+        "required": true
+      },
+      {
+        "name": "flat_number",
+        "label": "Flat Number",
+        "type": "text",
+        "hint": "Enter flat number",
+        "required": true
+      },
+      {
+        "name": "flat_floor",
+        "label": "Floor Number",
+        "type": "text",
+        "hint": "Enter floor number",
+        "required": true
+      },
+      {
+        "name": "flat_area_sqft",
+        "label": "Flat Area (sq ft)",
+        "type": "number",
+        "hint": "Enter flat built-up area",
+        "required": true
+      },
+      {
+        "name": "terrace_area_sqft",
+        "label": "Terrace Area (sq ft)",
+        "type": "number",
+        "hint": "Enter terrace area",
+        "required": false
+      },
+      {
+        "name": "building_name",
+        "label": "Building Name",
+        "type": "text",
+        "hint": "Enter building name",
+        "required": true
+      },
+      {
+        "name": "survey_number",
+        "label": "Survey Number",
+        "type": "text",
+        "hint": "Enter survey number",
+        "required": true
+      },
+      {
+        "name": "property_location",
+        "label": "Property Location",
+        "type": "text",
+        "hint": "Enter property location",
+        "required": true
+      },
+      {
+        "name": "share_percentage",
+        "label": "Gift Share Percentage",
+        "type": "text",
+        "hint": "Enter share being gifted (example: 1/2)",
+        "required": true
+      },
+      {
+        "name": "original_deed_date",
+        "label": "Original Deed Date",
+        "type": "date",
+        "hint": "Enter original deed date",
+        "required": true
+      },
+      {
+        "name": "original_deed_number",
+        "label": "Original Deed Registration Number",
+        "type": "text",
+        "hint": "Enter deed registration number",
+        "required": true
+      },
+      {
+        "name": "sub_registrar_office",
+        "label": "Sub Registrar Office",
+        "type": "text",
+        "hint": "Enter registrar office name",
+        "required": true
+      },
+      {
+        "name": "boundary_east",
+        "label": "Boundary East",
+        "type": "text",
+        "hint": "Enter east boundary",
+        "required": true
+      },
+      {
+        "name": "boundary_south",
+        "label": "Boundary South",
+        "type": "text",
+        "hint": "Enter south boundary",
+        "required": true
+      },
+      {
+        "name": "boundary_west",
+        "label": "Boundary West",
+        "type": "text",
+        "hint": "Enter west boundary",
+        "required": true
+      },
+      {
+        "name": "boundary_north",
+        "label": "Boundary North",
+        "type": "text",
+        "hint": "Enter north boundary",
+        "required": true
+      },
+      {
+        "name": "undivided_share_percentage",
+        "label": "Undivided Share in Common Areas (%)",
+        "type": "number",
+        "hint": "Enter undivided share percentage",
+        "required": true
+      },
+      {
+        "name": "common_area_document_name",
+        "label": "Common Area Document Name",
+        "type": "text",
+        "hint": "Enter document describing common areas",
+        "required": true
+      },
+      {
+        "name": "common_area_document_date",
+        "label": "Common Area Document Date",
+        "type": "date",
+        "hint": "Enter document date",
+        "required": true
+      },
+      {
+        "name": "witness1_name",
+        "label": "Witness 1 Name",
+        "type": "text",
+        "hint": "Enter Witness 1 full name",
+        "required": true
+      },
+      {
+        "name": "witness1_address",
+        "label": "Witness 1 Address",
+        "type": "text",
+        "hint": "Enter Witness 1 full address",
+        "required": true
+      },
+      {
+        "name": "witness2_name",
+        "label": "Witness 2 Name",
+        "type": "text",
+        "hint": "Enter Witness 2 full name",
+        "required": true
+      },
+      {
+        "name": "witness2_address",
+        "label": "Witness 2 Address",
+        "type": "text",
+        "hint": "Enter Witness 2 full address",
+        "required": true
+      }
+    ],
+    "timestamp": "2026-03-16T12:53:30.631266"
+  }
+  
+}

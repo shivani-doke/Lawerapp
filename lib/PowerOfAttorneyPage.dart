@@ -6,8 +6,6 @@ import 'package:universal_io/io.dart';
 import '../services/api_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import 'dart:ui' as ui;
-import 'dart:html' as html;
 
 // Simple model for a dynamic document field
 class DocumentField {
@@ -24,6 +22,16 @@ class DocumentField {
     this.hint,
     this.required = true,
   });
+
+  factory DocumentField.fromJson(Map<String, dynamic> json) {
+    return DocumentField(
+      name: json['name'],
+      label: json['label'],
+      type: json['type'] ?? 'text',
+      hint: json['hint'],
+      required: json['required'] ?? true,
+    );
+  }
 }
 
 class PowerOfAttorneyPage extends StatefulWidget {
@@ -36,12 +44,18 @@ class PowerOfAttorneyPage extends StatefulWidget {
 class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
   static const Color accentColor = Color(0xffE0A800);
 
-  // Dynamic fields (from extraction or default)
+  // Dynamic fields (from extraction)
   List<DocumentField> _fields = [];
   final Map<String, TextEditingController> _fieldControllers = {};
 
   // Reference document (used for both extraction and generation)
   PlatformFile? _referenceFile;
+
+  // Saved references management
+  List<Map<String, dynamic>> _savedReferences = [];
+  String? _selectedReferenceId;
+  bool _isLoadingReferences = false;
+  bool _isUploading = false;
 
   // UI state
   bool _isGenerating = false;
@@ -55,6 +69,13 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
   bool _pdfLoadFailed = false;
 
   @override
+  void initState() {
+    super.initState();
+    _fields = []; // No default fields
+    _loadSavedReferences();
+  }
+
+  @override
   void dispose() {
     for (var controller in _fieldControllers.values) {
       controller.dispose();
@@ -62,30 +83,14 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
     super.dispose();
   }
 
-  // Fallback default fields (used when extraction fails or no file is uploaded)
-  void _resetToDefaultFields() {
-    _fields = [
-      DocumentField(
-          name: 'principal',
-          label: "Principal's Full Name",
-          hint: 'Person granting authority'),
-      DocumentField(
-          name: 'agent',
-          label: "Agent's Full Name",
-          hint: 'Person receiving authority'),
-      DocumentField(
-          name: 'purpose',
-          label: 'Purpose / Scope of Authority',
-          type: 'multiline',
-          hint: 'Describe the powers being granted...'),
-      DocumentField(name: 'date', label: 'Date of Execution', type: 'date'),
-      DocumentField(
-          name: 'conditions',
-          label: 'Conditions & Limitations',
-          type: 'multiline',
-          hint: 'Any restrictions on the authority...'),
-    ];
-    _rebuildControllers();
+  // Clear all fields and controllers
+  void _resetFields() {
+    for (var controller in _fieldControllers.values) {
+      controller.dispose();
+    }
+    _fieldControllers.clear();
+    _fields = [];
+    setState(() {});
   }
 
   // Rebuild text controllers when fields change
@@ -100,13 +105,58 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
     setState(() {});
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _resetToDefaultFields();
+  // Load saved references from server
+  Future<void> _loadSavedReferences() async {
+    setState(() => _isLoadingReferences = true);
+    try {
+      final refs =
+          await ApiService().listReferences(documentType: 'power_of_attorney');
+      setState(() {
+        _savedReferences = refs;
+        _isLoadingReferences = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingReferences = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load saved references: $e')),
+      );
+    }
   }
 
-  // Pick a reference file (DOCX, PDF, TXT) for field extraction
+  // Select a saved reference and load its fields
+  Future<void> _selectSavedReference(String? id) async {
+    if (id == null) {
+      // "Upload new..." selected
+      setState(() {
+        _selectedReferenceId = null;
+        _referenceFile = null;
+        _resetFields();
+      });
+      return;
+    }
+    setState(() {
+      _selectedReferenceId = id;
+      _isExtracting = true;
+      _referenceFile = null;
+    });
+    try {
+      final fieldsJson = await ApiService().getReferenceFields(id);
+      final fields =
+          fieldsJson.map((json) => DocumentField.fromJson(json)).toList();
+      setState(() {
+        _fields = fields;
+        _isExtracting = false;
+      });
+      _rebuildControllers();
+    } catch (e) {
+      setState(() => _isExtracting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load fields: $e')),
+      );
+    }
+  }
+
+  // Pick a new reference file, upload it, and save it on the server
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -118,55 +168,64 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
       setState(() {
         _referenceFile = result.files.first;
         _isExtracting = true;
-        // Clear any previously generated document and failure flag
         _generatedDocx = null;
         _generatedPdf = null;
         _pdfLoadFailed = false;
+        _selectedReferenceId = null;
+        _resetFields();
       });
 
       try {
+        // Extract fields using Gemini
         final extractedFields = await ApiService().extractFieldsFromReference(
           _referenceFile!,
           documentType: 'power_of_attorney',
         );
 
-        setState(() {
-          _fields = extractedFields.map<DocumentField>((json) {
-            return DocumentField(
-              name: json['name'],
-              label: json['label'],
-              type: json['type'] ?? 'text',
-              hint: json['hint'],
-              required: json['required'] ?? true,
-            );
-          }).toList();
-          _isExtracting = false;
-        });
+        final fields = extractedFields
+            .map((json) => DocumentField.fromJson(json))
+            .toList();
 
-        _rebuildControllers();
+        setState(() => _isUploading = true);
+        final uploadResult = await ApiService().uploadReference(
+          _referenceFile!,
+          'power_of_attorney',
+        );
+        final newId = uploadResult['document_id'];
+
+        await _loadSavedReferences();
+        await _selectSavedReference(newId);
+
+        setState(() {
+          _isExtracting = false;
+          _isUploading = false;
+        });
       } catch (e) {
-        setState(() => _isExtracting = false);
+        setState(() {
+          _isExtracting = false;
+          _isUploading = false;
+          _fields = [];
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text('Field extraction failed: $e\nUsing default fields.')),
+          SnackBar(content: Text('Failed: $e')),
         );
       }
     }
   }
 
-  // Clear the uploaded file and revert to default fields
+  // Clear the uploaded file and any selection
   void _clearFile() {
     setState(() {
       _referenceFile = null;
-      _resetToDefaultFields();
+      _selectedReferenceId = null;
+      _resetFields();
       _generatedDocx = null;
       _generatedPdf = null;
       _pdfLoadFailed = false;
     });
   }
 
-  // Generate document using Gemini (reference file + field values)
+  // Generate document using either saved reference or newly uploaded file
   Future<void> _generateDocument() async {
     // Check required fields
     final missingFields = _fields.where((f) {
@@ -184,17 +243,17 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
       return;
     }
 
-    if (_referenceFile == null) {
+    if (_selectedReferenceId == null && _referenceFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Please upload a reference document first')),
+            content: Text('Please select or upload a reference document')),
       );
       return;
     }
 
     setState(() {
       _isGenerating = true;
-      _pdfLoadFailed = false; // Reset failure flag for new generation
+      _pdfLoadFailed = false;
     });
 
     try {
@@ -206,15 +265,13 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
       final response = await ApiService().generateDocument(
         documentType: 'power_of_attorney',
         fields: fields,
-        referenceFile: _referenceFile!,
+        referenceFile: _selectedReferenceId == null ? _referenceFile : null,
+        referenceId: _selectedReferenceId,
       );
 
-      final docx = response['docx_file'];
-      final pdf = response['pdf_file'];
-
       setState(() {
-        _generatedDocx = docx;
-        _generatedPdf = pdf;
+        _generatedDocx = response['docx_file'];
+        _generatedPdf = response['pdf_file'];
         _isGenerating = false;
       });
     } catch (e) {
@@ -281,19 +338,63 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                     ),
                     const SizedBox(height: 20),
 
+                    // Saved references dropdown
+                    if (_isLoadingReferences)
+                      const Center(child: CircularProgressIndicator())
+                    else if (_savedReferences.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedReferenceId,
+                          hint: const Text('Select a saved document'),
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('Upload new...'),
+                            ),
+                            ..._savedReferences.map((ref) {
+                              return DropdownMenuItem(
+                                value: ref['id'],
+                                child: Text(
+                                    '${ref['original_name']} (${ref['document_type']})'),
+                              );
+                            }),
+                          ],
+                          onChanged: _selectSavedReference,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xfff9fafb),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+
                     // Show loading indicator while extracting fields
-                    if (_isExtracting)
+                    if (_isExtracting || _isUploading)
                       const Center(
                           child: Padding(
                         padding: EdgeInsets.all(20),
                         child: CircularProgressIndicator(),
                       ))
+                    else if (_fields.isNotEmpty)
+                      ..._fields.map((field) => _buildField(field))
                     else
-                      ..._fields.map((field) => _buildField(field)),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: Text(
+                            'Select or upload a reference document to see fields',
+                            style: TextStyle(color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
 
                     const SizedBox(height: 20),
 
-                    // File picker row
+                    // File picker row (for new uploads)
                     Row(
                       children: [
                         Expanded(
@@ -303,7 +404,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                             label: Text(
                               _referenceFile != null
                                   ? 'File: ${_referenceFile!.name}'
-                                  : 'Upload Reference Document',
+                                  : 'Upload New Reference Document',
                               overflow: TextOverflow.ellipsis,
                             ),
                             style: OutlinedButton.styleFrom(
@@ -332,7 +433,9 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                       child: ElevatedButton.icon(
                         onPressed: (_isGenerating ||
                                 _isExtracting ||
-                                _referenceFile == null)
+                                _isUploading ||
+                                (_selectedReferenceId == null &&
+                                    _referenceFile == null))
                             ? null
                             : _generateDocument,
                         icon: _isGenerating
@@ -369,35 +472,35 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
           Expanded(
             flex: 2,
             child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: _generatedPdf == null
-                    ? _buildPlaceholder()
-                    : _buildPdfViewer()),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: _generatedPdf == null
+                  ? _buildPlaceholder()
+                  : _buildPdfViewer(),
+            ),
           ),
         ],
       ),
     );
   }
 
+  // PDF Viewer
   Widget _buildPdfViewer() {
     final pdfViewUrl =
         "${ApiService.baseUrl}/view/${_generatedPdf}?t=${DateTime.now().millisecondsSinceEpoch}";
-    print('PDF View URL: $pdfViewUrl');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Top row with title and download buttons (always visible)
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -428,7 +531,6 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
           ],
         ),
         const SizedBox(height: 10),
-        // Main content area: either PDF viewer or centered fallback button
         Expanded(
           child: Container(
             decoration: BoxDecoration(
@@ -436,21 +538,20 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
               border: Border.all(color: Colors.grey.shade300),
             ),
             child: _pdfLoadFailed
-                ? _buildFallbackButton(pdfViewUrl) // Centered button
+                ? _buildFallbackButton(pdfViewUrl)
                 : SfPdfViewer.network(
                     pdfViewUrl,
                     canShowScrollHead: true,
                     canShowScrollStatus: true,
                     onDocumentLoadFailed:
                         (PdfDocumentLoadFailedDetails details) {
-                      print('PDF load failed: ${details.error}');
                       setState(() {
                         _pdfLoadFailed = true;
                       });
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                             content:
-                                Text('Failed to load PDF: ${details.error}')),
+                                Text('Open to load PDF: ${details.error}')),
                       );
                     },
                   ),
@@ -460,7 +561,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
     );
   }
 
-  // Helper widget: centered fallback button
+  // Fallback button when PDF fails to load
   Widget _buildFallbackButton(String url) {
     return Center(
       child: Column(
@@ -573,7 +674,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
     }
   }
 
-  // Placeholder shown before any document is generated
+  // Placeholder before any document is generated
   Widget _buildPlaceholder() {
     return const Center(
       child: Column(
@@ -599,6 +700,608 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
     );
   }
 }
+
+// import 'package:flutter/material.dart';
+// import 'package:file_picker/file_picker.dart';
+// import 'package:path_provider/path_provider.dart';
+// import 'package:universal_html/html.dart' as html;
+// import 'package:universal_io/io.dart';
+// import '../services/api_service.dart';
+// import 'package:flutter/foundation.dart' show kIsWeb;
+// import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+// import 'dart:ui' as ui;
+// import 'dart:html' as html;
+
+// // Simple model for a dynamic document field
+// class DocumentField {
+//   final String name;
+//   final String label;
+//   final String type;
+//   final String? hint;
+//   final bool required;
+
+//   DocumentField({
+//     required this.name,
+//     required this.label,
+//     this.type = 'text',
+//     this.hint,
+//     this.required = true,
+//   });
+// }
+
+// class PowerOfAttorneyPage extends StatefulWidget {
+//   const PowerOfAttorneyPage({super.key});
+
+//   @override
+//   State<PowerOfAttorneyPage> createState() => _PowerOfAttorneyPageState();
+// }
+
+// class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
+//   static const Color accentColor = Color(0xffE0A800);
+
+//   // Dynamic fields (from extraction or default)
+//   List<DocumentField> _fields = [];
+//   final Map<String, TextEditingController> _fieldControllers = {};
+
+//   // Reference document (used for both extraction and generation)
+//   PlatformFile? _referenceFile;
+
+//   // UI state
+//   bool _isGenerating = false;
+//   bool _isExtracting = false;
+
+//   // Generated document info
+//   String? _generatedDocx;
+//   String? _generatedPdf;
+
+//   // Track PDF load failure for fallback button
+//   bool _pdfLoadFailed = false;
+
+//   @override
+//   void dispose() {
+//     for (var controller in _fieldControllers.values) {
+//       controller.dispose();
+//     }
+//     super.dispose();
+//   }
+
+//   // Fallback default fields (used when extraction fails or no file is uploaded)
+//   void _resetToDefaultFields() {
+//     _fields = [
+//       DocumentField(
+//           name: 'principal',
+//           label: "Principal's Full Name",
+//           hint: 'Person granting authority'),
+//       DocumentField(
+//           name: 'agent',
+//           label: "Agent's Full Name",
+//           hint: 'Person receiving authority'),
+//       DocumentField(
+//           name: 'purpose',
+//           label: 'Purpose / Scope of Authority',
+//           type: 'multiline',
+//           hint: 'Describe the powers being granted...'),
+//       DocumentField(name: 'date', label: 'Date of Execution', type: 'date'),
+//       DocumentField(
+//           name: 'conditions',
+//           label: 'Conditions & Limitations',
+//           type: 'multiline',
+//           hint: 'Any restrictions on the authority...'),
+//     ];
+//     _rebuildControllers();
+//   }
+
+//   // Rebuild text controllers when fields change
+//   void _rebuildControllers() {
+//     for (var controller in _fieldControllers.values) {
+//       controller.dispose();
+//     }
+//     _fieldControllers.clear();
+//     for (var field in _fields) {
+//       _fieldControllers[field.name] = TextEditingController();
+//     }
+//     setState(() {});
+//   }
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _resetToDefaultFields();
+//   }
+
+//   // Pick a reference file (DOCX, PDF, TXT) for field extraction
+//   Future<void> _pickFile() async {
+//     FilePickerResult? result = await FilePicker.platform.pickFiles(
+//       type: FileType.custom,
+//       allowedExtensions: ['docx', 'pdf', 'txt'],
+//       withData: true,
+//     );
+
+//     if (result != null) {
+//       setState(() {
+//         _referenceFile = result.files.first;
+//         _isExtracting = true;
+//         // Clear any previously generated document and failure flag
+//         _generatedDocx = null;
+//         _generatedPdf = null;
+//         _pdfLoadFailed = false;
+//       });
+
+//       try {
+//         final extractedFields = await ApiService().extractFieldsFromReference(
+//           _referenceFile!,
+//           documentType: 'power_of_attorney',
+//         );
+
+//         setState(() {
+//           _fields = extractedFields.map<DocumentField>((json) {
+//             return DocumentField(
+//               name: json['name'],
+//               label: json['label'],
+//               type: json['type'] ?? 'text',
+//               hint: json['hint'],
+//               required: json['required'] ?? true,
+//             );
+//           }).toList();
+//           _isExtracting = false;
+//         });
+
+//         _rebuildControllers();
+//       } catch (e) {
+//         setState(() => _isExtracting = false);
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//               content:
+//                   Text('Field extraction failed: $e\nUsing default fields.')),
+//         );
+//       }
+//     }
+//   }
+
+//   // Clear the uploaded file and revert to default fields
+//   void _clearFile() {
+//     setState(() {
+//       _referenceFile = null;
+//       _resetToDefaultFields();
+//       _generatedDocx = null;
+//       _generatedPdf = null;
+//       _pdfLoadFailed = false;
+//     });
+//   }
+
+//   // Generate document using Gemini (reference file + field values)
+//   Future<void> _generateDocument() async {
+//     // Check required fields
+//     final missingFields = _fields.where((f) {
+//       final value = _fieldControllers[f.name]?.text ?? '';
+//       return f.required && value.isEmpty;
+//     }).toList();
+
+//     if (missingFields.isNotEmpty) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text(
+//               'Please fill all required fields: ${missingFields.map((f) => f.label).join(', ')}'),
+//         ),
+//       );
+//       return;
+//     }
+
+//     if (_referenceFile == null) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(
+//             content: Text('Please upload a reference document first')),
+//       );
+//       return;
+//     }
+
+//     setState(() {
+//       _isGenerating = true;
+//       _pdfLoadFailed = false; // Reset failure flag for new generation
+//     });
+
+//     try {
+//       final fields = {
+//         for (var field in _fields)
+//           field.name: _fieldControllers[field.name]?.text ?? '',
+//       };
+
+//       final response = await ApiService().generateDocument(
+//         documentType: 'power_of_attorney',
+//         fields: fields,
+//         referenceFile: _referenceFile!,
+//       );
+
+//       final docx = response['docx_file'];
+//       final pdf = response['pdf_file'];
+
+//       setState(() {
+//         _generatedDocx = docx;
+//         _generatedPdf = pdf;
+//         _isGenerating = false;
+//       });
+//     } catch (e) {
+//       setState(() => _isGenerating = false);
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text('Error: $e')),
+//       );
+//     }
+//   }
+
+//   // Date picker for date fields
+//   Future<void> _selectDate(TextEditingController controller) async {
+//     final DateTime now = DateTime.now();
+//     final DateTime? picked = await showDatePicker(
+//       context: context,
+//       initialDate: now,
+//       firstDate: DateTime(2000),
+//       lastDate: DateTime(2100),
+//     );
+//     if (picked != null) {
+//       controller.text = "${picked.day.toString().padLeft(2, '0')}-"
+//           "${picked.month.toString().padLeft(2, '0')}-"
+//           "${picked.year}";
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       color: const Color(0xfff5f6f8),
+//       padding: const EdgeInsets.all(30),
+//       child: Row(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           // LEFT SIDE – Field input form
+//           Expanded(
+//             flex: 2,
+//             child: Container(
+//               padding: const EdgeInsets.all(24),
+//               decoration: BoxDecoration(
+//                 color: Colors.white,
+//                 borderRadius: BorderRadius.circular(16),
+//                 border: Border.all(color: Colors.grey.shade200),
+//               ),
+//               child: SingleChildScrollView(
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     const Text(
+//                       "AUTHORIZATION",
+//                       style: TextStyle(
+//                         color: accentColor,
+//                         fontWeight: FontWeight.w600,
+//                         fontSize: 12,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 6),
+//                     const Text(
+//                       "Power of Attorney",
+//                       style: TextStyle(
+//                         fontSize: 26,
+//                         fontWeight: FontWeight.bold,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 20),
+
+//                     // Show loading indicator while extracting fields
+//                     if (_isExtracting)
+//                       const Center(
+//                           child: Padding(
+//                         padding: EdgeInsets.all(20),
+//                         child: CircularProgressIndicator(),
+//                       ))
+//                     else
+//                       ..._fields.map((field) => _buildField(field)),
+
+//                     const SizedBox(height: 20),
+
+//                     // File picker row
+//                     Row(
+//                       children: [
+//                         Expanded(
+//                           child: OutlinedButton.icon(
+//                             onPressed: _pickFile,
+//                             icon: const Icon(Icons.attach_file),
+//                             label: Text(
+//                               _referenceFile != null
+//                                   ? 'File: ${_referenceFile!.name}'
+//                                   : 'Upload Reference Document',
+//                               overflow: TextOverflow.ellipsis,
+//                             ),
+//                             style: OutlinedButton.styleFrom(
+//                               padding: const EdgeInsets.symmetric(vertical: 16),
+//                               side: BorderSide(color: accentColor, width: 1.5),
+//                               shape: RoundedRectangleBorder(
+//                                 borderRadius: BorderRadius.circular(12),
+//                               ),
+//                               foregroundColor: accentColor,
+//                             ),
+//                           ),
+//                         ),
+//                         if (_referenceFile != null)
+//                           IconButton(
+//                             icon: const Icon(Icons.close),
+//                             onPressed: _clearFile,
+//                           ),
+//                       ],
+//                     ),
+
+//                     const SizedBox(height: 15),
+
+//                     // Generate button
+//                     SizedBox(
+//                       width: double.infinity,
+//                       child: ElevatedButton.icon(
+//                         onPressed: (_isGenerating ||
+//                                 _isExtracting ||
+//                                 _referenceFile == null)
+//                             ? null
+//                             : _generateDocument,
+//                         icon: _isGenerating
+//                             ? const SizedBox(
+//                                 width: 20,
+//                                 height: 20,
+//                                 child: CircularProgressIndicator(
+//                                   color: Colors.white,
+//                                   strokeWidth: 2,
+//                                 ),
+//                               )
+//                             : const Icon(Icons.auto_awesome),
+//                         label: Text(_isGenerating
+//                             ? 'Generating...'
+//                             : 'Generate Document'),
+//                         style: ElevatedButton.styleFrom(
+//                           backgroundColor: accentColor,
+//                           padding: const EdgeInsets.symmetric(vertical: 16),
+//                           shape: RoundedRectangleBorder(
+//                             borderRadius: BorderRadius.circular(12),
+//                           ),
+//                         ),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ),
+
+//           const SizedBox(width: 30),
+
+//           // RIGHT SIDE – Document viewer/editor
+//           Expanded(
+//             flex: 2,
+//             child: Container(
+//                 padding: const EdgeInsets.all(24),
+//                 decoration: BoxDecoration(
+//                   color: Colors.white,
+//                   borderRadius: BorderRadius.circular(12),
+//                   boxShadow: const [
+//                     BoxShadow(
+//                       color: Colors.black12,
+//                       blurRadius: 10,
+//                       offset: Offset(0, 6),
+//                     ),
+//                   ],
+//                 ),
+//                 child: _generatedPdf == null
+//                     ? _buildPlaceholder()
+//                     : _buildPdfViewer()),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildPdfViewer() {
+//     final pdfViewUrl =
+//         "${ApiService.baseUrl}/view/${_generatedPdf}?t=${DateTime.now().millisecondsSinceEpoch}";
+//     print('PDF View URL: $pdfViewUrl');
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         // Top row with title and download buttons (always visible)
+//         Row(
+//           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//           children: [
+//             const Text(
+//               "Generated Document",
+//               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//             ),
+//             Row(
+//               children: [
+//                 IconButton(
+//                   tooltip: "Download PDF",
+//                   icon: const Icon(Icons.picture_as_pdf),
+//                   onPressed: () async {
+//                     await ApiService()
+//                         .downloadGeneratedDocument(_generatedPdf!);
+//                   },
+//                 ),
+//                 IconButton(
+//                   tooltip: "Download DOCX",
+//                   icon: const Icon(Icons.description),
+//                   onPressed: () async {
+//                     await ApiService()
+//                         .downloadGeneratedDocument(_generatedDocx!);
+//                   },
+//                 ),
+//               ],
+//             )
+//           ],
+//         ),
+//         const SizedBox(height: 10),
+//         // Main content area: either PDF viewer or centered fallback button
+//         Expanded(
+//           child: Container(
+//             decoration: BoxDecoration(
+//               borderRadius: BorderRadius.circular(12),
+//               border: Border.all(color: Colors.grey.shade300),
+//             ),
+//             child: _pdfLoadFailed
+//                 ? _buildFallbackButton(pdfViewUrl) // Centered button
+//                 : SfPdfViewer.network(
+//                     pdfViewUrl,
+//                     canShowScrollHead: true,
+//                     canShowScrollStatus: true,
+//                     onDocumentLoadFailed:
+//                         (PdfDocumentLoadFailedDetails details) {
+//                       print('PDF load failed: ${details.error}');
+//                       setState(() {
+//                         _pdfLoadFailed = true;
+//                       });
+//                       ScaffoldMessenger.of(context).showSnackBar(
+//                         SnackBar(
+//                             content:
+//                                 Text('Failed to load PDF: ${details.error}')),
+//                       );
+//                     },
+//                   ),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   // Helper widget: centered fallback button
+//   Widget _buildFallbackButton(String url) {
+//     return Center(
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         children: [
+//           const Icon(
+//             Icons.picture_as_pdf,
+//             size: 80,
+//             color: Colors.grey,
+//           ),
+//           const SizedBox(height: 16),
+//           const Text(
+//             "Click to View PDF.",
+//             style: TextStyle(fontSize: 16, color: Colors.grey),
+//           ),
+//           const SizedBox(height: 8),
+//           ElevatedButton.icon(
+//             onPressed: () {
+//               html.window.open(url, '_blank');
+//             },
+//             icon: const Icon(Icons.open_in_browser),
+//             label: const Text("Open"),
+//             style: ElevatedButton.styleFrom(
+//               backgroundColor: accentColor,
+//               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+//               shape: RoundedRectangleBorder(
+//                 borderRadius: BorderRadius.circular(30),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   // Build an input field based on its type
+//   Widget _buildField(DocumentField field) {
+//     final controller = _fieldControllers[field.name]!;
+
+//     if (field.type == 'date') {
+//       return Padding(
+//         padding: const EdgeInsets.only(bottom: 18),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Text(field.label + (field.required ? ' *' : '')),
+//             const SizedBox(height: 6),
+//             TextField(
+//               controller: controller,
+//               readOnly: true,
+//               onTap: () => _selectDate(controller),
+//               decoration: InputDecoration(
+//                 hintText: field.hint ?? 'dd-mm-yyyy',
+//                 suffixIcon: const Icon(Icons.calendar_today),
+//                 filled: true,
+//                 fillColor: const Color(0xfff9fafb),
+//                 border: OutlineInputBorder(
+//                   borderRadius: BorderRadius.circular(12),
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//       );
+//     } else if (field.type == 'multiline') {
+//       return Padding(
+//         padding: const EdgeInsets.only(bottom: 18),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Text(field.label + (field.required ? ' *' : '')),
+//             const SizedBox(height: 6),
+//             TextField(
+//               controller: controller,
+//               maxLines: 3,
+//               decoration: InputDecoration(
+//                 hintText: field.hint,
+//                 filled: true,
+//                 fillColor: const Color(0xfff9fafb),
+//                 border: OutlineInputBorder(
+//                   borderRadius: BorderRadius.circular(12),
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//       );
+//     } else {
+//       return Padding(
+//         padding: const EdgeInsets.only(bottom: 18),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Text(field.label + (field.required ? ' *' : '')),
+//             const SizedBox(height: 6),
+//             TextField(
+//               controller: controller,
+//               decoration: InputDecoration(
+//                 hintText: field.hint,
+//                 filled: true,
+//                 fillColor: const Color(0xfff9fafb),
+//                 border: OutlineInputBorder(
+//                   borderRadius: BorderRadius.circular(12),
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//       );
+//     }
+//   }
+
+//   // Placeholder shown before any document is generated
+//   Widget _buildPlaceholder() {
+//     return const Center(
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           Icon(Icons.auto_awesome, size: 50, color: Colors.grey),
+//           SizedBox(height: 20),
+//           Text(
+//             "Ready to Generate",
+//             style: TextStyle(
+//               fontSize: 18,
+//               fontWeight: FontWeight.bold,
+//             ),
+//           ),
+//           SizedBox(height: 8),
+//           Text(
+//             "Fill in the details on the left, then click\n\"Generate Document\" to create your Power of Attorney.",
+//             textAlign: TextAlign.center,
+//             style: TextStyle(color: Colors.grey),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 // import 'package:flutter/material.dart';
 // import 'package:file_picker/file_picker.dart';

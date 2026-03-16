@@ -5,8 +5,8 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import '../services/api_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
-// Simple model for a dynamic document field (reused)
 class DocumentField {
   final String name;
   final String label;
@@ -21,6 +21,16 @@ class DocumentField {
     this.hint,
     this.required = true,
   });
+
+  factory DocumentField.fromJson(Map<String, dynamic> json) {
+    return DocumentField(
+      name: json['name'],
+      label: json['label'],
+      type: json['type'] ?? 'text',
+      hint: json['hint'],
+      required: json['required'] ?? true,
+    );
+  }
 }
 
 class LoanAgreementPage extends StatefulWidget {
@@ -33,76 +43,46 @@ class LoanAgreementPage extends StatefulWidget {
 class _LoanAgreementPageState extends State<LoanAgreementPage> {
   static const Color accentColor = Color(0xffE0A800);
 
-  // Dynamic fields (from extraction or default)
   List<DocumentField> _fields = [];
   final Map<String, TextEditingController> _fieldControllers = {};
 
-  // Reference document (used for both extraction and generation)
   PlatformFile? _referenceFile;
+  List<Map<String, dynamic>> _savedReferences = [];
+  String? _selectedReferenceId;
+  bool _isLoadingReferences = false;
+  bool _isUploading = false;
 
-  // UI state
   bool _isGenerating = false;
   bool _isExtracting = false;
 
-  // Generated document info
-  String? _generatedFilePath;
-  String? _documentContent; // plain text of the document
-  bool _isEditing = false; // whether we are in edit mode
-  final TextEditingController _editorController = TextEditingController();
+  String? _generatedDocx;
+  String? _generatedPdf;
+  bool _pdfLoadFailed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fields = [];
+    _loadSavedReferences();
+  }
 
   @override
   void dispose() {
     for (var controller in _fieldControllers.values) {
       controller.dispose();
     }
-    _editorController.dispose();
     super.dispose();
   }
 
-  // Default fields for a Loan Agreement (used when extraction fails or no file)
-  void _resetToDefaultFields() {
-    _fields = [
-      DocumentField(
-          name: 'lender',
-          label: "Lender's Full Name",
-          hint: 'Person or institution providing the loan'),
-      DocumentField(
-          name: 'borrower',
-          label: "Borrower's Full Name",
-          hint: 'Person receiving the loan'),
-      DocumentField(
-          name: 'loan_amount', label: "Loan Amount", hint: 'e.g. ₹5,00,000'),
-      DocumentField(
-          name: 'interest_rate',
-          label: "Interest Rate (%)",
-          hint: 'e.g. 10% per annum'),
-      DocumentField(
-          name: 'repayment_terms',
-          label: "Repayment Terms",
-          type: 'multiline',
-          hint: 'EMI amount, due dates, tenure, etc.'),
-      DocumentField(
-          name: 'collateral',
-          label: "Collateral / Security (if any)",
-          type: 'multiline',
-          required: false,
-          hint: 'Assets pledged as security'),
-      DocumentField(
-          name: 'date',
-          label: "Date of Agreement",
-          type: 'date',
-          hint: 'dd-mm-yyyy'),
-      DocumentField(
-          name: 'witnesses',
-          label: "Witnesses (if any)",
-          type: 'multiline',
-          required: false,
-          hint: 'Names and addresses of witnesses'),
-    ];
-    _rebuildControllers();
+  void _resetFields() {
+    for (var controller in _fieldControllers.values) {
+      controller.dispose();
+    }
+    _fieldControllers.clear();
+    _fields = [];
+    setState(() {});
   }
 
-  // Rebuild text controllers when fields change
   void _rebuildControllers() {
     for (var controller in _fieldControllers.values) {
       controller.dispose();
@@ -114,13 +94,54 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
     setState(() {});
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _resetToDefaultFields();
+  Future<void> _loadSavedReferences() async {
+    setState(() => _isLoadingReferences = true);
+    try {
+      final refs =
+          await ApiService().listReferences(documentType: 'loan_agreement');
+      setState(() {
+        _savedReferences = refs;
+        _isLoadingReferences = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingReferences = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load saved references: $e')),
+      );
+    }
   }
 
-  // Pick a reference file (DOCX, PDF, TXT) for field extraction
+  Future<void> _selectSavedReference(String? id) async {
+    if (id == null) {
+      setState(() {
+        _selectedReferenceId = null;
+        _referenceFile = null;
+        _resetFields();
+      });
+      return;
+    }
+    setState(() {
+      _selectedReferenceId = id;
+      _isExtracting = true;
+      _referenceFile = null;
+    });
+    try {
+      final fieldsJson = await ApiService().getReferenceFields(id);
+      final fields =
+          fieldsJson.map((json) => DocumentField.fromJson(json)).toList();
+      setState(() {
+        _fields = fields;
+        _isExtracting = false;
+      });
+      _rebuildControllers();
+    } catch (e) {
+      setState(() => _isExtracting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load fields: $e')),
+      );
+    }
+  }
+
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -132,55 +153,62 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
       setState(() {
         _referenceFile = result.files.first;
         _isExtracting = true;
-        // Clear any previously generated document
-        _generatedFilePath = null;
-        _documentContent = null;
+        _generatedDocx = null;
+        _generatedPdf = null;
+        _pdfLoadFailed = false;
+        _selectedReferenceId = null;
+        _resetFields();
       });
 
       try {
         final extractedFields = await ApiService().extractFieldsFromReference(
           _referenceFile!,
-          documentType: 'loan_agreement', // document type for loan agreement
+          documentType: 'loan_agreement',
         );
 
-        setState(() {
-          _fields = extractedFields.map<DocumentField>((json) {
-            return DocumentField(
-              name: json['name'],
-              label: json['label'],
-              type: json['type'] ?? 'text',
-              hint: json['hint'],
-              required: json['required'] ?? true,
-            );
-          }).toList();
-          _isExtracting = false;
-        });
+        final fields = extractedFields
+            .map((json) => DocumentField.fromJson(json))
+            .toList();
 
-        _rebuildControllers();
+        setState(() => _isUploading = true);
+        final uploadResult = await ApiService().uploadReference(
+          _referenceFile!,
+          'loan_agreement',
+        );
+        final newId = uploadResult['document_id'];
+
+        await _loadSavedReferences();
+        await _selectSavedReference(newId);
+
+        setState(() {
+          _isExtracting = false;
+          _isUploading = false;
+        });
       } catch (e) {
-        setState(() => _isExtracting = false);
+        setState(() {
+          _isExtracting = false;
+          _isUploading = false;
+          _fields = [];
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text('Field extraction failed: $e\nUsing default fields.')),
+          SnackBar(content: Text('Failed: $e')),
         );
       }
     }
   }
 
-  // Clear the uploaded file and revert to default fields
   void _clearFile() {
     setState(() {
       _referenceFile = null;
-      _resetToDefaultFields();
-      _generatedFilePath = null;
-      _documentContent = null;
+      _selectedReferenceId = null;
+      _resetFields();
+      _generatedDocx = null;
+      _generatedPdf = null;
+      _pdfLoadFailed = false;
     });
   }
 
-  // Generate document using Gemini (reference file + field values)
   Future<void> _generateDocument() async {
-    // Check required fields
     final missingFields = _fields.where((f) {
       final value = _fieldControllers[f.name]?.text ?? '';
       return f.required && value.isEmpty;
@@ -196,18 +224,17 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
       return;
     }
 
-    if (_referenceFile == null) {
+    if (_selectedReferenceId == null && _referenceFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Please upload a reference document first')),
+            content: Text('Please select or upload a reference document')),
       );
       return;
     }
 
     setState(() {
       _isGenerating = true;
-      _generatedFilePath = null;
-      _documentContent = null;
+      _pdfLoadFailed = false;
     });
 
     try {
@@ -219,17 +246,15 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
       final response = await ApiService().generateDocument(
         documentType: 'loan_agreement',
         fields: fields,
-        referenceFile: _referenceFile!,
+        referenceFile: _selectedReferenceId == null ? _referenceFile : null,
+        referenceId: _selectedReferenceId,
       );
 
-      final filename = response['file_path'];
       setState(() {
-        _generatedFilePath = filename;
+        _generatedDocx = response['docx_file'];
+        _generatedPdf = response['pdf_file'];
         _isGenerating = false;
       });
-
-      // Automatically fetch the content for viewing/editing
-      await _loadDocumentContent(filename);
     } catch (e) {
       setState(() => _isGenerating = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -238,58 +263,6 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
     }
   }
 
-  // Fetch the plain text content of the generated document
-  Future<void> _loadDocumentContent(String filename) async {
-    try {
-      final content = await ApiService().getDocumentContent(filename);
-      setState(() {
-        _documentContent = content;
-        _editorController.text = content;
-        _isEditing = false; // start in view mode
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load document: $e')),
-      );
-    }
-  }
-
-  // Save edited content back to the server
-  Future<void> _saveDocument() async {
-    if (_generatedFilePath == null) return;
-    setState(() => _isEditing = false);
-    try {
-      await ApiService()
-          .updateDocument(_generatedFilePath!, _editorController.text);
-      // Refresh content after save
-      await _loadDocumentContent(_generatedFilePath!);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Document saved')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Save failed: $e')),
-      );
-    }
-  }
-
-  // Download the generated DOCX file
-  Future<void> _downloadDocument() async {
-    if (_generatedFilePath == null) return;
-
-    try {
-      await ApiService().downloadGeneratedDocument(_generatedFilePath!);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Download started')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Download failed: $e')),
-      );
-    }
-  }
-
-  // Date picker for date fields
   Future<void> _selectDate(TextEditingController controller) async {
     final DateTime now = DateTime.now();
     final DateTime? picked = await showDatePicker(
@@ -313,7 +286,6 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // LEFT SIDE – Field input form (with Loan Agreement header)
           Expanded(
             flex: 2,
             child: Container(
@@ -328,7 +300,7 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "FINANCE",
+                      "LOAN AGREEMENT",
                       style: TextStyle(
                         color: accentColor,
                         fontWeight: FontWeight.w600,
@@ -344,20 +316,57 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Show loading indicator while extracting fields
-                    if (_isExtracting)
+                    if (_isLoadingReferences)
+                      const Center(child: CircularProgressIndicator())
+                    else if (_savedReferences.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedReferenceId,
+                          hint: const Text('Select a saved document'),
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('Upload new...'),
+                            ),
+                            ..._savedReferences.map((ref) {
+                              return DropdownMenuItem(
+                                value: ref['id'],
+                                child: Text(
+                                    '${ref['original_name']} (${ref['document_type']})'),
+                              );
+                            }),
+                          ],
+                          onChanged: _selectSavedReference,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xfff9fafb),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (_isExtracting || _isUploading)
                       const Center(
                           child: Padding(
                         padding: EdgeInsets.all(20),
                         child: CircularProgressIndicator(),
                       ))
+                    else if (_fields.isNotEmpty)
+                      ..._fields.map((field) => _buildField(field))
                     else
-                      ..._fields.map((field) => _buildField(field)),
-
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: Text(
+                            'Select or upload a reference document to see fields',
+                            style: TextStyle(color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 20),
-
-                    // File picker row
                     Row(
                       children: [
                         Expanded(
@@ -367,7 +376,7 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
                             label: Text(
                               _referenceFile != null
                                   ? 'File: ${_referenceFile!.name}'
-                                  : 'Add Reference Document',
+                                  : 'Upload New Reference Document',
                               overflow: TextOverflow.ellipsis,
                             ),
                             style: OutlinedButton.styleFrom(
@@ -387,16 +396,15 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
                           ),
                       ],
                     ),
-
                     const SizedBox(height: 15),
-
-                    // Generate button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: (_isGenerating ||
                                 _isExtracting ||
-                                _referenceFile == null)
+                                _isUploading ||
+                                (_selectedReferenceId == null &&
+                                    _referenceFile == null))
                             ? null
                             : _generateDocument,
                         icon: _isGenerating
@@ -411,7 +419,7 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
                             : const Icon(Icons.auto_awesome),
                         label: Text(_isGenerating
                             ? 'Generating...'
-                            : 'Generate Document with AI'),
+                            : 'Generate Document'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: accentColor,
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -426,22 +434,25 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
               ),
             ),
           ),
-
           const SizedBox(width: 30),
-
-          // RIGHT SIDE – Document viewer/editor
           Expanded(
             flex: 2,
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 6),
+                  ),
+                ],
               ),
-              child: _documentContent == null
+              child: _generatedPdf == null
                   ? _buildPlaceholder()
-                  : _buildDocumentEditor(),
+                  : _buildPdfViewer(),
             ),
           ),
         ],
@@ -449,7 +460,107 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
     );
   }
 
-  // Build an input field based on its type
+  Widget _buildPdfViewer() {
+    final pdfViewUrl =
+        "${ApiService.baseUrl}/view/${_generatedPdf}?t=${DateTime.now().millisecondsSinceEpoch}";
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Generated Document",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Row(
+              children: [
+                IconButton(
+                  tooltip: "Download PDF",
+                  icon: const Icon(Icons.picture_as_pdf),
+                  onPressed: () async {
+                    await ApiService()
+                        .downloadGeneratedDocument(_generatedPdf!);
+                  },
+                ),
+                IconButton(
+                  tooltip: "Download DOCX",
+                  icon: const Icon(Icons.description),
+                  onPressed: () async {
+                    await ApiService()
+                        .downloadGeneratedDocument(_generatedDocx!);
+                  },
+                ),
+              ],
+            )
+          ],
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: _pdfLoadFailed
+                ? _buildFallbackButton(pdfViewUrl)
+                : SfPdfViewer.network(
+                    pdfViewUrl,
+                    canShowScrollHead: true,
+                    canShowScrollStatus: true,
+                    onDocumentLoadFailed:
+                        (PdfDocumentLoadFailedDetails details) {
+                      setState(() {
+                        _pdfLoadFailed = true;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content:
+                                Text('Open to load PDF: ${details.error}')),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFallbackButton(String url) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.picture_as_pdf,
+            size: 80,
+            color: Colors.grey,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "Click to View PDF.",
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton.icon(
+            onPressed: () {
+              html.window.open(url, '_blank');
+            },
+            icon: const Icon(Icons.open_in_browser),
+            label: const Text("Open"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accentColor,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildField(DocumentField field) {
     final controller = _fieldControllers[field.name]!;
 
@@ -526,7 +637,6 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
     }
   }
 
-  // Placeholder shown before any document is generated
   Widget _buildPlaceholder() {
     return const Center(
       child: Column(
@@ -543,81 +653,12 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
           ),
           SizedBox(height: 8),
           Text(
-            "Fill in the details on the left, then click\n\"Generate Document with AI\" to create your Loan Agreement.",
+            "Fill in the details on the left, then click\n\"Generate Document\" to create your Loan Agreement.",
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey),
           ),
         ],
       ),
-    );
-  }
-
-  // Document viewer/editor panel
-  Widget _buildDocumentEditor() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              "Generated Document",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Row(
-              children: [
-                // Edit / Save toggle
-                if (!_isEditing)
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () {
-                      setState(() {
-                        _isEditing = true;
-                      });
-                    },
-                  ),
-                if (_isEditing)
-                  IconButton(
-                    icon: const Icon(Icons.save),
-                    onPressed: _saveDocument,
-                  ),
-                // Always show download button
-                IconButton(
-                  icon: const Icon(Icons.download),
-                  onPressed: _downloadDocument,
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xfff9fafb),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: _isEditing
-                ? TextField(
-                    controller: _editorController,
-                    maxLines: null, // unlimited lines
-                    expands: true,
-                    textAlignVertical: TextAlignVertical.top,
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Edit your document...',
-                    ),
-                  )
-                : SingleChildScrollView(
-                    child: Text(
-                      _documentContent ?? '',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-          ),
-        ),
-      ],
     );
   }
 }

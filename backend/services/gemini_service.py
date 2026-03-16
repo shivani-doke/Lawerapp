@@ -1,3 +1,4 @@
+# # backend/services/gemini_service.py
 import os
 import json
 import re
@@ -10,89 +11,157 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def extract_fields_from_document(document_text, document_type):
     prompt = f"""
-You are a legal document data extraction system.
+You are an AI system that converts legal document templates into dynamic form fields.
 
-Analyze the following legal reference document from start to end and extract ONLY the
-CLIENT INFORMATION fields that must be filled by the user to customize the legal document.
+Your task is to analyze the legal document and extract ALL values that can change
+from one client to another.
 
-IMPORTANT:
-Extract ONLY personal or entity details. DO NOT extract legal clauses,
-paragraphs, or conditions.
+These values will later be replaced by user input in a document generation system.
 
-ALLOWED FIELD TYPES TO EXTRACT:
+IMPORTANT RULE:
+If a value could be different for another client, it must be extracted as a field.
 
-1. Personal details
-   - Name
-   - Age
-   - Gender
-   - Occupation
+DO NOT extract fixed legal clauses or paragraphs.
 
-2. Identification details
-   - PAN number
-   - Aadhaar number
-   - Passport number
-   - ID numbers
+--------------------------------
+FIELDS THAT MUST BE EXTRACTED
+--------------------------------
 
-3. Contact details
-   - Address
-   - Email
-   - Phone number
+1. Personal Details
+- Name
+- Age
+- Gender
+- Occupation
+- Relationship (father, mother, daughter, etc.)
 
-4. Legal role details
-   - Principal
-   - Agent
-   - Seller
-   - Buyer
-   - Tenant
-   - Landlord
-   - Witness
+2. Identification Details
+- PAN number
+- Aadhaar number
+- Passport number
+- Government ID numbers
 
-5. Date fields
-   - Execution date
-   - Agreement date
+3. Contact Details
+- Address
+- Phone number
+- Email
 
-6. Location fields
-   - City
-   - Registration office
-   - Property location (short field only)
+4. Legal Roles
+Extract fields for parties such as:
+- Principal
+- Agent / Attorney
+- Seller
+- Buyer
+- Donor
+- Donee
+- Landlord
+- Tenant
+- Partner
+- Witness
 
-FIELD NAMING RULES (VERY IMPORTANT):
-
-Use the following exact field names when they appear in the document:
-
-Principal fields
+Examples:
 principal_name
-
-Agent / Attorney
 agent_name
+seller_name
+buyer_name
+donor_name
+donee_name
 
-Witness fields
-witness1_name
-witness1_address
-witness2_name
-witness2_address
+5. Dates
+- Execution date
+- Agreement date
+- Registration date
+- Deed date
 
-If the document contains witnesses, always extract TWO witness fields using the exact names above.
+6. Location Fields
+- City
+- State
+- Property location
+- Registration office
 
-DO NOT EXTRACT:
-- Legal clauses
-- Paragraph text
-- Conditions
-- Powers granted
-- Agreement descriptions
+7. Property Details (IMPORTANT)
+If the document contains property description, extract fields such as:
 
-OUTPUT FORMAT:
+- Flat number
+- Building name
+- Floor number
+- Survey number
+- CTS number
+- Area (sq ft / sq m)
+- Terrace area
+- Parking details
+
+8. Property Boundaries
+Extract boundary placeholders if present:
+
+boundary_east
+boundary_west
+boundary_north
+boundary_south
+
+9. Legal Reference Details
+- Deed number
+- Registration number
+- Share percentage
+- Undivided share
+
+10. Monetary Values
+- Sale amount
+- Deposit amount
+- Consideration amount
+- Stamp duty
+
+--------------------------------
+FIELD NAMING RULES
+--------------------------------
+
+All field names must be:
+
+snake_case
+
+Examples:
+
+principal_name
+principal_pan
+buyer_address
+flat_number
+survey_number
+execution_date
+sale_amount
+boundary_east
+
+--------------------------------
+FIELD TYPE RULES
+--------------------------------
+
+Use only these types:
+
+"text"
+"number"
+"date"
+"email"
+
+Examples:
+Age → number
+Amount → number
+Date → date
+Name → text
+Address → text
+
+--------------------------------
+OUTPUT FORMAT
+--------------------------------
+
 Return ONLY a JSON array.
 
 Each field must contain:
 
-- "name": snake_case identifier
-- "label": readable label
-- "type": one of "text", "date", "number", "email"
-- "hint": short placeholder
-- "required": true or false
+"name"
+"label"
+"type"
+"hint"
+"required"
 
-Example output:
+Example:
 
 [
   {{
@@ -103,17 +172,10 @@ Example output:
     "required": true
   }},
   {{
-    "name": "principal_pan",
-    "label": "Principal PAN Number",
-    "type": "text",
-    "hint": "Enter PAN number",
-    "required": true
-  }},
-  {{
-    "name": "principal_address",
-    "label": "Principal Address",
-    "type": "text",
-    "hint": "Enter full address",
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "hint": "Select execution date",
     "required": true
   }}
 ]
@@ -140,28 +202,8 @@ REFERENCE DOCUMENT:
 
     except Exception as e:
         print(f"Gemini extraction error: {e}")
-        return get_default_fields(document_type)
+        return [] 
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
-
-        text = response.text.strip()
-
-        json_str = re.sub(r'^```json\s*|\s*```$', '', text, flags=re.MULTILINE)
-
-        fields = json.loads(json_str)
-
-        if not isinstance(fields, list):
-            raise ValueError("Response is not a list")
-
-        return fields
-
-    except Exception as e:
-        print(f"Gemini extraction error: {e}")
-        return get_default_fields(document_type)
 def fill_document_with_fields(reference_text, field_values, document_type):
     fields_description = "\n".join([f"- {key}: {value}" for key, value in field_values.items()])
 
@@ -204,8 +246,21 @@ REPLACEMENT RULES:
 - If a field value is not provided, leave the original text unchanged.
 - Do NOT invent missing data.
 - Do NOT add commentary or explanation.
-- **Do NOT repeat any part of the document.** Output the document only once, from beginning to end.
-- **Do NOT include any introductory or concluding remarks.** Output only the final document text.
+
+IMPORTANT SYSTEM RULES:
+
+- Do NOT populate witness sections.
+- Do NOT populate signature blocks.
+- Do NOT insert values inside tables.
+- Leave placeholders such as {{witness1_name}}, {{witness1_address}}, {{witness2_name}}, {{witness2_address}} unchanged.
+- These fields will be filled later by the document processing system.
+
+OUTPUT RULES:
+
+- Do NOT repeat any part of the document.
+- Output the document only once, from beginning to end.
+- Do NOT include any introductory or concluding remarks.
+- Output ONLY the final document text.
 
 Output ONLY the final complete document text.
 Do NOT use markdown.
@@ -231,16 +286,6 @@ FINAL DOCUMENT:
     except Exception as e:
         raise Exception(f"Gemini generation failed: {str(e)}")
 
-def get_default_fields(doc_type):
-    if doc_type == "power_of_attorney":
-        return [
-            {"name": "principal", "label": "Principal's Full Name", "type": "text", "hint": "Person granting authority", "required": True},
-            {"name": "agent", "label": "Agent's Full Name", "type": "text", "hint": "Person receiving authority", "required": True},
-            {"name": "purpose", "label": "Purpose / Scope of Authority", "type": "multiline", "hint": "Describe the powers...", "required": True},
-            {"name": "date", "label": "Date of Execution", "type": "date", "hint": "dd-mm-yyyy", "required": True},
-            {"name": "conditions", "label": "Conditions & Limitations", "type": "multiline", "hint": "Any restrictions...", "required": False}
-        ]
-    return []
 
 def replace_placeholders(doc, field_values):
 
