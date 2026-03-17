@@ -469,6 +469,202 @@
       }
     ],
     "timestamp": "2026-03-16T12:53:30.631266"
+  },
+  "be8a4ff0-25ac-45e2-96ed-48477d75b269": {
+    "original_name": "rent.pdf",
+    "filename": "be8a4ff0-25ac-45e2-96ed-48477d75b269.pdf",
+    "document_type": "rental_agreement",
+    "fields": [
+      {
+        "name": "agreement_city",
+        "label": "Agreement Execution City",
+        "type": "text",
+        "hint": "Enter the city where the agreement is executed",
+        "required": true
+      },
+      {
+        "name": "execution_date",
+        "label": "Execution Date",
+        "type": "date",
+        "hint": "Select the date of agreement execution",
+        "required": true
+      },
+      {
+        "name": "owner_name",
+        "label": "Owner Full Name",
+        "type": "text",
+        "hint": "Enter the full name of the owner (landlord)",
+        "required": true
+      },
+      {
+        "name": "owner_father_name",
+        "label": "Owner's Father/Mother Name",
+        "type": "text",
+        "hint": "Enter the father's or mother's name of the owner",
+        "required": true
+      },
+      {
+        "name": "owner_address",
+        "label": "Owner Permanent Address",
+        "type": "text",
+        "hint": "Enter the permanent address of the owner",
+        "required": true
+      },
+      {
+        "name": "tenant_name",
+        "label": "Tenant Full Name",
+        "type": "text",
+        "hint": "Enter the full name of the tenant",
+        "required": true
+      },
+      {
+        "name": "tenant_father_name",
+        "label": "Tenant's Father/Mother Name",
+        "type": "text",
+        "hint": "Enter the father's or mother's name of the tenant",
+        "required": true
+      },
+      {
+        "name": "tenant_occupation_address",
+        "label": "Tenant Office/Study Institution Address",
+        "type": "text",
+        "hint": "Enter the address of the tenant's office or studying institution",
+        "required": true
+      },
+      {
+        "name": "tenant_address",
+        "label": "Tenant Permanent Address",
+        "type": "text",
+        "hint": "Enter the complete permanent address of the tenant",
+        "required": true
+      },
+      {
+        "name": "property_address",
+        "label": "Demised Premises Complete Address",
+        "type": "text",
+        "hint": "Enter the complete address of the rented property (Demised Premises)",
+        "required": true
+      },
+      {
+        "name": "agreement_start_date",
+        "label": "Agreement Start Date",
+        "type": "date",
+        "hint": "Select the date when the rent agreement commences",
+        "required": true
+      },
+      {
+        "name": "agreement_end_date",
+        "label": "Agreement Expiry Date",
+        "type": "date",
+        "hint": "Select the date when the rent agreement expires",
+        "required": true
+      },
+      {
+        "name": "monthly_rent_amount",
+        "label": "Monthly Rent Amount",
+        "type": "number",
+        "hint": "Enter the monthly rent amount in numbers (excluding electricity and water)",
+        "required": true
+      },
+      {
+        "name": "monthly_maintenance_amount",
+        "label": "Monthly Maintenance Charge Amount",
+        "type": "number",
+        "hint": "Enter the monthly maintenance charge amount in numbers",
+        "required": true
+      },
+      {
+        "name": "security_deposit_amount",
+        "label": "Interest-Free Refundable Security Deposit Amount",
+        "type": "number",
+        "hint": "Enter the interest-free refundable security deposit amount in numbers",
+        "required": true
+      },
+      {
+        "name": "security_deposit_cheque_number",
+        "label": "Security Deposit Cheque Number",
+        "type": "text",
+        "hint": "Enter the cheque number for the security deposit",
+        "required": true
+      },
+      {
+        "name": "security_deposit_cheque_date",
+        "label": "Security Deposit Cheque Date",
+        "type": "date",
+        "hint": "Select the date of the security deposit cheque",
+        "required": true
+      },
+      {
+        "name": "jurisdiction_city",
+        "label": "Jurisdiction City for Disputes",
+        "type": "text",
+        "hint": "Enter the city whose civil courts have jurisdiction over disputes",
+        "required": true
+      },
+      {
+        "name": "property_bedrooms",
+        "label": "Number of Bedrooms in Property",
+        "type": "number",
+        "hint": "Enter the number of bedrooms in the rented property",
+        "required": true
+      },
+      {
+        "name": "property_fans",
+        "label": "Number of Fans in Property",
+        "type": "number",
+        "hint": "Enter the number of fans provided in the property",
+        "required": true
+      },
+      {
+        "name": "property_cfl_lights",
+        "label": "Number of CFL Lights in Property",
+        "type": "number",
+        "hint": "Enter the number of CFL lights provided in the property",
+        "required": true
+      },
+      {
+        "name": "property_geysers",
+        "label": "Number of Geysers in Property",
+        "type": "number",
+        "hint": "Enter the number of geysers provided in the property",
+        "required": true
+      },
+      {
+        "name": "property_mirrors",
+        "label": "Number of Mirrors in Property",
+        "type": "number",
+        "hint": "Enter the number of mirrors provided in the property",
+        "required": true
+      },
+      {
+        "name": "witness_1_name",
+        "label": "Witness 1 Full Name",
+        "type": "text",
+        "hint": "Enter the full name of the first witness",
+        "required": true
+      },
+      {
+        "name": "witness_1_address",
+        "label": "Witness 1 Address",
+        "type": "text",
+        "hint": "Enter the address of the first witness",
+        "required": true
+      },
+      {
+        "name": "witness_2_name",
+        "label": "Witness 2 Full Name",
+        "type": "text",
+        "hint": "Enter the full name of the second witness",
+        "required": true
+      },
+      {
+        "name": "witness_2_address",
+        "label": "Witness 2 Address",
+        "type": "text",
+        "hint": "Enter the address of the second witness",
+        "required": true
+      }
+    ],
+    "timestamp": "2026-03-17T12:14:11.489270"
   }
-  
 }

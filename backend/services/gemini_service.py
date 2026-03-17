@@ -247,14 +247,6 @@ REPLACEMENT RULES:
 - Do NOT invent missing data.
 - Do NOT add commentary or explanation.
 
-IMPORTANT SYSTEM RULES:
-
-- Do NOT populate witness sections.
-- Do NOT populate signature blocks.
-- Do NOT insert values inside tables.
-- Leave placeholders such as {{witness1_name}}, {{witness1_address}}, {{witness2_name}}, {{witness2_address}} unchanged.
-- These fields will be filled later by the document processing system.
-
 OUTPUT RULES:
 
 - Do NOT repeat any part of the document.

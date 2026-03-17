@@ -261,8 +261,8 @@ def generate_document():
     
     # Fallback to default template if specific one missing or not defined
     if template_path is None:
-        default_template = "default_template.docx"
-        default_path = os.path.join(TEMPLATES_FOLDER, default_template)
+        blank_template = "blank_template.docx"
+        default_path = os.path.join(TEMPLATES_FOLDER, blank_template)
         if os.path.exists(default_path):
             template_path = default_path
         else:
