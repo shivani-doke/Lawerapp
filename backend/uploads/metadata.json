@@ -1,222 +1,4 @@
 {
-  "b427bc76-d0ec-4e74-8546-bb5dba8b9bcc": {
-    "original_name": "Bodekar POWER OF ATTORNEY.docx",
-    "filename": "b427bc76-d0ec-4e74-8546-bb5dba8b9bcc.docx",
-    "document_type": "power_of_attorney",
-    "fields": [
-      {
-        "name": "principal_name",
-        "label": "Principal Full Name",
-        "type": "text",
-        "hint": "Enter principal full name",
-        "required": true
-      },
-      {
-        "name": "principal_age",
-        "label": "Principal Age",
-        "type": "number",
-        "hint": "Enter principal age in years",
-        "required": true
-      },
-      {
-        "name": "principal_occupation",
-        "label": "Principal Occupation",
-        "type": "text",
-        "hint": "Enter principal occupation",
-        "required": true
-      },
-      {
-        "name": "principal_pan",
-        "label": "Principal PAN Number",
-        "type": "text",
-        "hint": "Enter principal PAN number",
-        "required": true
-      },
-      {
-        "name": "principal_aadhar",
-        "label": "Principal Aadhaar Number",
-        "type": "text",
-        "hint": "Enter principal Aadhaar number",
-        "required": true
-      },
-      {
-        "name": "principal_address",
-        "label": "Principal Address",
-        "type": "text",
-        "hint": "Enter principal full address",
-        "required": true
-      },
-      {
-        "name": "principal_reason",
-        "label": "Reason for Power of Attorney",
-        "type": "text",
-        "hint": "Enter reason for granting power of attorney",
-        "required": false
-      },
-      {
-        "name": "agent_name",
-        "label": "Agent Full Name",
-        "type": "text",
-        "hint": "Enter agent full name",
-        "required": true
-      },
-      {
-        "name": "agent_age",
-        "label": "Agent Age",
-        "type": "number",
-        "hint": "Enter agent age in years",
-        "required": true
-      },
-      {
-        "name": "agent_occupation",
-        "label": "Agent Occupation",
-        "type": "text",
-        "hint": "Enter agent occupation",
-        "required": true
-      },
-      {
-        "name": "agent_pan",
-        "label": "Agent PAN Number",
-        "type": "text",
-        "hint": "Enter agent PAN number",
-        "required": true
-      },
-      {
-        "name": "agent_aadhar",
-        "label": "Agent Aadhaar Number",
-        "type": "text",
-        "hint": "Enter agent Aadhaar number",
-        "required": true
-      },
-      {
-        "name": "agent_address",
-        "label": "Agent Address",
-        "type": "text",
-        "hint": "Enter agent full address",
-        "required": true
-      },
-      {
-        "name": "flat_number",
-        "label": "Flat Number",
-        "type": "text",
-        "hint": "Enter flat number",
-        "required": true
-      },
-      {
-        "name": "building_name",
-        "label": "Building Name",
-        "type": "text",
-        "hint": "Enter building name",
-        "required": true
-      },
-      {
-        "name": "floor",
-        "label": "Floor",
-        "type": "text",
-        "hint": "Enter floor number",
-        "required": true
-      },
-      {
-        "name": "builtup_area_sqft",
-        "label": "Built-up Area (sq ft)",
-        "type": "number",
-        "hint": "Enter built-up area in square feet",
-        "required": true
-      },
-      {
-        "name": "garden_area_sqft",
-        "label": "Garden Area (sq ft)",
-        "type": "number",
-        "hint": "Enter garden area in square feet",
-        "required": false
-      },
-      {
-        "name": "survey_number",
-        "label": "Survey Number",
-        "type": "text",
-        "hint": "Enter survey number",
-        "required": true
-      },
-      {
-        "name": "hissa_number",
-        "label": "Hissa Number",
-        "type": "text",
-        "hint": "Enter hissa number",
-        "required": true
-      },
-      {
-        "name": "boundary_east",
-        "label": "Boundary East",
-        "type": "text",
-        "hint": "Enter east boundary description",
-        "required": true
-      },
-      {
-        "name": "boundary_south",
-        "label": "Boundary South",
-        "type": "text",
-        "hint": "Enter south boundary description",
-        "required": true
-      },
-      {
-        "name": "boundary_west",
-        "label": "Boundary West",
-        "type": "text",
-        "hint": "Enter west boundary description",
-        "required": true
-      },
-      {
-        "name": "boundary_north",
-        "label": "Boundary North",
-        "type": "text",
-        "hint": "Enter north boundary description",
-        "required": true
-      },
-      {
-        "name": "city",
-        "label": "Signing City",
-        "type": "text",
-        "hint": "Enter city where document is signed",
-        "required": true
-      },
-      {
-        "name": "execution_date",
-        "label": "Execution Date",
-        "type": "date",
-        "hint": "Select the date of execution",
-        "required": true
-      },
-      {
-        "name": "witness1_name",
-        "label": "Witness 1 Name",
-        "type": "text",
-        "hint": "Enter Witness 1 full name",
-        "required": true
-      },
-      {
-        "name": "witness1_address",
-        "label": "Witness 1 Address",
-        "type": "text",
-        "hint": "Enter Witness 1 full address",
-        "required": true
-      },
-      {
-        "name": "witness2_name",
-        "label": "Witness 2 Name",
-        "type": "text",
-        "hint": "Enter Witness 2 full name",
-        "required": true
-      },
-      {
-        "name": "witness2_address",
-        "label": "Witness 2 Address",
-        "type": "text",
-        "hint": "Enter Witness 2 full address",
-        "required": true
-      }
-    ],
-    "timestamp": "2026-03-16T11:35:20.355433"
-  },
   "279c0895-2d28-4537-a155-9ff36f99e520": {
     "original_name": "Gift Deed Tamane.docx",
     "filename": "279c0895-2d28-4537-a155-9ff36f99e520.docx",
@@ -666,5 +448,272 @@
       }
     ],
     "timestamp": "2026-03-17T12:14:11.489270"
+  },
+  "aa4b5e6d-7ee1-4dee-9af4-f3ebea08c69e": {
+    "original_name": "Bodekar POWER OF ATTORNEY.docx",
+    "filename": "aa4b5e6d-7ee1-4dee-9af4-f3ebea08c69e.docx",
+    "document_type": "power_of_attorney",
+    "fields": [
+      {
+        "name": "principal_name",
+        "label": "Principal Full Name",
+        "type": "text",
+        "hint": "Enter the full name of the Principal (donor of power)",
+        "required": true
+      },
+      {
+        "name": "principal_age",
+        "label": "Principal Age",
+        "type": "number",
+        "hint": "Enter the age of the Principal",
+        "required": true
+      },
+      {
+        "name": "principal_occupation",
+        "label": "Principal Occupation",
+        "type": "text",
+        "hint": "Enter the occupation of the Principal",
+        "required": true
+      },
+      {
+        "name": "principal_pan",
+        "label": "Principal PAN Number",
+        "type": "text",
+        "hint": "Enter the PAN number of the Principal",
+        "required": true
+      },
+      {
+        "name": "principal_aadhaar",
+        "label": "Principal Aadhaar Number",
+        "type": "text",
+        "hint": "Enter the Aadhaar number of the Principal",
+        "required": true
+      },
+      {
+        "name": "principal_address",
+        "label": "Principal Address",
+        "type": "text",
+        "hint": "Enter the full residential address of the Principal",
+        "required": true
+      },
+      {
+        "name": "principal_city",
+        "label": "Principal City",
+        "type": "text",
+        "hint": "Enter the city of the Principal's address",
+        "required": true
+      },
+      {
+        "name": "principal_pincode",
+        "label": "Principal Pincode",
+        "type": "text",
+        "hint": "Enter the pincode of the Principal's address",
+        "required": true
+      },
+      {
+        "name": "agent_name",
+        "label": "Agent Full Name",
+        "type": "text",
+        "hint": "Enter the full name of the Agent/Attorney",
+        "required": true
+      },
+      {
+        "name": "agent_age",
+        "label": "Agent Age",
+        "type": "number",
+        "hint": "Enter the age of the Agent/Attorney",
+        "required": true
+      },
+      {
+        "name": "agent_occupation",
+        "label": "Agent Occupation",
+        "type": "text",
+        "hint": "Enter the occupation of the Agent/Attorney",
+        "required": true
+      },
+      {
+        "name": "agent_pan",
+        "label": "Agent PAN Number",
+        "type": "text",
+        "hint": "Enter the PAN number of the Agent/Attorney",
+        "required": true
+      },
+      {
+        "name": "agent_aadhaar",
+        "label": "Agent Aadhaar Number",
+        "type": "text",
+        "hint": "Enter the Aadhaar number of the Agent/Attorney",
+        "required": true
+      },
+      {
+        "name": "agent_address",
+        "label": "Agent Address",
+        "type": "text",
+        "hint": "Enter the full residential address of the Agent/Attorney",
+        "required": true
+      },
+      {
+        "name": "agent_city",
+        "label": "Agent City",
+        "type": "text",
+        "hint": "Enter the city of the Agent's address",
+        "required": true
+      },
+      {
+        "name": "agent_pincode",
+        "label": "Agent Pincode",
+        "type": "text",
+        "hint": "Enter the pincode of the Agent's address",
+        "required": true
+      },
+      {
+        "name": "agent_relationship",
+        "label": "Agent Relationship to Principal",
+        "type": "text",
+        "hint": "Enter the relationship of the Agent to the Principal (e.g., daughter, son, spouse)",
+        "required": true
+      },
+      {
+        "name": "flat_number",
+        "label": "Property Flat Number",
+        "type": "text",
+        "hint": "Enter the flat number of the property",
+        "required": true
+      },
+      {
+        "name": "building_name",
+        "label": "Property Building Name/Number",
+        "type": "text",
+        "hint": "Enter the building name or number of the property",
+        "required": true
+      },
+      {
+        "name": "floor_number",
+        "label": "Property Floor Number",
+        "type": "text",
+        "hint": "Enter the floor number where the flat is located (e.g., ground floor, 1st floor)",
+        "required": true
+      },
+      {
+        "name": "built_up_area_sqft",
+        "label": "Property Built-up Area (sq. ft.)",
+        "type": "number",
+        "hint": "Enter the built-up area of the flat in square feet",
+        "required": true
+      },
+      {
+        "name": "built_up_area_sqm",
+        "label": "Property Built-up Area (sq. m.)",
+        "type": "number",
+        "hint": "Enter the built-up area of the flat in square meters",
+        "required": true
+      },
+      {
+        "name": "garden_area_sqft",
+        "label": "Property Garden Area (sq. ft.)",
+        "type": "number",
+        "hint": "Enter the garden area of the property in square feet",
+        "required": true
+      },
+      {
+        "name": "garden_area_sqm",
+        "label": "Property Garden Area (sq. m.)",
+        "type": "number",
+        "hint": "Enter the garden area of the property in square meters",
+        "required": true
+      },
+      {
+        "name": "parking_details",
+        "label": "Property Parking Details",
+        "type": "text",
+        "hint": "Describe the parking space allocated (e.g., for a car and a scooter, 1 covered parking)",
+        "required": true
+      },
+      {
+        "name": "survey_number",
+        "label": "Property Survey Number",
+        "type": "text",
+        "hint": "Enter the survey number of the land on which the building is constructed",
+        "required": true
+      },
+      {
+        "name": "hissa_number",
+        "label": "Property Hissa Number",
+        "type": "text",
+        "hint": "Enter the Hissa number of the land",
+        "required": true
+      },
+      {
+        "name": "boundary_east",
+        "label": "Property Boundary (East)",
+        "type": "text",
+        "hint": "Describe the boundary on the East side of the property",
+        "required": true
+      },
+      {
+        "name": "boundary_south",
+        "label": "Property Boundary (South)",
+        "type": "text",
+        "hint": "Describe the boundary on the South side of the property",
+        "required": true
+      },
+      {
+        "name": "boundary_west",
+        "label": "Property Boundary (West)",
+        "type": "text",
+        "hint": "Describe the boundary on the West side of the property",
+        "required": true
+      },
+      {
+        "name": "boundary_north",
+        "label": "Property Boundary (North)",
+        "type": "text",
+        "hint": "Describe the boundary on the North side of the property",
+        "required": true
+      },
+      {
+        "name": "execution_city",
+        "label": "Execution City",
+        "type": "text",
+        "hint": "Enter the city where this Power of Attorney is signed",
+        "required": true
+      },
+      {
+        "name": "execution_date",
+        "label": "Execution Date",
+        "type": "date",
+        "hint": "Select the date on which this Power of Attorney is signed",
+        "required": true
+      },
+      {
+        "name": "witness1_name",
+        "label": "Witness 1 Full Name",
+        "type": "text",
+        "hint": "Enter the full name of the first witness",
+        "required": true
+      },
+      {
+        "name": "witness1_address",
+        "label": "Witness 1 Address",
+        "type": "text",
+        "hint": "Enter the address of the first witness",
+        "required": true
+      },
+      {
+        "name": "witness2_name",
+        "label": "Witness 2 Full Name",
+        "type": "text",
+        "hint": "Enter the full name of the second witness",
+        "required": true
+      },
+      {
+        "name": "witness2_address",
+        "label": "Witness 2 Address",
+        "type": "text",
+        "hint": "Enter the address of the second witness",
+        "required": true
+      }
+    ],
+    "timestamp": "2026-03-18T12:23:34.452496"
   }
 }

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'LegalAiPage.dart';
 import 'SaleDeedPage.dart';
 import 'RentalAgreementPage.dart';
-import 'PowerOfAttorneyPage.dart';
+import 'package:chatbot/PowerOfAttorneyPage.dart';
 import 'PartnershipDeedPage.dart';
 import 'AffidavitPage.dart';
 import 'WillTestamentPage.dart';

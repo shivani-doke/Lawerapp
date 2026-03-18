@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
-import 'package:universal_io/io.dart';
 import '../services/api_service.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
+// Simple model for a dynamic document field
 class DocumentField {
   final String name;
   final String label;
@@ -43,21 +41,30 @@ class WillTestamentPage extends StatefulWidget {
 class _WillTestamentPageState extends State<WillTestamentPage> {
   static const Color accentColor = Color(0xffE0A800);
 
+  // Dynamic fields (from extraction)
   List<DocumentField> _fields = [];
   final Map<String, TextEditingController> _fieldControllers = {};
 
+  // Reference document
   PlatformFile? _referenceFile;
+
+  // Saved references management
   List<Map<String, dynamic>> _savedReferences = [];
   String? _selectedReferenceId;
   bool _isLoadingReferences = false;
   bool _isUploading = false;
 
+  // UI state
   bool _isGenerating = false;
   bool _isExtracting = false;
 
+  // Generated document info
   String? _generatedDocx;
   String? _generatedPdf;
   bool _pdfLoadFailed = false;
+
+  // Format toggle
+  bool _useTableFormat = true;
 
   @override
   void initState() {
@@ -111,19 +118,12 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
     }
   }
 
-  Future<void> _selectSavedReference(String? id) async {
-    if (id == null) {
-      setState(() {
-        _selectedReferenceId = null;
-        _referenceFile = null;
-        _resetFields();
-      });
-      return;
-    }
+  Future<void> _selectSavedReference(String id) async {
     setState(() {
       _selectedReferenceId = id;
       _isExtracting = true;
       _referenceFile = null;
+      _pdfLoadFailed = false;
     });
     try {
       final fieldsJson = await ApiService().getReferenceFields(id);
@@ -140,6 +140,13 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
         SnackBar(content: Text('Failed to load fields: $e')),
       );
     }
+  }
+
+  void _previewReference() {
+    if (_selectedReferenceId == null) return;
+    final previewUrl =
+        '${ApiService.baseUrl}/references/$_selectedReferenceId/view';
+    html.window.open(previewUrl, '_blank');
   }
 
   Future<void> _pickFile() async {
@@ -177,13 +184,16 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
         );
         final newId = uploadResult['document_id'];
 
-        await _loadSavedReferences();
-        await _selectSavedReference(newId);
-
         setState(() {
+          _fields = fields;
+          _selectedReferenceId = newId;
+          _referenceFile = null;
           _isExtracting = false;
           _isUploading = false;
         });
+
+        _rebuildControllers();
+        _loadSavedReferences();
       } catch (e) {
         setState(() {
           _isExtracting = false;
@@ -248,6 +258,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
         fields: fields,
         referenceFile: _selectedReferenceId == null ? _referenceFile : null,
         referenceId: _selectedReferenceId,
+        format: _useTableFormat ? 'table' : 'blank',
       );
 
       setState(() {
@@ -300,7 +311,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "WILL & TESTAMENT",
+                      "WILL",
                       style: TextStyle(
                         color: accentColor,
                         fontWeight: FontWeight.w600,
@@ -319,43 +330,121 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
                     if (_isLoadingReferences)
                       const Center(child: CircularProgressIndicator())
                     else if (_savedReferences.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedReferenceId,
-                          hint: const Text('Select a saved document'),
-                          items: [
-                            const DropdownMenuItem(
-                              value: null,
-                              child: Text('Upload new...'),
-                            ),
-                            ..._savedReferences.map((ref) {
-                              return DropdownMenuItem(
-                                value: ref['id'],
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DropdownButtonFormField<String>(
+                            value: _selectedReferenceId,
+                            hint: const Text('Select an existing document'),
+                            items: _savedReferences
+                                .map<DropdownMenuItem<String>>((ref) {
+                              return DropdownMenuItem<String>(
+                                value: ref['id'] as String,
                                 child: Text(
                                     '${ref['original_name']} (${ref['document_type']})'),
                               );
-                            }),
-                          ],
-                          onChanged: _selectSavedReference,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: const Color(0xfff9fafb),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                            }).toList(),
+                            onChanged: (value) {
+                              if (value != null) _selectSavedReference(value);
+                            },
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color(0xfff9fafb),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
+                          if (_selectedReferenceId != null) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: _previewReference,
+                              icon: const Icon(Icons.visibility),
+                              label: const Text('Preview Document'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: accentColor,
+                                minimumSize: const Size(double.infinity, 48),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    if (_selectedReferenceId != null)
+                      const SizedBox(height: 16),
+                    if (_selectedReferenceId == null) ...[
+                      if (_savedReferences.isNotEmpty)
+                        const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _pickFile,
+                                icon: const Icon(Icons.attach_file),
+                                label: Text(
+                                  _referenceFile != null
+                                      ? 'File: ${_referenceFile!.name}'
+                                      : 'Upload New Reference Document',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  side: BorderSide(
+                                      color: accentColor, width: 1.5),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  foregroundColor: accentColor,
+                                ),
+                              ),
+                            ),
+                            if (_referenceFile != null)
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: _clearFile,
+                              ),
+                          ],
                         ),
                       ),
+                    ],
                     if (_isExtracting || _isUploading)
                       const Center(
                           child: Padding(
                         padding: EdgeInsets.all(20),
                         child: CircularProgressIndicator(),
                       ))
-                    else if (_fields.isNotEmpty)
-                      ..._fields.map((field) => _buildField(field))
-                    else
+                    else if (_fields.isNotEmpty) ...[
+                      ..._fields.map((field) => _buildField(field)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Row(
+                          children: [
+                            const Text('Document Format:'),
+                            const SizedBox(width: 16),
+                            ChoiceChip(
+                              label: const Text('Table Format'),
+                              selected: _useTableFormat,
+                              onSelected: (selected) =>
+                                  setState(() => _useTableFormat = selected),
+                            ),
+                            const SizedBox(width: 8),
+                            ChoiceChip(
+                              label: const Text('Blank Template'),
+                              selected: !_useTableFormat,
+                              onSelected: (selected) =>
+                                  setState(() => _useTableFormat = !selected),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 20),
                         child: Center(
@@ -367,36 +456,6 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
                         ),
                       ),
                     const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _pickFile,
-                            icon: const Icon(Icons.attach_file),
-                            label: Text(
-                              _referenceFile != null
-                                  ? 'File: ${_referenceFile!.name}'
-                                  : 'Upload New Reference Document',
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              side: BorderSide(color: accentColor, width: 1.5),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              foregroundColor: accentColor,
-                            ),
-                          ),
-                        ),
-                        if (_referenceFile != null)
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: _clearFile,
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 15),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -510,14 +569,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
                     canShowScrollStatus: true,
                     onDocumentLoadFailed:
                         (PdfDocumentLoadFailedDetails details) {
-                      setState(() {
-                        _pdfLoadFailed = true;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('Open to load PDF: ${details.error}')),
-                      );
+                      setState(() => _pdfLoadFailed = true);
                     },
                   ),
           ),
@@ -531,21 +583,15 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.picture_as_pdf,
-            size: 80,
-            color: Colors.grey,
-          ),
+          const Icon(Icons.picture_as_pdf, size: 80, color: Colors.grey),
           const SizedBox(height: 16),
           const Text(
-            "Click to View PDF.",
+            "Preview failed. Click to open in browser.",
             style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
           const SizedBox(height: 8),
           ElevatedButton.icon(
-            onPressed: () {
-              html.window.open(url, '_blank');
-            },
+            onPressed: () => html.window.open(url, '_blank'),
             icon: const Icon(Icons.open_in_browser),
             label: const Text("Open"),
             style: ElevatedButton.styleFrom(
@@ -646,10 +692,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
           SizedBox(height: 20),
           Text(
             "Ready to Generate",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
           Text(
