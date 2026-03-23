@@ -1,11 +1,11 @@
-import 'package:chatbot/Clientside.dart';
-import 'package:chatbot/DashboardPage.dart';
-import 'package:chatbot/DocumentPage.dart';
+import 'package:LegalAI/Clientside.dart';
+import 'package:LegalAI/DashboardPage.dart';
+import 'package:LegalAI/DocumentPage.dart';
 import 'package:flutter/material.dart';
 import 'LegalAiPage.dart';
 import 'SaleDeedPage.dart';
 import 'RentalAgreementPage.dart';
-import 'package:chatbot/PowerOfAttorneyPage.dart';
+import 'PowerOfAttorneyPage.dart';
 import 'PartnershipDeedPage.dart';
 import 'AffidavitPage.dart';
 import 'WillTestamentPage.dart';

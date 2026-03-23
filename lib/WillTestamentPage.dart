@@ -586,7 +586,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
           const Icon(Icons.picture_as_pdf, size: 80, color: Colors.grey),
           const SizedBox(height: 16),
           const Text(
-            "Preview failed. Click to open in browser.",
+            "Click to open in browser.",
             style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
           const SizedBox(height: 8),

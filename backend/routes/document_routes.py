@@ -1,3 +1,5 @@
+# backend/routes/document_routes.py
+
 import os
 import json
 import tempfile
@@ -11,7 +13,7 @@ from docx.shared import Pt
 import PyPDF2
 
 from services.gemini_service import extract_fields_from_document, fill_document_with_fields, replace_placeholders
-from services.document_service import GENERATED_FOLDER, convert_docx_to_pdf
+from services.document_service import GENERATED_FOLDER, PREVIEW_FOLDER, convert_docx_to_pdf
 
 # Folder where template DOCX files are stored
 TEMPLATES_FOLDER = "templates"
@@ -193,9 +195,14 @@ def view_reference(doc_id):
     # ✅ If DOCX → convert to PDF for preview
     if ext == ".docx":
         try:
-            pdf_path = convert_docx_to_pdf(filepath)
+            pdf_filename = filename.replace(".docx", ".pdf")
+            pdf_path = os.path.join(PREVIEW_FOLDER, pdf_filename)
+
+            # ✅ CACHE: don't reconvert if already exists
+            if not os.path.exists(pdf_path):
+                pdf_path = convert_docx_to_pdf(filepath, PREVIEW_FOLDER)
             return send_from_directory(
-                os.path.dirname(pdf_path),
+                PREVIEW_FOLDER,
                 os.path.basename(pdf_path),
                 mimetype="application/pdf",
                 as_attachment=False
@@ -339,11 +346,21 @@ def generate_document():
     except Exception as e:
         return jsonify({"error": f"Document generation failed: {str(e)}"}), 500
 
-    # Create output filename and path
-    client_name = fields.get("principal", fields.get("client_name", "Client"))
-    output_filename = f"{client_name}_{document_type}_generated.docx"
-    output_path = os.path.join(GENERATED_FOLDER, output_filename)
 
+    # Create unique output filename with timestamp + incremental counter
+    # ----------------------------
+    client_name = fields.get("principal", fields.get("client_name", "Client"))
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base_filename = f"{client_name}_{document_type}_{timestamp}_generated"
+
+    # Incremental counter to avoid duplicates
+    counter = 1
+    output_filename = f"{base_filename}.docx"
+    while os.path.exists(os.path.join(GENERATED_FOLDER, output_filename)):
+        counter += 1
+        output_filename = f"{base_filename}_{counter}.docx"
+
+    output_path = os.path.join(GENERATED_FOLDER, output_filename)
     try:
         # Load the server‑side template (preserves tables, formatting)
         doc = DocxDocument(template_path)
@@ -377,7 +394,7 @@ def generate_document():
 
 
         doc.save(output_path)
-        pdf_path = convert_docx_to_pdf(output_path)
+        pdf_path = convert_docx_to_pdf(output_path, GENERATED_FOLDER)
         pdf_filename = os.path.basename(pdf_path)
     except Exception as e:
         return jsonify({"error": f"Failed to create DOCX: {str(e)}"}), 500

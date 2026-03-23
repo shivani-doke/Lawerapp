@@ -1,3 +1,5 @@
+# backend/routes/client_routes.py
+
 from flask import Blueprint, request, jsonify
 from database import db
 from models.client_model import Client

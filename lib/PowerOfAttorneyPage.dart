@@ -638,7 +638,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            "Preview failed. Click to open in browser.",
+            "Click to open in browser.",
             style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
           const SizedBox(height: 8),

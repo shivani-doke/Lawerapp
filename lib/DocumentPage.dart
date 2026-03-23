@@ -15,6 +15,7 @@ class DocumentsPage extends StatefulWidget {
 
 class _DocumentsPageState extends State<DocumentsPage> {
   String selectedCategory = "All";
+  String searchQuery = ""; // ✅ New state for search
 
   final List<String> categories = [
     "All",
@@ -80,11 +81,19 @@ class _DocumentsPageState extends State<DocumentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredDocs = selectedCategory == "All"
-        ? documents
-        : documents
-            .where((doc) => doc["category"] == selectedCategory)
-            .toList();
+    // 🔍 Filter documents by category AND search query
+    final filteredDocs = documents.where((doc) {
+      // Category filter
+      final matchesCategory =
+          selectedCategory == "All" || doc["category"] == selectedCategory;
+
+      // Search filter (case‑insensitive, checks title and description)
+      final matchesSearch = searchQuery.isEmpty ||
+          doc["title"]!.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          doc["description"]!.toLowerCase().contains(searchQuery.toLowerCase());
+
+      return matchesCategory && matchesSearch;
+    }).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xffF8F9FB),
@@ -117,19 +126,19 @@ class _DocumentsPageState extends State<DocumentsPage> {
                     ),
                   ],
                 ),
-                ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text("New Document"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xffE0A800),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                )
+                // ElevatedButton.icon(
+                //   onPressed: () {},
+                //   icon: const Icon(Icons.add, size: 18),
+                //   label: const Text("New Document"),
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: const Color(0xffE0A800),
+                //     padding: const EdgeInsets.symmetric(
+                //         horizontal: 20, vertical: 14),
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(10),
+                //     ),
+                //   ),
+                // )
               ],
             ),
 
@@ -137,9 +146,24 @@ class _DocumentsPageState extends State<DocumentsPage> {
 
             /// Search Bar
             TextField(
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value; // ✅ Update search state
+                });
+              },
               decoration: InputDecoration(
                 hintText: "Search templates...",
                 prefixIcon: const Icon(Icons.search),
+                suffixIcon: searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            searchQuery = "";
+                          });
+                        },
+                      )
+                    : null,
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(vertical: 16),
@@ -181,19 +205,50 @@ class _DocumentsPageState extends State<DocumentsPage> {
 
             /// Grid Documents
             Expanded(
-              child: GridView.builder(
-                itemCount: filteredDocs.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4, // Change to 3 if smaller screen
-                  crossAxisSpacing: 20,
-                  mainAxisSpacing: 20,
-                  childAspectRatio: 1.3,
-                ),
-                itemBuilder: (context, index) {
-                  final doc = filteredDocs[index];
-                  return documentCard(doc);
-                },
-              ),
+              child: filteredDocs.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 80,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "No documents found",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Try a different search term or category",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : GridView.builder(
+                      itemCount: filteredDocs.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4, // Change to 3 if smaller screen
+                        crossAxisSpacing: 20,
+                        mainAxisSpacing: 20,
+                        childAspectRatio: 1.3,
+                      ),
+                      itemBuilder: (context, index) {
+                        final doc = filteredDocs[index];
+                        return documentCard(doc);
+                      },
+                    ),
             ),
           ],
         ),
