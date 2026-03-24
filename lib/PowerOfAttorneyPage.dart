@@ -6,6 +6,8 @@ import 'package:universal_io/io.dart';
 import '../services/api_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'web_preview_iframe_stub.dart'
+    if (dart.library.html) 'web_preview_iframe_web.dart' as web_preview;
 
 // Simple model for a dynamic document field
 class DocumentField {
@@ -64,6 +66,8 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
   // Generated document info
   String? _generatedDocx;
   String? _generatedPdf;
+  String? _generatedPdfViewType;
+  String? _generatedPdfViewUrl;
 
   // Track PDF load failure for fallback button
   bool _pdfLoadFailed = false;
@@ -151,12 +155,26 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
     }
   }
 
-  // Preview the selected reference document in a new browser tab
+  // Preview the selected reference document in a small in-app popup
   void _previewReference() {
     if (_selectedReferenceId == null) return;
     final previewUrl =
         '${ApiService.baseUrl}/references/$_selectedReferenceId/view';
-    html.window.open(previewUrl, '_blank');
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 80, vertical: 60),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: SizedBox(
+          width: 820,
+          height: 600,
+          child: _ReferencePreviewDialog(
+            previewUrl: previewUrl,
+            accentColor: accentColor,
+          ),
+        ),
+      ),
+    );
   }
 
   // Pick a new reference file, upload it, and save it on the server
@@ -173,6 +191,8 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
         _isExtracting = true;
         _generatedDocx = null;
         _generatedPdf = null;
+        _generatedPdfViewType = null;
+        _generatedPdfViewUrl = null;
         _pdfLoadFailed = false;
         _selectedReferenceId = null; // Deselect any saved reference
         _resetFields();
@@ -232,6 +252,8 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
       _resetFields();
       _generatedDocx = null;
       _generatedPdf = null;
+      _generatedPdfViewType = null;
+      _generatedPdfViewUrl = null;
       _pdfLoadFailed = false;
     });
   }
@@ -281,9 +303,28 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
         format: _useTableFormat ? 'table' : 'blank',
       );
 
+      final generatedPdf = response['pdf_file'] as String?;
+      final generatedPdfViewUrl = generatedPdf == null
+          ? null
+          : "${ApiService.baseUrl}/view/$generatedPdf?t=${DateTime.now().millisecondsSinceEpoch}";
+      final generatedPdfViewType = generatedPdf == null
+          ? null
+          : 'generated-preview-${DateTime.now().microsecondsSinceEpoch}';
+
+      if (kIsWeb &&
+          generatedPdfViewUrl != null &&
+          generatedPdfViewType != null) {
+        web_preview.registerPreviewIframe(
+          generatedPdfViewType,
+          generatedPdfViewUrl,
+        );
+      }
+
       setState(() {
         _generatedDocx = response['docx_file'];
-        _generatedPdf = response['pdf_file'];
+        _generatedPdf = generatedPdf;
+        _generatedPdfViewType = generatedPdfViewType;
+        _generatedPdfViewUrl = generatedPdfViewUrl;
         _isGenerating = false;
       });
     } catch (e) {
@@ -564,7 +605,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
 
   // PDF Viewer
   Widget _buildPdfViewer() {
-    final pdfViewUrl =
+    final pdfViewUrl = _generatedPdfViewUrl ??
         "${ApiService.baseUrl}/view/${_generatedPdf}?t=${DateTime.now().millisecondsSinceEpoch}";
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,6 +619,13 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
             ),
             Row(
               children: [
+                IconButton(
+                  tooltip: "Maximize Preview",
+                  icon: const Icon(Icons.open_in_full),
+                  onPressed: () {
+                    _openGeneratedPreviewDialog(pdfViewUrl);
+                  },
+                ),
                 IconButton(
                   tooltip: "Download PDF",
                   icon: const Icon(Icons.picture_as_pdf),
@@ -605,23 +653,54 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: _pdfLoadFailed
-                ? _buildFallbackButton(pdfViewUrl)
-                : SfPdfViewer.network(
-                    pdfViewUrl,
-                    canShowScrollHead: true,
-                    canShowScrollStatus: true,
-                    onDocumentLoadFailed:
-                        (PdfDocumentLoadFailedDetails details) {
-                      // Silently switch to fallback UI – no error message shown
-                      setState(() {
-                        _pdfLoadFailed = true;
-                      });
-                    },
-                  ),
+            child: _buildGeneratedPreviewContent(pdfViewUrl),
           ),
         ),
       ],
+    );
+  }
+
+  void _openGeneratedPreviewDialog(String pdfViewUrl) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: SizedBox(
+          width: MediaQuery.of(dialogContext).size.width * 0.9,
+          height: MediaQuery.of(dialogContext).size.height * 0.9,
+          child: _GeneratedPreviewDialog(
+            previewUrl: pdfViewUrl,
+            accentColor: accentColor,
+            generatedPdf: _generatedPdf,
+            generatedDocx: _generatedDocx,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGeneratedPreviewContent(String pdfViewUrl) {
+    if (_pdfLoadFailed) {
+      return _buildFallbackButton(pdfViewUrl);
+    }
+
+    if (kIsWeb && _generatedPdfViewType != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: web_preview.buildPreviewIframe(_generatedPdfViewType!),
+      );
+    }
+
+    return SfPdfViewer.network(
+      pdfViewUrl,
+      canShowScrollHead: true,
+      canShowScrollStatus: true,
+      onDocumentLoadFailed: (PdfDocumentLoadFailedDetails details) {
+        setState(() {
+          _pdfLoadFailed = true;
+        });
+      },
     );
   }
 
@@ -758,6 +837,272 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
             "Fill in the details on the left, then click\n\"Generate Document\" to create your Power of Attorney.",
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReferencePreviewDialog extends StatefulWidget {
+  final String previewUrl;
+  final Color accentColor;
+
+  const _ReferencePreviewDialog({
+    required this.previewUrl,
+    required this.accentColor,
+  });
+
+  @override
+  State<_ReferencePreviewDialog> createState() => _ReferencePreviewDialogState();
+}
+
+class _ReferencePreviewDialogState extends State<_ReferencePreviewDialog> {
+  bool _loadFailed = false;
+  late final String _previewUrlWithTimestamp;
+  late final String _iframeViewType;
+
+  @override
+  void initState() {
+    super.initState();
+    _previewUrlWithTimestamp =
+        '${widget.previewUrl}?t=${DateTime.now().millisecondsSinceEpoch}';
+    _iframeViewType =
+        'reference-preview-${DateTime.now().microsecondsSinceEpoch}';
+
+    if (kIsWeb) {
+      web_preview.registerPreviewIframe(_iframeViewType, _previewUrlWithTimestamp);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Reference Preview',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close),
+                tooltip: 'Close',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _loadFailed
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.description_outlined,
+                              size: 72,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 14),
+                            const Text(
+                              "Preview unavailable inside the app.",
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                html.window.open(
+                                    _previewUrlWithTimestamp, '_blank');
+                              },
+                              icon: const Icon(Icons.open_in_browser),
+                              label: const Text("Open in Browser"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: widget.accentColor,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : kIsWeb
+                        ? web_preview.buildPreviewIframe(_iframeViewType)
+                        : SfPdfViewer.network(
+                            _previewUrlWithTimestamp,
+                            canShowScrollHead: true,
+                            canShowScrollStatus: true,
+                            onDocumentLoadFailed:
+                                (PdfDocumentLoadFailedDetails details) {
+                              setState(() {
+                                _loadFailed = true;
+                              });
+                            },
+                          ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GeneratedPreviewDialog extends StatefulWidget {
+  final String previewUrl;
+  final Color accentColor;
+  final String? generatedPdf;
+  final String? generatedDocx;
+
+  const _GeneratedPreviewDialog({
+    required this.previewUrl,
+    required this.accentColor,
+    required this.generatedPdf,
+    required this.generatedDocx,
+  });
+
+  @override
+  State<_GeneratedPreviewDialog> createState() => _GeneratedPreviewDialogState();
+}
+
+class _GeneratedPreviewDialogState extends State<_GeneratedPreviewDialog> {
+  bool _loadFailed = false;
+  late final String _previewUrlWithTimestamp;
+  late final String _iframeViewType;
+
+  @override
+  void initState() {
+    super.initState();
+    _previewUrlWithTimestamp =
+        '${widget.previewUrl}${widget.previewUrl.contains('?') ? '&' : '?'}dialog=${DateTime.now().millisecondsSinceEpoch}';
+    _iframeViewType =
+        'generated-preview-${DateTime.now().microsecondsSinceEpoch}';
+
+    if (kIsWeb) {
+      web_preview.registerPreviewIframe(_iframeViewType, _previewUrlWithTimestamp);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Generated Document',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              if (widget.generatedPdf != null)
+                IconButton(
+                  tooltip: 'Download PDF',
+                  icon: const Icon(Icons.picture_as_pdf),
+                  onPressed: () async {
+                    await ApiService()
+                        .downloadGeneratedDocument(widget.generatedPdf!);
+                  },
+                ),
+              if (widget.generatedDocx != null)
+                IconButton(
+                  tooltip: 'Download DOCX',
+                  icon: const Icon(Icons.description),
+                  onPressed: () async {
+                    await ApiService()
+                        .downloadGeneratedDocument(widget.generatedDocx!);
+                  },
+                ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close),
+                tooltip: 'Close',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _loadFailed
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.picture_as_pdf,
+                              size: 72,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 14),
+                            const Text(
+                              "Preview unavailable inside the app.",
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                html.window.open(
+                                    _previewUrlWithTimestamp, '_blank');
+                              },
+                              icon: const Icon(Icons.open_in_browser),
+                              label: const Text("Open in Browser"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: widget.accentColor,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : kIsWeb
+                        ? web_preview.buildPreviewIframe(_iframeViewType)
+                        : SfPdfViewer.network(
+                            _previewUrlWithTimestamp,
+                            canShowScrollHead: true,
+                            canShowScrollStatus: true,
+                            onDocumentLoadFailed:
+                                (PdfDocumentLoadFailedDetails details) {
+                              setState(() {
+                                _loadFailed = true;
+                              });
+                            },
+                          ),
+              ),
+            ),
           ),
         ],
       ),

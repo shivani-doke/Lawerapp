@@ -201,32 +201,44 @@ def view_reference(doc_id):
             # ✅ CACHE: don't reconvert if already exists
             if not os.path.exists(pdf_path):
                 pdf_path = convert_docx_to_pdf(filepath, PREVIEW_FOLDER)
-            return send_from_directory(
+            response = send_from_directory(
                 PREVIEW_FOLDER,
                 os.path.basename(pdf_path),
                 mimetype="application/pdf",
                 as_attachment=False
             )
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+            return response
         except Exception as e:
             return jsonify({"error": f"Conversion failed: {str(e)}"}), 500
 
     # ✅ If already PDF → show directly
     elif ext == ".pdf":
-        return send_from_directory(
+        response = send_from_directory(
             UPLOADS_FOLDER,
             filename,
             mimetype="application/pdf",
             as_attachment=False
         )
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        return response
 
     # ✅ TXT → show inline
     elif ext == ".txt":
-        return send_from_directory(
+        response = send_from_directory(
             UPLOADS_FOLDER,
             filename,
             mimetype="text/plain",
             as_attachment=False
         )
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        return response
 
     else:
         abort(400, description="Unsupported file type")

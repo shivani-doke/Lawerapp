@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 import '../services/api_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'web_preview_iframe_stub.dart'
+    if (dart.library.html) 'web_preview_iframe_web.dart' as web_preview;
 
 // Simple model for a dynamic document field
 class DocumentField {
@@ -45,7 +50,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
   List<DocumentField> _fields = [];
   final Map<String, TextEditingController> _fieldControllers = {};
 
-  // Reference document
+  // Reference document (used for both extraction and generation)
   PlatformFile? _referenceFile;
 
   // Saved references management
@@ -61,15 +66,19 @@ class _AffidavitPageState extends State<AffidavitPage> {
   // Generated document info
   String? _generatedDocx;
   String? _generatedPdf;
+  String? _generatedPdfViewType;
+  String? _generatedPdfViewUrl;
+
+  // Track PDF load failure for fallback button
   bool _pdfLoadFailed = false;
 
-  // Format toggle
+  // Format toggle state (true = table format, false = blank template)
   bool _useTableFormat = true;
 
   @override
   void initState() {
     super.initState();
-    _fields = [];
+    _fields = []; // No default fields
     _loadSavedReferences();
   }
 
@@ -81,6 +90,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
     super.dispose();
   }
 
+  // Clear all fields and controllers
   void _resetFields() {
     for (var controller in _fieldControllers.values) {
       controller.dispose();
@@ -90,6 +100,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
     setState(() {});
   }
 
+  // Rebuild text controllers when fields change
   void _rebuildControllers() {
     for (var controller in _fieldControllers.values) {
       controller.dispose();
@@ -101,10 +112,12 @@ class _AffidavitPageState extends State<AffidavitPage> {
     setState(() {});
   }
 
+  // Load saved references from server
   Future<void> _loadSavedReferences() async {
     setState(() => _isLoadingReferences = true);
     try {
-      final refs = await ApiService().listReferences(documentType: 'affidavit');
+      final refs =
+          await ApiService().listReferences(documentType: 'affidavit');
       setState(() {
         _savedReferences = refs;
         _isLoadingReferences = false;
@@ -117,12 +130,13 @@ class _AffidavitPageState extends State<AffidavitPage> {
     }
   }
 
+  // Select a saved reference and load its fields
   Future<void> _selectSavedReference(String id) async {
     setState(() {
       _selectedReferenceId = id;
       _isExtracting = true;
-      _referenceFile = null;
-      _pdfLoadFailed = false;
+      _referenceFile = null; // Clear any local file
+      _pdfLoadFailed = false; // Reset PDF failure if any
     });
     try {
       final fieldsJson = await ApiService().getReferenceFields(id);
@@ -141,13 +155,29 @@ class _AffidavitPageState extends State<AffidavitPage> {
     }
   }
 
+  // Preview the selected reference document in a small in-app popup
   void _previewReference() {
     if (_selectedReferenceId == null) return;
     final previewUrl =
         '${ApiService.baseUrl}/references/$_selectedReferenceId/view';
-    html.window.open(previewUrl, '_blank');
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 80, vertical: 60),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: SizedBox(
+          width: 820,
+          height: 600,
+          child: _ReferencePreviewDialog(
+            previewUrl: previewUrl,
+            accentColor: accentColor,
+          ),
+        ),
+      ),
+    );
   }
 
+  // Pick a new reference file, upload it, and save it on the server
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -161,12 +191,15 @@ class _AffidavitPageState extends State<AffidavitPage> {
         _isExtracting = true;
         _generatedDocx = null;
         _generatedPdf = null;
+        _generatedPdfViewType = null;
+        _generatedPdfViewUrl = null;
         _pdfLoadFailed = false;
-        _selectedReferenceId = null;
+        _selectedReferenceId = null; // Deselect any saved reference
         _resetFields();
       });
 
       try {
+        // 1. Extract fields using Gemini
         final extractedFields = await ApiService().extractFieldsFromReference(
           _referenceFile!,
           documentType: 'affidavit',
@@ -176,6 +209,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
             .map((json) => DocumentField.fromJson(json))
             .toList();
 
+        // 2. Upload the file to server and get new ID
         setState(() => _isUploading = true);
         final uploadResult = await ApiService().uploadReference(
           _referenceFile!,
@@ -183,6 +217,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
         );
         final newId = uploadResult['document_id'];
 
+        // 3. Immediately show the fields we just extracted
         setState(() {
           _fields = fields;
           _selectedReferenceId = newId;
@@ -191,7 +226,10 @@ class _AffidavitPageState extends State<AffidavitPage> {
           _isUploading = false;
         });
 
+        // 4. Create controllers for the new fields
         _rebuildControllers();
+
+        // 5. Refresh saved references list in background
         _loadSavedReferences();
       } catch (e) {
         setState(() {
@@ -206,6 +244,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
     }
   }
 
+  // Clear the uploaded file and any selection
   void _clearFile() {
     setState(() {
       _referenceFile = null;
@@ -213,11 +252,15 @@ class _AffidavitPageState extends State<AffidavitPage> {
       _resetFields();
       _generatedDocx = null;
       _generatedPdf = null;
+      _generatedPdfViewType = null;
+      _generatedPdfViewUrl = null;
       _pdfLoadFailed = false;
     });
   }
 
+  // Generate document using either saved reference or newly uploaded file
   Future<void> _generateDocument() async {
+    // Check required fields
     final missingFields = _fields.where((f) {
       final value = _fieldControllers[f.name]?.text ?? '';
       return f.required && value.isEmpty;
@@ -243,7 +286,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
 
     setState(() {
       _isGenerating = true;
-      _pdfLoadFailed = false;
+      _pdfLoadFailed = false; // Reset PDF failure on new generation
     });
 
     try {
@@ -260,9 +303,28 @@ class _AffidavitPageState extends State<AffidavitPage> {
         format: _useTableFormat ? 'table' : 'blank',
       );
 
+      final generatedPdf = response['pdf_file'] as String?;
+      final generatedPdfViewUrl = generatedPdf == null
+          ? null
+          : "${ApiService.baseUrl}/view/$generatedPdf?t=${DateTime.now().millisecondsSinceEpoch}";
+      final generatedPdfViewType = generatedPdf == null
+          ? null
+          : 'generated-preview-${DateTime.now().microsecondsSinceEpoch}';
+
+      if (kIsWeb &&
+          generatedPdfViewUrl != null &&
+          generatedPdfViewType != null) {
+        web_preview.registerPreviewIframe(
+          generatedPdfViewType,
+          generatedPdfViewUrl,
+        );
+      }
+
       setState(() {
         _generatedDocx = response['docx_file'];
-        _generatedPdf = response['pdf_file'];
+        _generatedPdf = generatedPdf;
+        _generatedPdfViewType = generatedPdfViewType;
+        _generatedPdfViewUrl = generatedPdfViewUrl;
         _isGenerating = false;
       });
     } catch (e) {
@@ -273,6 +335,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
     }
   }
 
+  // Date picker for date fields
   Future<void> _selectDate(TextEditingController controller) async {
     final DateTime now = DateTime.now();
     final DateTime? picked = await showDatePicker(
@@ -296,6 +359,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // LEFT SIDE – Field input form
           Expanded(
             flex: 2,
             child: Container(
@@ -310,7 +374,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "AFFIDAVIT",
+                      "LEGAL",
                       style: TextStyle(
                         color: accentColor,
                         fontWeight: FontWeight.w600,
@@ -326,6 +390,8 @@ class _AffidavitPageState extends State<AffidavitPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
+
+                    // Saved references dropdown
                     if (_isLoadingReferences)
                       const Center(child: CircularProgressIndicator())
                     else if (_savedReferences.isNotEmpty)
@@ -344,7 +410,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
                               );
                             }).toList(),
                             onChanged: (value) {
-                              if (value != null) _selectSavedReference(value);
+                              if (value != null) {
+                                _selectSavedReference(value);
+                              }
                             },
                             decoration: InputDecoration(
                               filled: true,
@@ -354,8 +422,10 @@ class _AffidavitPageState extends State<AffidavitPage> {
                               ),
                             ),
                           ),
+                          // Preview button (styled exactly like Generate button)
                           if (_selectedReferenceId != null) ...[
-                            const SizedBox(height: 16),
+                            const SizedBox(
+                                height: 16), // Spacing above preview button
                             ElevatedButton.icon(
                               onPressed: _previewReference,
                               icon: const Icon(Icons.visibility),
@@ -373,9 +443,14 @@ class _AffidavitPageState extends State<AffidavitPage> {
                           ],
                         ],
                       ),
+
+                    // Extra spacing between preview button and fields (when reference selected)
                     if (_selectedReferenceId != null)
                       const SizedBox(height: 16),
+
+                    // UPLOAD BUTTON – shown only when no saved document is selected
                     if (_selectedReferenceId == null) ...[
+                      // Add spacing only if saved references exist above
                       if (_savedReferences.isNotEmpty)
                         const SizedBox(height: 16),
                       Padding(
@@ -413,6 +488,8 @@ class _AffidavitPageState extends State<AffidavitPage> {
                         ),
                       ),
                     ],
+
+                    // Show loading indicator while extracting fields
                     if (_isExtracting || _isUploading)
                       const Center(
                           child: Padding(
@@ -420,7 +497,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
                         child: CircularProgressIndicator(),
                       ))
                     else if (_fields.isNotEmpty) ...[
+                      // Build dynamic fields
                       ..._fields.map((field) => _buildField(field)),
+                      // Format selection toggle
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Row(
@@ -454,7 +533,10 @@ class _AffidavitPageState extends State<AffidavitPage> {
                           ),
                         ),
                       ),
+
                     const SizedBox(height: 20),
+
+                    // Generate button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -492,7 +574,10 @@ class _AffidavitPageState extends State<AffidavitPage> {
               ),
             ),
           ),
+
           const SizedBox(width: 30),
+
+          // RIGHT SIDE – Document viewer/editor
           Expanded(
             flex: 2,
             child: Container(
@@ -518,8 +603,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
     );
   }
 
+  // PDF Viewer
   Widget _buildPdfViewer() {
-    final pdfViewUrl =
+    final pdfViewUrl = _generatedPdfViewUrl ??
         "${ApiService.baseUrl}/view/${_generatedPdf}?t=${DateTime.now().millisecondsSinceEpoch}";
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -533,6 +619,13 @@ class _AffidavitPageState extends State<AffidavitPage> {
             ),
             Row(
               children: [
+                IconButton(
+                  tooltip: "Maximize Preview",
+                  icon: const Icon(Icons.open_in_full),
+                  onPressed: () {
+                    _openGeneratedPreviewDialog(pdfViewUrl);
+                  },
+                ),
                 IconButton(
                   tooltip: "Download PDF",
                   icon: const Icon(Icons.picture_as_pdf),
@@ -560,37 +653,78 @@ class _AffidavitPageState extends State<AffidavitPage> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: _pdfLoadFailed
-                ? _buildFallbackButton(pdfViewUrl)
-                : SfPdfViewer.network(
-                    pdfViewUrl,
-                    canShowScrollHead: true,
-                    canShowScrollStatus: true,
-                    onDocumentLoadFailed:
-                        (PdfDocumentLoadFailedDetails details) {
-                      setState(() => _pdfLoadFailed = true);
-                    },
-                  ),
+            child: _buildGeneratedPreviewContent(pdfViewUrl),
           ),
         ),
       ],
     );
   }
 
+  void _openGeneratedPreviewDialog(String pdfViewUrl) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: SizedBox(
+          width: MediaQuery.of(dialogContext).size.width * 0.9,
+          height: MediaQuery.of(dialogContext).size.height * 0.9,
+          child: _GeneratedPreviewDialog(
+            previewUrl: pdfViewUrl,
+            accentColor: accentColor,
+            generatedPdf: _generatedPdf,
+            generatedDocx: _generatedDocx,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGeneratedPreviewContent(String pdfViewUrl) {
+    if (_pdfLoadFailed) {
+      return _buildFallbackButton(pdfViewUrl);
+    }
+
+    if (kIsWeb && _generatedPdfViewType != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: web_preview.buildPreviewIframe(_generatedPdfViewType!),
+      );
+    }
+
+    return SfPdfViewer.network(
+      pdfViewUrl,
+      canShowScrollHead: true,
+      canShowScrollStatus: true,
+      onDocumentLoadFailed: (PdfDocumentLoadFailedDetails details) {
+        setState(() {
+          _pdfLoadFailed = true;
+        });
+      },
+    );
+  }
+
+  // Fallback button when PDF fails to load
   Widget _buildFallbackButton(String url) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.picture_as_pdf, size: 80, color: Colors.grey),
+          const Icon(
+            Icons.picture_as_pdf,
+            size: 80,
+            color: Colors.grey,
+          ),
           const SizedBox(height: 16),
           const Text(
-            " Click to open in browser.",
+            "Click to open in browser.",
             style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
           const SizedBox(height: 8),
           ElevatedButton.icon(
-            onPressed: () => html.window.open(url, '_blank'),
+            onPressed: () {
+              html.window.open(url, '_blank');
+            },
             icon: const Icon(Icons.open_in_browser),
             label: const Text("Open"),
             style: ElevatedButton.styleFrom(
@@ -606,6 +740,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
     );
   }
 
+  // Build an input field based on its type
   Widget _buildField(DocumentField field) {
     final controller = _fieldControllers[field.name]!;
 
@@ -682,6 +817,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
     }
   }
 
+  // Placeholder before any document is generated
   Widget _buildPlaceholder() {
     return const Center(
       child: Column(
@@ -691,11 +827,14 @@ class _AffidavitPageState extends State<AffidavitPage> {
           SizedBox(height: 20),
           Text(
             "Ready to Generate",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           SizedBox(height: 8),
           Text(
-            "Fill in the details on the left, then click\n\"Generate Document\" to create your Affidavit.",
+            "Fill in the details on the left, then click\n\"Generate Document\" to create your Power of Attorney.",
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey),
           ),
@@ -704,3 +843,270 @@ class _AffidavitPageState extends State<AffidavitPage> {
     );
   }
 }
+
+class _ReferencePreviewDialog extends StatefulWidget {
+  final String previewUrl;
+  final Color accentColor;
+
+  const _ReferencePreviewDialog({
+    required this.previewUrl,
+    required this.accentColor,
+  });
+
+  @override
+  State<_ReferencePreviewDialog> createState() => _ReferencePreviewDialogState();
+}
+
+class _ReferencePreviewDialogState extends State<_ReferencePreviewDialog> {
+  bool _loadFailed = false;
+  late final String _previewUrlWithTimestamp;
+  late final String _iframeViewType;
+
+  @override
+  void initState() {
+    super.initState();
+    _previewUrlWithTimestamp =
+        '${widget.previewUrl}?t=${DateTime.now().millisecondsSinceEpoch}';
+    _iframeViewType =
+        'reference-preview-${DateTime.now().microsecondsSinceEpoch}';
+
+    if (kIsWeb) {
+      web_preview.registerPreviewIframe(_iframeViewType, _previewUrlWithTimestamp);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Reference Preview',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close),
+                tooltip: 'Close',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _loadFailed
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.description_outlined,
+                              size: 72,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 14),
+                            const Text(
+                              "Preview unavailable inside the app.",
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                html.window.open(
+                                    _previewUrlWithTimestamp, '_blank');
+                              },
+                              icon: const Icon(Icons.open_in_browser),
+                              label: const Text("Open in Browser"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: widget.accentColor,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : kIsWeb
+                        ? web_preview.buildPreviewIframe(_iframeViewType)
+                        : SfPdfViewer.network(
+                            _previewUrlWithTimestamp,
+                            canShowScrollHead: true,
+                            canShowScrollStatus: true,
+                            onDocumentLoadFailed:
+                                (PdfDocumentLoadFailedDetails details) {
+                              setState(() {
+                                _loadFailed = true;
+                              });
+                            },
+                          ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GeneratedPreviewDialog extends StatefulWidget {
+  final String previewUrl;
+  final Color accentColor;
+  final String? generatedPdf;
+  final String? generatedDocx;
+
+  const _GeneratedPreviewDialog({
+    required this.previewUrl,
+    required this.accentColor,
+    required this.generatedPdf,
+    required this.generatedDocx,
+  });
+
+  @override
+  State<_GeneratedPreviewDialog> createState() => _GeneratedPreviewDialogState();
+}
+
+class _GeneratedPreviewDialogState extends State<_GeneratedPreviewDialog> {
+  bool _loadFailed = false;
+  late final String _previewUrlWithTimestamp;
+  late final String _iframeViewType;
+
+  @override
+  void initState() {
+    super.initState();
+    _previewUrlWithTimestamp =
+        '${widget.previewUrl}${widget.previewUrl.contains('?') ? '&' : '?'}dialog=${DateTime.now().millisecondsSinceEpoch}';
+    _iframeViewType =
+        'generated-preview-${DateTime.now().microsecondsSinceEpoch}';
+
+    if (kIsWeb) {
+      web_preview.registerPreviewIframe(_iframeViewType, _previewUrlWithTimestamp);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Generated Document',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              if (widget.generatedPdf != null)
+                IconButton(
+                  tooltip: 'Download PDF',
+                  icon: const Icon(Icons.picture_as_pdf),
+                  onPressed: () async {
+                    await ApiService()
+                        .downloadGeneratedDocument(widget.generatedPdf!);
+                  },
+                ),
+              if (widget.generatedDocx != null)
+                IconButton(
+                  tooltip: 'Download DOCX',
+                  icon: const Icon(Icons.description),
+                  onPressed: () async {
+                    await ApiService()
+                        .downloadGeneratedDocument(widget.generatedDocx!);
+                  },
+                ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close),
+                tooltip: 'Close',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _loadFailed
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.picture_as_pdf,
+                              size: 72,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 14),
+                            const Text(
+                              "Preview unavailable inside the app.",
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                html.window.open(
+                                    _previewUrlWithTimestamp, '_blank');
+                              },
+                              icon: const Icon(Icons.open_in_browser),
+                              label: const Text("Open in Browser"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: widget.accentColor,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : kIsWeb
+                        ? web_preview.buildPreviewIframe(_iframeViewType)
+                        : SfPdfViewer.network(
+                            _previewUrlWithTimestamp,
+                            canShowScrollHead: true,
+                            canShowScrollStatus: true,
+                            onDocumentLoadFailed:
+                                (PdfDocumentLoadFailedDetails details) {
+                              setState(() {
+                                _loadFailed = true;
+                              });
+                            },
+                          ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
