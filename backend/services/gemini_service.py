@@ -312,6 +312,8 @@ FIELD VALUES:
 
 RULES:
 - Draft a complete, professional legal document for the given document type.
+- Start the document with a clear standalone title derived from the document type.
+- The first non-empty line must be the document title in uppercase.
 - Use clear headings, clauses, and signature sections where appropriate.
 - Use only the provided facts.
 - Do NOT invent names, dates, addresses, money amounts, or legal facts.

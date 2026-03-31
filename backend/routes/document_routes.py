@@ -47,6 +47,44 @@ def save_metadata(metadata):
 def normalize_document_type(document_type):
     return (document_type or "").strip().lower()
 
+def get_document_title(document_type):
+    doc_type = normalize_document_type(document_type)
+    title_map = {
+        "power_of_attorney": "POWER OF ATTORNEY",
+        "gift_deed": "GIFT DEED",
+        "rental_agreement": "RENTAL AGREEMENT",
+        "partnership_deed": "PARTNERSHIP DEED",
+        "affidavit": "AFFIDAVIT",
+        "will_and_testament": "WILL AND TESTAMENT",
+        "bail_application": "BAIL APPLICATION",
+        "loan_agreement": "LOAN AGREEMENT",
+        "divorce_paper": "DIVORCE PAPER",
+        "sale_deed": "SALE DEED",
+        "mortgage_deed": "MORTGAGE DEED",
+        "non_disclosure_agreement": "NON-DISCLOSURE AGREEMENT",
+        "employment_contract": "EMPLOYMENT CONTRACT",
+        "offer_letter": "OFFER LETTER",
+        "service_agreement": "SERVICE AGREEMENT",
+        "child_custody_agreement": "CHILD CUSTODY AGREEMENT",
+        "adoption_papers": "ADOPTION PAPERS",
+        "partition_deed": "PARTITION DEED",
+        "trust_deed": "TRUST DEED",
+        "memorandum_of_understanding": "MEMORANDUM OF UNDERSTANDING",
+        "vendor_agreement": "VENDOR AGREEMENT",
+        "non_compete_agreement": "NON-COMPETE AGREEMENT",
+        "indemnity_agreement": "INDEMNITY AGREEMENT",
+        "joint_venture_agreement": "JOINT VENTURE AGREEMENT",
+        "licensing_agreement": "LICENSING AGREEMENT",
+        "assignment_agreement": "ASSIGNMENT AGREEMENT",
+        "settlement_agreement": "SETTLEMENT AGREEMENT",
+        "trademark_application": "TRADEMARK APPLICATION",
+        "copyright_agreement": "COPYRIGHT AGREEMENT",
+        "patent_filing_documents": "PATENT FILING DOCUMENTS",
+    }
+    if doc_type in title_map:
+        return title_map[doc_type]
+    return doc_type.replace("_", " ").strip().upper()
+
 def extract_text_from_file(filepath, ext):
     """Extract text from a file based on its extension."""
     try:
@@ -360,6 +398,11 @@ def generate_document():
                 fields,
                 field_schema=field_schema,
             )
+            document_title = get_document_title(document_type)
+            stripped_document = final_document_text.lstrip()
+            normalized_start = stripped_document[:len(document_title)].upper()
+            if normalized_start != document_title:
+                final_document_text = f"{document_title}\n\n{stripped_document}"
     except Exception as e:
         return jsonify({"error": f"Document generation failed: {str(e)}"}), 500
 
