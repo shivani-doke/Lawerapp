@@ -1,0 +1,314 @@
+[
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "required": true,
+    "hint": "Select execution date"
+  },
+  {
+    "name": "execution_city",
+    "label": "Execution City",
+    "type": "text",
+    "required": true,
+    "hint": "Enter execution city"
+  },
+  
+  {
+    "name": "owner_name",
+    "label": "Owner Full Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter owner full name"
+  },
+  {
+    "name": "owner_parent_name",
+    "label": "Owner Father/Mother Name",
+    "type": "text",
+    "hint": "Enter owner father/mother name",
+    "required": false
+  },
+  {
+    "name": "owner_address",
+    "label": "Owner Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter owner address"
+  },
+  {
+    "name": "owner_id_proof",
+    "label": "Owner ID Proof (PAN/Aadhaar)",
+    "type": "text",
+    "hint": "Enter owner id proof (pan/aadhaar)",
+    "required": false
+  },
+  {
+    "name": "tenant_name",
+    "label": "Tenant Full Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter tenant full name"
+  },
+  {
+    "name": "tenant_parent_name",
+    "label": "Tenant Father/Mother Name",
+    "type": "text",
+    "hint": "Enter tenant father/mother name",
+    "required": false
+  },
+  {
+    "name": "tenant_address",
+    "label": "Tenant Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter tenant address"
+  },
+  {
+    "name": "tenant_work_address",
+    "label": "Tenant Work/Office Address",
+    "type": "textarea",
+    "hint": "Enter tenant work/office address",
+    "required": false
+  },
+  {
+    "name": "tenant_id_proof",
+    "label": "Tenant ID Proof (PAN/Aadhaar)",
+    "type": "text",
+    "hint": "Enter tenant id proof (pan/aadhaar)",
+    "required": false
+  },
+  {
+    "name": "property_type",
+    "label": "Property Type",
+    "type": "dropdown",
+    "options": [
+      "Flat",
+      "House",
+      "Shop",
+      "Office"
+    ],
+    "hint": "Select property type",
+    "required": false
+  },
+  {
+    "name": "property_address",
+    "label": "Property Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter property address"
+  },
+  {
+    "name": "property_area_sqft",
+    "label": "Area (sq ft)",
+    "type": "number",
+    "hint": "Enter area (sq ft)",
+    "required": false
+  },
+  {
+    "name": "furnishing_status",
+    "label": "Furnishing Status",
+    "type": "dropdown",
+    "options": [
+      "Furnished",
+      "Semi-Furnished",
+      "Unfurnished"
+    ],
+    "hint": "Select furnishing status",
+    "required": false
+  },
+  {
+    "name": "start_date",
+    "label": "Agreement Start Date",
+    "type": "date",
+    "required": true,
+    "hint": "Select agreement start date"
+  },
+  {
+    "name": "end_date",
+    "label": "Agreement End Date",
+    "type": "date",
+    "required": true,
+    "hint": "Select agreement end date"
+  },
+  {
+    "name": "lock_in_period",
+    "label": "Lock-in Period (months)",
+    "type": "number",
+    "hint": "Enter lock-in period (months)",
+    "required": false
+  },
+  {
+    "name": "notice_period",
+    "label": "Notice Period (days)",
+    "type": "number",
+    "hint": "Enter notice period (days)",
+    "required": false
+  },
+  {
+    "name": "monthly_rent",
+    "label": "Monthly Rent",
+    "type": "number",
+    "required": true,
+    "hint": "Enter monthly rent"
+  },
+  {
+    "name": "maintenance_charges",
+    "label": "Maintenance Charges",
+    "type": "number",
+    "hint": "Enter maintenance charges",
+    "required": false
+  },
+  {
+    "name": "security_deposit",
+    "label": "Security Deposit",
+    "type": "number",
+    "required": true,
+    "hint": "Enter security deposit"
+  },
+  {
+    "name": "payment_mode",
+    "label": "Payment Mode",
+    "type": "dropdown",
+    "options": [
+      "Cash",
+      "Cheque",
+      "Bank Transfer",
+      "UPI"
+    ],
+    "hint": "Select payment mode",
+    "required": false
+  },
+  {
+    "name": "rent_due_date",
+    "label": "Rent Due Date (day of month)",
+    "type": "number",
+    "hint": "Enter rent due date (day of month)",
+    "required": false
+  },
+  {
+    "name": "rent_increase_percentage",
+    "label": "Annual Rent Increase (%)",
+    "type": "number",
+    "hint": "Enter annual rent increase (%)",
+    "required": false
+  },
+  {
+    "name": "electricity_paid_by",
+    "label": "Electricity Charges Paid By",
+    "type": "dropdown",
+    "options": [
+      "Tenant",
+      "Owner"
+    ],
+    "hint": "Select electricity charges paid by",
+    "required": false
+  },
+  {
+    "name": "water_paid_by",
+    "label": "Water Charges Paid By",
+    "type": "dropdown",
+    "options": [
+      "Tenant",
+      "Owner"
+    ],
+    "hint": "Select water charges paid by",
+    "required": false
+  },
+  {
+    "name": "maintenance_paid_by",
+    "label": "Maintenance Paid By",
+    "type": "dropdown",
+    "options": [
+      "Tenant",
+      "Owner"
+    ],
+    "hint": "Select maintenance paid by",
+    "required": false
+  },
+  {
+    "name": "usage_type",
+    "label": "Usage Type",
+    "type": "dropdown",
+    "options": [
+      "Residential",
+      "Commercial"
+    ],
+    "hint": "Select usage type",
+    "required": false
+  },
+  {
+    "name": "number_of_occupants",
+    "label": "Number of Occupants",
+    "type": "number",
+    "hint": "Enter number of occupants",
+    "required": false
+  },
+  {
+    "name": "pets_allowed",
+    "label": "Pets Allowed",
+    "type": "boolean",
+    "hint": "Select yes or no for pets allowed",
+    "required": false
+  },
+  {
+    "name": "subletting_allowed",
+    "label": "Subletting Allowed",
+    "type": "boolean",
+    "hint": "Select yes or no for subletting allowed",
+    "required": false
+  },
+  {
+    "name": "inventory_items",
+    "label": "Inventory Items (JSON/List)",
+    "type": "textarea",
+    "hint": "Example: Fans: 4, AC: 2, Beds: 2",
+    "required": false
+  },
+  {
+    "name": "jurisdiction_city",
+    "label": "Jurisdiction City",
+    "type": "text",
+    "required": true,
+    "hint": "Enter jurisdiction city"
+  },
+  {
+    "name": "stamp_duty_paid_by",
+    "label": "Stamp Duty Paid By",
+    "type": "dropdown",
+    "options": [
+      "Owner",
+      "Tenant",
+      "Shared"
+    ],
+    "hint": "Select stamp duty paid by",
+    "required": false
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter witness 1 name"
+  },
+  {
+    "name": "witness1_address",
+    "label": "Witness 1 Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter witness 1 address"
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter witness 2 name"
+  },
+  {
+    "name": "witness2_address",
+    "label": "Witness 2 Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter witness 2 address"
+  }
+]

@@ -12,8 +12,13 @@ from docx import Document as DocxDocument
 from docx.shared import Pt
 import PyPDF2
 
-from services.gemini_service import extract_fields_from_document, fill_document_with_fields, replace_placeholders
+from services.gemini_service import (
+    fill_document_with_fields,
+    generate_document_from_fields_only,
+    replace_placeholders,
+)
 from services.document_service import GENERATED_FOLDER, PREVIEW_FOLDER, convert_docx_to_pdf
+from services.document_fields import get_fields_for_document_type, get_subtypes_for_document_type
 
 # Folder where template DOCX files are stored
 TEMPLATES_FOLDER = "templates"
@@ -39,6 +44,9 @@ def save_metadata(metadata):
     with open(METADATA_FILE, 'w') as f:
         json.dump(metadata, f, indent=2)
 
+def normalize_document_type(document_type):
+    return (document_type or "").strip().lower()
+
 def extract_text_from_file(filepath, ext):
     """Extract text from a file based on its extension."""
     try:
@@ -59,58 +67,37 @@ def extract_text_from_file(filepath, ext):
         return None
 
 # -------------------------------------------------------------------
-# Existing endpoint: extract_fields (unchanged)
+# Existing endpoint: extract_fields
 # -------------------------------------------------------------------
 @document_bp.route("/extract_fields", methods=["POST"])
 def extract_fields():
-    """Extract fields from uploaded reference document using Gemini."""
-    if "file" not in request.files:
-        return jsonify({"error": "No file provided"}), 400
-
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"error": "Empty file"}), 400
-
-    doc_type = request.form.get("document_type", "power_of_attorney")
-    ext = os.path.splitext(file.filename)[1].lower()
-    text = ""
-
-    try:
-        if ext == ".txt":
-            text = file.read().decode("utf-8")
-        elif ext == ".docx":
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp:
-                file.save(tmp.name)
-                tmp_path = tmp.name
-            try:
-                doc = DocxDocument(tmp_path)
-                text = "\n".join([para.text for para in doc.paragraphs])
-            finally:
-                os.unlink(tmp_path)
-        elif ext == ".pdf":
-            pdf_reader = PyPDF2.PdfReader(file)
-            text = "\n".join([page.extract_text() for page in pdf_reader.pages])
-        else:
-            return jsonify({"error": f"Unsupported file type: {ext}"}), 400
-    except Exception as e:
-        return jsonify({"error": f"Could not read file: {str(e)}"}), 400
-
-    fields = extract_fields_from_document(text, doc_type)
+    """Return backend-defined fields for a document type."""
+    doc_type = normalize_document_type(request.form.get("document_type", "power_of_attorney"))
+    subtype = (request.form.get("subtype") or "").strip()
+    fields = get_fields_for_document_type(doc_type, subtype=subtype)
     return jsonify(fields)
+
+
+@document_bp.route("/document_subtypes", methods=["GET"])
+def document_subtypes():
+    """Return available subtypes for a document type (if configured)."""
+    doc_type = normalize_document_type(request.args.get("document_type"))
+    return jsonify(get_subtypes_for_document_type(doc_type))
 
 # -------------------------------------------------------------------
 # New endpoint: upload_reference
 # -------------------------------------------------------------------
 @document_bp.route("/upload_reference", methods=["POST"])
 def upload_reference():
-    """Upload a reference document, extract fields, save file and metadata."""
+    """Upload a reference document, attach backend-defined fields, save file and metadata."""
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
     file = request.files["file"]
     if file.filename == "":
         return jsonify({"error": "Empty file"}), 400
 
-    doc_type = request.form.get("document_type", "power_of_attorney")
+    doc_type = normalize_document_type(request.form.get("document_type", "power_of_attorney"))
+    subtype = (request.form.get("subtype") or "").strip()
     ext = os.path.splitext(file.filename)[1].lower()
 
     # Generate unique ID and save file
@@ -119,14 +106,8 @@ def upload_reference():
     filepath = os.path.join(UPLOADS_FOLDER, filename)
     file.save(filepath)
 
-    # Extract text for field extraction
-    text = extract_text_from_file(filepath, ext)
-    if text is None:
-        os.unlink(filepath)
-        return jsonify({"error": "Could not extract text from file"}), 400
-
-    # Extract fields using Gemini
-    fields = extract_fields_from_document(text, doc_type)
+    # Use backend-defined fields (no AI extraction)
+    fields = get_fields_for_document_type(doc_type, subtype=subtype)
 
     # Save metadata
     metadata = load_metadata()
@@ -134,7 +115,7 @@ def upload_reference():
         "original_name": file.filename,
         "filename": filename,
         "document_type": doc_type,
-        "fields": fields,
+        "subtype": subtype,
         "timestamp": datetime.now().isoformat()
     }
     save_metadata(metadata)
@@ -147,16 +128,18 @@ def upload_reference():
 @document_bp.route("/list_references", methods=["GET"])
 def list_references():
     """Return list of saved reference documents, optionally filtered by document_type."""
-    doc_type_filter = request.args.get("document_type")
+    doc_type_filter = normalize_document_type(request.args.get("document_type"))
     metadata = load_metadata()
     result = []
     for doc_id, info in metadata.items():
-        if doc_type_filter and info.get("document_type") != doc_type_filter:
+        info_doc_type = normalize_document_type(info.get("document_type"))
+        if doc_type_filter and info_doc_type != doc_type_filter:
             continue
         result.append({
             "id": doc_id,
             "original_name": info["original_name"],
-            "document_type": info["document_type"],
+            "document_type": info_doc_type,
+            "subtype": info.get("subtype", ""),
             "timestamp": info["timestamp"]
         })
     return jsonify(result)
@@ -166,12 +149,15 @@ def list_references():
 # -------------------------------------------------------------------
 @document_bp.route("/get_reference/<doc_id>", methods=["GET"])
 def get_reference(doc_id):
-    """Return fields for a saved reference document."""
+    """Return current backend-defined fields for the reference document type."""
     metadata = load_metadata()
     info = metadata.get(doc_id)
     if not info:
         return jsonify({"error": "Document not found"}), 404
-    return jsonify(info["fields"])
+    doc_type = normalize_document_type(info.get("document_type", "power_of_attorney"))
+    subtype = (info.get("subtype") or "").strip()
+    fields = get_fields_for_document_type(doc_type, subtype=subtype)
+    return jsonify(fields)
 
 # -------------------------------------------------------------------
 # NEW endpoint: preview reference document
@@ -251,9 +237,10 @@ def generate_document():
     Generate a final document using either:
       - a newly uploaded reference file, or
       - a previously saved reference document (by reference_id).
+      - or no reference at all, in which case Gemini drafts from fields only.
     Accepts optional 'format' field: 'table' (use document-specific table template) or 'blank' (use blank template).
     """
-    document_type = request.form.get("document_type")
+    document_type = normalize_document_type(request.form.get("document_type"))
     fields_json = request.form.get("fields", "{}")
     # Read format parameter (default to 'table' for backward compatibility)
     format_type = request.form.get("format", "table")  # 'table' or 'blank'
@@ -265,6 +252,8 @@ def generate_document():
 
     reference_id = request.form.get("reference_id")
     reference_text = ""
+    has_reference_context = False
+    field_schema = get_fields_for_document_type(document_type)
 
     # Determine source of reference text
     if reference_id:
@@ -278,13 +267,10 @@ def generate_document():
         reference_text = extract_text_from_file(filepath, ext)
         if reference_text is None:
             return jsonify({"error": "Could not read stored reference file"}), 500
-    else:
+        has_reference_context = True
+    elif "reference_file" in request.files and request.files["reference_file"].filename:
         # Use uploaded file
-        if "reference_file" not in request.files:
-            return jsonify({"error": "Reference file required"}), 400
         file = request.files["reference_file"]
-        if file.filename == "":
-            return jsonify({"error": "Empty file"}), 400
         ext = os.path.splitext(file.filename)[1].lower()
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
             file.save(tmp.name)
@@ -307,15 +293,16 @@ def generate_document():
             return jsonify({"error": f"Could not read reference file: {str(e)}"}), 400
         finally:
             os.unlink(tmp_path)
+        has_reference_context = True
 
     # Determine which template to use based on format_type
     template_map = {
         "power_of_attorney": "power_of_attorney_template.docx",
-        "sale_deed": "sale_deed_template.docx",
+        "gift_deed": "gift_deed_template.docx",
         "rental_agreement": "rental_agreement_template.docx",
         "partnership_deed": "partnership_deed_template.docx",
         "affidavit": "affidavit_template.docx",
-        "will_testament": "will_testament_template.docx",
+        "will_and_testament": "will_testament_template.docx",
         "bail_application": "bail_application_template.docx",
         "loan_agreement": "loan_agreement_template.docx",
     }
@@ -323,7 +310,13 @@ def generate_document():
     blank_template = "blank_template.docx"
     template_path = None
 
-    if format_type == "blank":
+    if not has_reference_context:
+        blank_path = os.path.join(TEMPLATES_FOLDER, blank_template)
+        if os.path.exists(blank_path):
+            template_path = blank_path
+        else:
+            return jsonify({"error": "Blank template not found on server"}), 500
+    elif format_type == "blank":
         # Force blank template
         blank_path = os.path.join(TEMPLATES_FOLDER, blank_template)
         if os.path.exists(blank_path):
@@ -352,9 +345,21 @@ def generate_document():
             else:
                 return jsonify({"error": f"No template mapping for '{document_type}' and blank template missing."}), 500
 
-    # Ask Gemini to produce the final document text using the reference document as context
+    # Ask Gemini to produce the final document text either from the reference
+    # or from the field values alone when no reference was provided.
     try:
-        final_document_text = fill_document_with_fields(reference_text, fields, document_type)
+        if has_reference_context:
+            final_document_text = fill_document_with_fields(
+                reference_text,
+                fields,
+                document_type,
+            )
+        else:
+            final_document_text = generate_document_from_fields_only(
+                document_type,
+                fields,
+                field_schema=field_schema,
+            )
     except Exception as e:
         return jsonify({"error": f"Document generation failed: {str(e)}"}), 500
 

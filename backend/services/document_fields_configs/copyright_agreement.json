@@ -1,0 +1,234 @@
+[
+  {
+    "name": "agreement_date",
+    "label": "Agreement Date",
+    "type": "date",
+    "hint": "Select date of agreement execution",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where agreement is signed",
+    "required": true
+  },
+  {
+    "name": "author_owner_name",
+    "label": "Author / Owner Name",
+    "type": "text",
+    "hint": "Enter full legal name of copyright owner",
+    "required": true
+  },
+  {
+    "name": "author_owner_address",
+    "label": "Author / Owner Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "assignee_licensee_name",
+    "label": "Assignee / Licensee Name",
+    "type": "text",
+    "hint": "Enter receiving party name",
+    "required": true
+  },
+  {
+    "name": "assignee_licensee_address",
+    "label": "Assignee / Licensee Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "party_type",
+    "label": "Party Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select type of parties",
+    "required": true
+  },
+  {
+    "name": "work_title",
+    "label": "Work Title",
+    "type": "text",
+    "hint": "Enter title of copyrighted work",
+    "required": true
+  },
+  {
+    "name": "work_description",
+    "label": "Work Description",
+    "type": "textarea",
+    "hint": "Describe the work (book, software, music, etc.)",
+    "required": true
+  },
+  {
+    "name": "work_type",
+    "label": "Type of Work",
+    "type": "dropdown",
+    "options": [
+      "Literary",
+      "Software",
+      "Music",
+      "Artistic",
+      "Cinematographic",
+      "Photograph",
+      "Other"
+    ],
+    "hint": "Select type of work",
+    "required": true
+  },
+  {
+    "name": "creation_date",
+    "label": "Date of Creation",
+    "type": "date",
+    "hint": "Select date when work was created",
+    "required": false
+  },
+  {
+    "name": "registration_number",
+    "label": "Copyright Registration Number",
+    "type": "text",
+    "hint": "Enter registration number (if registered)",
+    "required": false
+  },
+  {
+    "name": "transfer_type",
+    "label": "Transfer Type",
+    "type": "dropdown",
+    "options": [
+      "Assignment",
+      "Exclusive License",
+      "Non-Exclusive License"
+    ],
+    "hint": "Select type of transfer",
+    "required": true
+  },
+  {
+    "name": "assigned_rights",
+    "label": "Rights Transferred",
+    "type": "textarea",
+    "hint": "Specify rights (reproduction, distribution, adaptation, etc.)",
+    "required": true
+  },
+  {
+    "name": "usage_scope",
+    "label": "Usage Scope",
+    "type": "textarea",
+    "hint": "Define scope, limitations, and permitted uses",
+    "required": true
+  },
+  {
+    "name": "territory",
+    "label": "Territory",
+    "type": "text",
+    "hint": "Enter geographical scope (e.g., India, Worldwide)",
+    "required": true
+  },
+  {
+    "name": "duration",
+    "label": "Duration",
+    "type": "text",
+    "hint": "Enter duration of agreement (e.g., 5 years, perpetual)",
+    "required": true
+  },
+  {
+    "name": "effective_date",
+    "label": "Effective Date",
+    "type": "date",
+    "hint": "Select effective date",
+    "required": true
+  },
+  {
+    "name": "consideration_amount",
+    "label": "Consideration Amount",
+    "type": "number",
+    "hint": "Enter payment amount",
+    "required": false
+  },
+  {
+    "name": "royalty_details",
+    "label": "Royalty Details",
+    "type": "textarea",
+    "hint": "Enter royalty percentage and payment terms",
+    "required": false
+  },
+  {
+    "name": "credit_clause",
+    "label": "Credit / Attribution",
+    "type": "textarea",
+    "hint": "Specify how author will be credited",
+    "required": false
+  },
+  {
+    "name": "moral_rights",
+    "label": "Moral Rights Clause",
+    "type": "textarea",
+    "hint": "Specify retention or waiver of moral rights",
+    "required": false
+  },
+  {
+    "name": "confidentiality_clause",
+    "label": "Confidentiality Clause",
+    "type": "textarea",
+    "hint": "Enter confidentiality terms",
+    "required": false
+  },
+  {
+    "name": "termination_clause",
+    "label": "Termination Clause",
+    "type": "textarea",
+    "hint": "Specify termination conditions",
+    "required": false
+  },
+  {
+    "name": "indemnity_clause",
+    "label": "Indemnity Clause",
+    "type": "textarea",
+    "hint": "Specify indemnity obligations",
+    "required": false
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Laws of India)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "author_signature",
+    "label": "Author / Owner Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": false
+  },
+  {
+    "name": "assignee_signature",
+    "label": "Assignee / Licensee Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": false
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  }
+]

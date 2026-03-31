@@ -278,6 +278,63 @@ FINAL DOCUMENT:
     except Exception as e:
         raise Exception(f"Gemini generation failed: {str(e)}")
 
+def generate_document_from_fields_only(document_type, field_values, field_schema=None):
+    schema_lines = []
+    for field in field_schema or []:
+        if not isinstance(field, dict):
+            continue
+        schema_lines.append(json.dumps(field, ensure_ascii=False))
+
+    fields_description = "\n".join(
+        [f"- {key}: {json.dumps(value, ensure_ascii=False)}" for key, value in field_values.items()]
+    )
+    schema_description = "\n".join(schema_lines) if schema_lines else "No schema provided."
+
+    prompt = f"""
+You are a legal drafting engine.
+
+You are given:
+1. A legal document type
+2. A structured field schema
+3. User-provided values
+
+Your task is to draft a complete legal first draft from scratch using only the
+provided values. Do not rely on any reference document.
+
+DOCUMENT TYPE:
+{document_type}
+
+FIELD SCHEMA:
+{schema_description}
+
+FIELD VALUES:
+{fields_description}
+
+RULES:
+- Draft a complete, professional legal document for the given document type.
+- Use clear headings, clauses, and signature sections where appropriate.
+- Use only the provided facts.
+- Do NOT invent names, dates, addresses, money amounts, or legal facts.
+- If some optional information is missing, omit that detail cleanly.
+- If a required section needs missing information, write it in neutral generic form
+  without inventing facts.
+- Keep the tone formal and legally styled.
+- Do NOT include commentary, explanations, checklists, or notes to the user.
+- Output only the final document text.
+- Do NOT use markdown.
+- Do NOT wrap the answer in code fences.
+"""
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config={"temperature": 0.2}
+        )
+        return response.text.strip()
+    except Exception as e:
+        raise Exception(f"Gemini draft generation failed: {str(e)}")
+
 def replace_placeholders(doc, field_values):
     def replace_in_paragraph(paragraph):
         for run in paragraph.runs:

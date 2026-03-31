@@ -1,0 +1,234 @@
+[
+  {
+    "name": "issue_date",
+    "label": "Issue Date",
+    "type": "date",
+    "hint": "Select contract issue date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where contract is issued",
+    "required": true
+  },
+  {
+    "name": "employer_name",
+    "label": "Employer Name",
+    "type": "text",
+    "hint": "Enter company legal name",
+    "required": true
+  },
+  {
+    "name": "employer_address",
+    "label": "Employer Address",
+    "type": "textarea",
+    "hint": "Enter registered office address",
+    "required": true
+  },
+  {
+    "name": "employer_type",
+    "label": "Employer Type",
+    "type": "dropdown",
+    "options": ["Company", "LLP", "Partnership", "Individual"],
+    "hint": "Select employer type",
+    "required": true
+  },
+  {
+    "name": "employee_name",
+    "label": "Employee Name",
+    "type": "text",
+    "hint": "Enter employee full name",
+    "required": true
+  },
+  {
+    "name": "employee_father_name",
+    "label": "Father's Name",
+    "type": "text",
+    "hint": "Enter father's name",
+    "required": false
+  },
+  {
+    "name": "employee_address",
+    "label": "Employee Address",
+    "type": "textarea",
+    "hint": "Enter residential address",
+    "required": true
+  },
+  {
+    "name": "employee_id_proof",
+    "label": "ID Proof (Aadhaar/PAN)",
+    "type": "text",
+    "hint": "Enter ID proof details",
+    "required": false
+  },
+  {
+    "name": "designation",
+    "label": "Designation",
+    "type": "text",
+    "hint": "Enter job designation",
+    "required": true
+  },
+  {
+    "name": "department",
+    "label": "Department",
+    "type": "text",
+    "hint": "Enter department name",
+    "required": false
+  },
+  {
+    "name": "job_location",
+    "label": "Job Location",
+    "type": "text",
+    "hint": "Enter primary work location",
+    "required": true
+  },
+  {
+    "name": "employment_type",
+    "label": "Employment Type",
+    "type": "dropdown",
+    "options": [
+      "Full-Time",
+      "Part-Time",
+      "Contract",
+      "Internship"
+    ],
+    "hint": "Select employment type",
+    "required": true
+  },
+  {
+    "name": "joining_date",
+    "label": "Joining Date",
+    "type": "date",
+    "hint": "Select joining date",
+    "required": true
+  },
+  {
+    "name": "probation_period_months",
+    "label": "Probation Period (Months)",
+    "type": "number",
+    "hint": "Enter probation period duration",
+    "required": false
+  },
+  {
+    "name": "confirmation_terms",
+    "label": "Confirmation Terms",
+    "type": "textarea",
+    "hint": "Conditions for confirmation after probation",
+    "required": false
+  },
+  {
+    "name": "salary_ctc",
+    "label": "Annual CTC",
+    "type": "number",
+    "hint": "Enter annual compensation",
+    "required": true
+  },
+  {
+    "name": "salary_breakup",
+    "label": "Salary Breakup",
+    "type": "textarea",
+    "hint": "Enter breakdown (basic, HRA, allowances, etc.)",
+    "required": false
+  },
+  {
+    "name": "payment_frequency",
+    "label": "Payment Frequency",
+    "type": "dropdown",
+    "options": ["Monthly", "Bi-Weekly", "Weekly"],
+    "hint": "Select salary payment frequency",
+    "required": true
+  },
+  {
+    "name": "working_hours",
+    "label": "Working Hours",
+    "type": "text",
+    "hint": "e.g., 9 AM to 6 PM, 5 days a week",
+    "required": true
+  },
+  {
+    "name": "leave_policy",
+    "label": "Leave Policy",
+    "type": "textarea",
+    "hint": "Mention annual leave, sick leave, etc.",
+    "required": false
+  },
+  {
+    "name": "notice_period_days",
+    "label": "Notice Period (Days)",
+    "type": "number",
+    "hint": "Enter notice period",
+    "required": true
+  },
+  {
+    "name": "termination_clause",
+    "label": "Termination Clause",
+    "type": "textarea",
+    "hint": "Conditions for termination",
+    "required": true
+  },
+  {
+    "name": "confidentiality_clause",
+    "label": "Confidentiality Clause",
+    "type": "textarea",
+    "hint": "Employee confidentiality obligations",
+    "required": false
+  },
+  {
+    "name": "non_compete_clause",
+    "label": "Non-Compete Clause",
+    "type": "textarea",
+    "hint": "Restrictions on working with competitors",
+    "required": false
+  },
+  {
+    "name": "intellectual_property_clause",
+    "label": "Intellectual Property Clause",
+    "type": "textarea",
+    "hint": "Ownership of work created by employee",
+    "required": false
+  },
+  {
+    "name": "code_of_conduct",
+    "label": "Code of Conduct",
+    "type": "textarea",
+    "hint": "Company policies and behavior expectations",
+    "required": false
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Laws of India)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "employer_signatory_name",
+    "label": "Employer Signatory Name",
+    "type": "text",
+    "hint": "Authorized signatory name",
+    "required": true
+  },
+  {
+    "name": "employee_signature",
+    "label": "Employee Signature",
+    "type": "text",
+    "hint": "Enter employee name as signature",
+    "required": true
+  },
+  {
+    "name": "employer_signature",
+    "label": "Employer Signature",
+    "type": "text",
+    "hint": "Enter employer signatory name",
+    "required": true
+  }
+]

@@ -1,0 +1,319 @@
+[
+  {
+    "name": "effective_date",
+    "label": "Effective Date",
+    "type": "date",
+    "hint": "Select agreement effective date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state of execution",
+    "required": true
+  },
+
+  {
+    "name": "service_provider_details",
+    "label": "Service Provider Details",
+    "type": "group",
+    "repeatable": false,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Legal Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter service provider legal name"
+      },
+      {
+        "name": "entity_type",
+        "label": "Entity Type",
+        "type": "dropdown",
+        "options": ["Individual", "Company", "Partnership", "LLP"],
+        "required": true,
+        "hint": "Select entity type"
+      },
+      {
+        "name": "address",
+        "label": "Registered Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter registered address"
+      },
+      {
+        "name": "contact_details",
+        "label": "Contact Details",
+        "type": "text",
+        "required": false,
+        "hint": "Phone/email"
+      }
+    ]
+  },
+
+  {
+    "name": "client_details",
+    "label": "Client Details",
+    "type": "group",
+    "repeatable": false,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Legal Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter client legal name"
+      },
+      {
+        "name": "entity_type",
+        "label": "Entity Type",
+        "type": "dropdown",
+        "options": ["Individual", "Company", "Partnership", "LLP"],
+        "required": true,
+        "hint": "Select entity type"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter address"
+      },
+      {
+        "name": "contact_details",
+        "label": "Contact Details",
+        "type": "text",
+        "required": false,
+        "hint": "Phone/email"
+      }
+    ]
+  },
+
+  {
+    "name": "services_scope",
+    "label": "Scope of Services",
+    "type": "textarea",
+    "hint": "Describe services in detail",
+    "required": true
+  },
+  {
+    "name": "deliverables",
+    "label": "Deliverables",
+    "type": "textarea",
+    "hint": "List expected deliverables",
+    "required": true
+  },
+  {
+    "name": "service_level_agreement",
+    "label": "Service Level Agreement (SLA)",
+    "type": "textarea",
+    "hint": "Define timelines, performance metrics",
+    "required": false
+  },
+
+  {
+    "name": "service_term_start",
+    "label": "Service Start Date",
+    "type": "date",
+    "hint": "Select start date",
+    "required": true
+  },
+  {
+    "name": "service_term_end",
+    "label": "Service End Date",
+    "type": "date",
+    "hint": "Select end date",
+    "required": false
+  },
+  {
+    "name": "auto_renewal",
+    "label": "Auto Renewal",
+    "type": "boolean",
+    "hint": "Does contract auto-renew?",
+    "required": false
+  },
+
+  {
+    "name": "service_fee",
+    "label": "Total Service Fee",
+    "type": "number",
+    "hint": "Enter total agreed fee",
+    "required": true
+  },
+  {
+    "name": "payment_structure",
+    "label": "Payment Structure",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "milestone",
+        "label": "Milestone",
+        "type": "text",
+        "required": false,
+        "hint": "e.g., Advance, Phase 1"
+      },
+      {
+        "name": "amount",
+        "label": "Amount",
+        "type": "number",
+        "required": true,
+        "hint": "Enter amount"
+      },
+      {
+        "name": "due_date",
+        "label": "Due Date",
+        "type": "date",
+        "required": false,
+        "hint": "Select due date"
+      }
+    ]
+  },
+  {
+    "name": "payment_mode",
+    "label": "Payment Mode",
+    "type": "dropdown",
+    "options": ["Bank Transfer", "Cheque", "UPI", "Cash"],
+    "hint": "Select payment mode",
+    "required": true
+  },
+  {
+    "name": "late_payment_penalty",
+    "label": "Late Payment Penalty",
+    "type": "textarea",
+    "hint": "Penalty terms for delayed payment",
+    "required": false
+  },
+
+  {
+    "name": "confidentiality_clause",
+    "label": "Confidentiality Clause",
+    "type": "textarea",
+    "hint": "Define confidentiality obligations",
+    "required": false
+  },
+  {
+    "name": "non_compete_clause",
+    "label": "Non-Compete Clause",
+    "type": "textarea",
+    "hint": "Restrictions on competition",
+    "required": false
+  },
+  {
+    "name": "intellectual_property_rights",
+    "label": "Intellectual Property Rights",
+    "type": "textarea",
+    "hint": "Ownership of work/product",
+    "required": true
+  },
+
+  {
+    "name": "liability_clause",
+    "label": "Limitation of Liability",
+    "type": "textarea",
+    "hint": "Limit liability of parties",
+    "required": false
+  },
+  {
+    "name": "indemnity_clause",
+    "label": "Indemnity Clause",
+    "type": "textarea",
+    "hint": "Indemnification terms",
+    "required": false
+  },
+
+  {
+    "name": "termination_notice_days",
+    "label": "Termination Notice (Days)",
+    "type": "number",
+    "hint": "Enter notice period",
+    "required": false
+  },
+  {
+    "name": "termination_conditions",
+    "label": "Termination Conditions",
+    "type": "textarea",
+    "hint": "Conditions for termination",
+    "required": false
+  },
+
+  {
+    "name": "force_majeure",
+    "label": "Force Majeure Clause",
+    "type": "textarea",
+    "hint": "Events beyond control",
+    "required": false
+  },
+
+  {
+    "name": "dispute_resolution",
+    "label": "Dispute Resolution",
+    "type": "textarea",
+    "hint": "Arbitration/mediation details",
+    "required": false
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+
+  {
+    "name": "signatures",
+    "label": "Signatures",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "party_name",
+        "label": "Party Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name"
+      },
+      {
+        "name": "designation",
+        "label": "Designation",
+        "type": "text",
+        "required": false,
+        "hint": "Enter designation"
+      },
+      {
+        "name": "signature",
+        "label": "Signature",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name as signature"
+      }
+    ]
+  },
+
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  }
+]

@@ -1,0 +1,235 @@
+[
+  {
+    "name": "effective_date",
+    "label": "Effective Date",
+    "type": "date",
+    "hint": "Select effective date of agreement",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where agreement is executed",
+    "required": true
+  },
+  {
+    "name": "party_a_name",
+    "label": "Party A Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "party_a_address",
+    "label": "Party A Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "party_a_type",
+    "label": "Party A Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select type of Party A",
+    "required": true
+  },
+  {
+    "name": "party_b_name",
+    "label": "Party B Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "party_b_address",
+    "label": "Party B Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "party_b_type",
+    "label": "Party B Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select type of Party B",
+    "required": true
+  },
+  {
+    "name": "venture_name",
+    "label": "Joint Venture Name",
+    "type": "text",
+    "hint": "Enter name of joint venture entity",
+    "required": false
+  },
+  {
+    "name": "venture_objective",
+    "label": "Venture Objective",
+    "type": "textarea",
+    "hint": "Describe purpose and scope of the joint venture",
+    "required": true
+  },
+  {
+    "name": "business_activities",
+    "label": "Business Activities",
+    "type": "textarea",
+    "hint": "Specify activities to be carried out",
+    "required": true
+  },
+  {
+    "name": "contribution_details",
+    "label": "Contribution Details",
+    "type": "textarea",
+    "hint": "Specify capital, assets, services contributed by each party",
+    "required": true
+  },
+  {
+    "name": "ownership_percentage",
+    "label": "Ownership Percentage",
+    "type": "text",
+    "hint": "Enter ownership share of each party",
+    "required": true
+  },
+  {
+    "name": "profit_sharing_ratio",
+    "label": "Profit Sharing Ratio",
+    "type": "text",
+    "hint": "Enter agreed profit sharing ratio",
+    "required": true
+  },
+  {
+    "name": "loss_sharing_ratio",
+    "label": "Loss Sharing Ratio",
+    "type": "text",
+    "hint": "Enter loss sharing ratio",
+    "required": true
+  },
+  {
+    "name": "management_structure",
+    "label": "Management Structure",
+    "type": "textarea",
+    "hint": "Define roles, responsibilities, and decision-making authority",
+    "required": true
+  },
+  {
+    "name": "board_composition",
+    "label": "Board / Committee Composition",
+    "type": "textarea",
+    "hint": "Specify board members and representation",
+    "required": false
+  },
+  {
+    "name": "decision_making_process",
+    "label": "Decision Making Process",
+    "type": "textarea",
+    "hint": "Explain voting rights and approval requirements",
+    "required": true
+  },
+  {
+    "name": "bank_account_details",
+    "label": "Banking & Finance",
+    "type": "textarea",
+    "hint": "Specify bank account operation and financial control",
+    "required": false
+  },
+  {
+    "name": "term_duration",
+    "label": "Term / Duration",
+    "type": "text",
+    "hint": "Enter duration of joint venture",
+    "required": true
+  },
+  {
+    "name": "confidentiality_clause",
+    "label": "Confidentiality Clause",
+    "type": "textarea",
+    "hint": "Specify confidentiality obligations",
+    "required": false
+  },
+  {
+    "name": "non_compete_clause",
+    "label": "Non-Compete Clause",
+    "type": "textarea",
+    "hint": "Restrictions on competing businesses",
+    "required": false
+  },
+  {
+    "name": "intellectual_property_rights",
+    "label": "Intellectual Property Rights",
+    "type": "textarea",
+    "hint": "Define ownership of IP created",
+    "required": false
+  },
+  {
+    "name": "dispute_resolution",
+    "label": "Dispute Resolution",
+    "type": "textarea",
+    "hint": "Specify mediation/arbitration process",
+    "required": true
+  },
+  {
+    "name": "termination_clause",
+    "label": "Termination Clause",
+    "type": "textarea",
+    "hint": "Conditions for termination",
+    "required": true
+  },
+  {
+    "name": "exit_clause",
+    "label": "Exit / Buyout Clause",
+    "type": "textarea",
+    "hint": "Define exit terms and buyout mechanism",
+    "required": true
+  },
+  {
+    "name": "force_majeure",
+    "label": "Force Majeure Clause",
+    "type": "textarea",
+    "hint": "Events beyond control affecting agreement",
+    "required": false
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Laws of India)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "party_a_signature",
+    "label": "Party A Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "party_b_signature",
+    "label": "Party B Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  }
+]

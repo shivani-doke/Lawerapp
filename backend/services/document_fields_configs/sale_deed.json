@@ -1,0 +1,365 @@
+[
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "hint": "Select execution date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state of execution",
+    "required": true
+  },
+
+  {
+    "name": "seller_details",
+    "label": "Seller Details",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Full Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter seller full name"
+      },
+      {
+        "name": "age",
+        "label": "Age",
+        "type": "number",
+        "required": false,
+        "hint": "Enter age"
+      },
+      {
+        "name": "occupation",
+        "label": "Occupation",
+        "type": "text",
+        "required": false,
+        "hint": "Enter occupation"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter residential address"
+      },
+      {
+        "name": "id_proof",
+        "label": "ID Proof",
+        "type": "text",
+        "required": false,
+        "hint": "Enter Aadhaar/PAN details"
+      }
+    ]
+  },
+
+  {
+    "name": "buyer_details",
+    "label": "Buyer Details",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Full Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter buyer full name"
+      },
+      {
+        "name": "age",
+        "label": "Age",
+        "type": "number",
+        "required": false,
+        "hint": "Enter age"
+      },
+      {
+        "name": "occupation",
+        "label": "Occupation",
+        "type": "text",
+        "required": false,
+        "hint": "Enter occupation"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter residential address"
+      },
+      {
+        "name": "id_proof",
+        "label": "ID Proof",
+        "type": "text",
+        "required": false,
+        "hint": "Enter Aadhaar/PAN details"
+      }
+    ]
+  },
+
+  {
+    "name": "property_type",
+    "label": "Property Type",
+    "type": "dropdown",
+    "options": [
+      "Residential",
+      "Commercial",
+      "Agricultural",
+      "Plot",
+      "Flat"
+    ],
+    "hint": "Select property type",
+    "required": true
+  },
+  {
+    "name": "property_description",
+    "label": "Property Description",
+    "type": "textarea",
+    "hint": "Enter full description (survey no, boundaries, etc.)",
+    "required": true
+  },
+  {
+    "name": "property_address",
+    "label": "Property Address",
+    "type": "textarea",
+    "hint": "Enter full property address",
+    "required": true
+  },
+  {
+    "name": "survey_number",
+    "label": "Survey / Plot Number",
+    "type": "text",
+    "hint": "Enter survey/plot number",
+    "required": true
+  },
+  {
+    "name": "area_details",
+    "label": "Area Details",
+    "type": "text",
+    "hint": "Enter built-up / carpet / land area",
+    "required": false
+  },
+  {
+    "name": "title_details",
+    "label": "Title Details",
+    "type": "textarea",
+    "hint": "Explain ownership history of seller",
+    "required": true
+  },
+  {
+    "name": "encumbrance_status",
+    "label": "Encumbrance Status",
+    "type": "dropdown",
+    "options": [
+      "Free from Encumbrances",
+      "Under Loan",
+      "Disputed"
+    ],
+    "hint": "Select encumbrance status",
+    "required": true
+  },
+
+  {
+    "name": "sale_consideration",
+    "label": "Total Sale Consideration",
+    "type": "number",
+    "hint": "Enter total amount",
+    "required": true
+  },
+  {
+    "name": "payment_details",
+    "label": "Payment Details",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "amount",
+        "label": "Amount",
+        "type": "number",
+        "required": true,
+        "hint": "Enter payment amount"
+      },
+      {
+        "name": "mode",
+        "label": "Mode",
+        "type": "dropdown",
+        "options": [
+          "Bank Transfer",
+          "Cheque",
+          "Demand Draft",
+          "Cash"
+        ],
+        "required": true,
+        "hint": "Select mode"
+      },
+      {
+        "name": "transaction_details",
+        "label": "Transaction Details",
+        "type": "text",
+        "required": false,
+        "hint": "Enter cheque/DD/UTR number"
+      },
+      {
+        "name": "payment_date",
+        "label": "Payment Date",
+        "type": "date",
+        "required": false,
+        "hint": "Select payment date"
+      }
+    ]
+  },
+
+  {
+    "name": "advance_paid",
+    "label": "Advance Paid",
+    "type": "number",
+    "hint": "Enter advance amount",
+    "required": false
+  },
+  {
+    "name": "balance_payment_due",
+    "label": "Balance Payment",
+    "type": "number",
+    "hint": "Enter remaining amount",
+    "required": false
+  },
+
+  {
+    "name": "possession_date",
+    "label": "Possession Date",
+    "type": "date",
+    "hint": "Select possession handover date",
+    "required": true
+  },
+  {
+    "name": "possession_clause",
+    "label": "Possession Clause",
+    "type": "textarea",
+    "hint": "Describe possession transfer terms",
+    "required": true
+  },
+
+  {
+    "name": "indemnity_clause",
+    "label": "Indemnity Clause",
+    "type": "textarea",
+    "hint": "Seller indemnifies buyer against defects",
+    "required": false
+  },
+  {
+    "name": "default_clause",
+    "label": "Default Clause",
+    "type": "textarea",
+    "hint": "Terms for breach or non-payment",
+    "required": false
+  },
+
+  {
+    "name": "registration_details",
+    "label": "Registration Details",
+    "type": "textarea",
+    "hint": "Sub-registrar office details",
+    "required": true
+  },
+  {
+    "name": "stamp_duty",
+    "label": "Stamp Duty Amount",
+    "type": "number",
+    "hint": "Enter stamp duty paid",
+    "required": true
+  },
+  {
+    "name": "registration_fee",
+    "label": "Registration Fee",
+    "type": "number",
+    "hint": "Enter registration fee",
+    "required": false
+  },
+
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+
+  {
+    "name": "witnesses",
+    "label": "Witness Details",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Witness Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full name"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": false,
+        "hint": "Enter address"
+      }
+    ]
+  },
+
+  {
+    "name": "seller_signatures",
+    "label": "Seller Signatures",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Seller Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name"
+      },
+      {
+        "name": "signature",
+        "label": "Signature",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name as signature"
+      }
+    ]
+  },
+  {
+    "name": "buyer_signatures",
+    "label": "Buyer Signatures",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Buyer Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name"
+      },
+      {
+        "name": "signature",
+        "label": "Signature",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name as signature"
+      }
+    ]
+  }
+]

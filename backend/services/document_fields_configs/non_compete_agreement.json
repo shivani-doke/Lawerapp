@@ -1,0 +1,227 @@
+[
+  {
+    "name": "effective_date",
+    "label": "Effective Date",
+    "type": "date",
+    "hint": "Select agreement effective date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where agreement is signed",
+    "required": true
+  },
+  {
+    "name": "agreement_context",
+    "label": "Agreement Context",
+    "type": "dropdown",
+    "options": [
+      "Employment",
+      "Business Sale",
+      "Partnership Exit",
+      "Consulting",
+      "Other"
+    ],
+    "hint": "Select context of non-compete",
+    "required": true
+  },
+  {
+    "name": "restricted_party_name",
+    "label": "Restricted Party Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "restricted_party_address",
+    "label": "Restricted Party Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "restricted_party_type",
+    "label": "Restricted Party Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select type",
+    "required": true
+  },
+  {
+    "name": "beneficiary_party_name",
+    "label": "Beneficiary Party Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "beneficiary_party_address",
+    "label": "Beneficiary Party Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "beneficiary_party_type",
+    "label": "Beneficiary Party Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select type",
+    "required": true
+  },
+  {
+    "name": "business_description",
+    "label": "Business Description",
+    "type": "textarea",
+    "hint": "Describe nature of business being protected",
+    "required": true
+  },
+  {
+    "name": "restricted_activities",
+    "label": "Restricted Activities",
+    "type": "textarea",
+    "hint": "Clearly list prohibited activities",
+    "required": true
+  },
+  {
+    "name": "restricted_industry",
+    "label": "Restricted Industry",
+    "type": "text",
+    "hint": "Specify industry or sector",
+    "required": false
+  },
+  {
+    "name": "restricted_territory",
+    "label": "Restricted Territory",
+    "type": "text",
+    "hint": "Enter geographic limitation (city/state/country)",
+    "required": true
+  },
+  {
+    "name": "restriction_period_months",
+    "label": "Restriction Period (Months)",
+    "type": "number",
+    "hint": "Enter duration of restriction",
+    "required": true
+  },
+  {
+    "name": "start_trigger",
+    "label": "Restriction Start Trigger",
+    "type": "dropdown",
+    "options": [
+      "From Agreement Date",
+      "From Termination of Employment",
+      "From Business Sale",
+      "Other"
+    ],
+    "hint": "When does restriction begin?",
+    "required": true
+  },
+  {
+    "name": "consideration_provided",
+    "label": "Consideration Provided",
+    "type": "boolean",
+    "hint": "Is compensation provided for non-compete?",
+    "required": true
+  },
+  {
+    "name": "consideration_details",
+    "label": "Consideration Details",
+    "type": "textarea",
+    "hint": "Describe compensation (salary, payout, etc.)",
+    "required": false
+  },
+  {
+    "name": "non_solicitation_clause",
+    "label": "Non-Solicitation Clause",
+    "type": "textarea",
+    "hint": "Restrictions on soliciting clients/employees",
+    "required": false
+  },
+  {
+    "name": "confidentiality_clause",
+    "label": "Confidentiality Clause",
+    "type": "textarea",
+    "hint": "Confidentiality obligations",
+    "required": false
+  },
+  {
+    "name": "exceptions",
+    "label": "Exceptions",
+    "type": "textarea",
+    "hint": "List permitted activities or exceptions",
+    "required": false
+  },
+  {
+    "name": "penalty_clause",
+    "label": "Penalty Clause",
+    "type": "textarea",
+    "hint": "Penalty in case of breach",
+    "required": false
+  },
+  {
+    "name": "remedies_clause",
+    "label": "Remedies Clause",
+    "type": "textarea",
+    "hint": "Legal remedies (injunction, damages)",
+    "required": true
+  },
+  {
+    "name": "severability_clause",
+    "label": "Severability Clause",
+    "type": "textarea",
+    "hint": "Invalid clauses do not affect rest",
+    "required": false
+  },
+  {
+    "name": "termination_clause",
+    "label": "Termination Clause",
+    "type": "textarea",
+    "hint": "Conditions under which agreement ends",
+    "required": false
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Laws of India)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "restricted_party_signature",
+    "label": "Restricted Party Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "beneficiary_party_signature",
+    "label": "Beneficiary Party Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  }
+]

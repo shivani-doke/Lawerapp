@@ -1,0 +1,279 @@
+[
+  {
+    "name": "settlement_date",
+    "label": "Settlement Date",
+    "type": "date",
+    "hint": "Select settlement date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state of execution",
+    "required": true
+  },
+
+  {
+    "name": "party_a_details",
+    "label": "Party A Details",
+    "type": "group",
+    "repeatable": false,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Full Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full legal name"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter address"
+      },
+      {
+        "name": "contact",
+        "label": "Contact Details",
+        "type": "text",
+        "required": false,
+        "hint": "Phone/email"
+      }
+    ]
+  },
+
+  {
+    "name": "party_b_details",
+    "label": "Party B Details",
+    "type": "group",
+    "repeatable": false,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Full Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full legal name"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter address"
+      },
+      {
+        "name": "contact",
+        "label": "Contact Details",
+        "type": "text",
+        "required": false,
+        "hint": "Phone/email"
+      }
+    ]
+  },
+
+  {
+    "name": "case_reference",
+    "label": "Case / Dispute Reference",
+    "type": "text",
+    "hint": "Enter case number, FIR, or reference ID",
+    "required": false
+  },
+  {
+    "name": "court_name",
+    "label": "Court Name (if applicable)",
+    "type": "text",
+    "hint": "Enter court name",
+    "required": false
+  },
+
+  {
+    "name": "dispute_summary",
+    "label": "Dispute Background",
+    "type": "textarea",
+    "hint": "Describe dispute facts",
+    "required": true
+  },
+
+  {
+    "name": "settlement_type",
+    "label": "Settlement Type",
+    "type": "dropdown",
+    "options": [
+      "Monetary Settlement",
+      "Property Settlement",
+      "Employment Settlement",
+      "Family Settlement",
+      "Full and Final Settlement"
+    ],
+    "hint": "Select type of settlement",
+    "required": true
+  },
+
+  {
+    "name": "settlement_terms",
+    "label": "Settlement Terms",
+    "type": "textarea",
+    "hint": "Enter agreed obligations",
+    "required": true
+  },
+
+  {
+    "name": "payment_terms",
+    "label": "Payment Terms",
+    "type": "group",
+    "repeatable": true,
+    "required": false,
+    "fields": [
+      {
+        "name": "amount",
+        "label": "Amount",
+        "type": "number",
+        "required": true,
+        "hint": "Enter amount"
+      },
+      {
+        "name": "mode",
+        "label": "Mode",
+        "type": "dropdown",
+        "options": [
+          "Bank Transfer",
+          "Cheque",
+          "Demand Draft",
+          "Cash"
+        ],
+        "required": true,
+        "hint": "Select payment mode"
+      },
+      {
+        "name": "due_date",
+        "label": "Due Date",
+        "type": "date",
+        "required": false,
+        "hint": "Select due date"
+      }
+    ]
+  },
+
+  {
+    "name": "release_clause",
+    "label": "Release Clause",
+    "type": "textarea",
+    "hint": "Full and final settlement clause",
+    "required": true
+  },
+
+  {
+    "name": "withdrawal_of_cases",
+    "label": "Withdrawal of Cases",
+    "type": "textarea",
+    "hint": "Mention withdrawal of pending cases",
+    "required": false
+  },
+
+  {
+    "name": "confidentiality_clause",
+    "label": "Confidentiality Clause",
+    "type": "textarea",
+    "hint": "Confidentiality obligations",
+    "required": false
+  },
+
+  {
+    "name": "non_disparagement_clause",
+    "label": "Non-Disparagement Clause",
+    "type": "textarea",
+    "hint": "Prevent parties from defamation",
+    "required": false
+  },
+
+  {
+    "name": "default_clause",
+    "label": "Default Clause",
+    "type": "textarea",
+    "hint": "Consequences of breach",
+    "required": false
+  },
+
+  {
+    "name": "indemnity_clause",
+    "label": "Indemnity Clause",
+    "type": "textarea",
+    "hint": "Indemnification terms",
+    "required": false
+  },
+
+  {
+    "name": "force_majeure",
+    "label": "Force Majeure",
+    "type": "textarea",
+    "hint": "Unforeseen circumstances clause",
+    "required": false
+  },
+
+  {
+    "name": "dispute_resolution",
+    "label": "Dispute Resolution",
+    "type": "textarea",
+    "hint": "Arbitration/mediation details",
+    "required": false
+  },
+
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+
+  {
+    "name": "signatures",
+    "label": "Party Signatures",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "party_name",
+        "label": "Party Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name"
+      },
+      {
+        "name": "signature",
+        "label": "Signature",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name as signature"
+      }
+    ]
+  },
+
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  }
+]

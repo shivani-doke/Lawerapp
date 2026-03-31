@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import '../services/api_service.dart';
+import 'upload_context.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'web_preview_iframe_stub.dart'
@@ -16,6 +17,9 @@ class DocumentField {
   final String type;
   final String? hint;
   final bool required;
+  final List<String> options;
+  final bool repeatable;
+  final List<DocumentField> fields;
 
   DocumentField({
     required this.name,
@@ -23,15 +27,31 @@ class DocumentField {
     this.type = 'text',
     this.hint,
     this.required = true,
+    this.options = const [],
+    this.repeatable = false,
+    this.fields = const [],
   });
 
   factory DocumentField.fromJson(Map<String, dynamic> json) {
+    final rawOptions = json['options'];
+    final rawFields = json['fields'];
+
     return DocumentField(
       name: json['name'],
       label: json['label'],
       type: json['type'] ?? 'text',
       hint: json['hint'],
       required: json['required'] ?? true,
+      options: rawOptions is List
+          ? rawOptions.map((e) => e.toString()).toList()
+          : const [],
+      repeatable: json['repeatable'] == true,
+      fields: rawFields is List
+          ? rawFields
+              .whereType<Map<String, dynamic>>()
+              .map(DocumentField.fromJson)
+              .toList()
+          : const [],
     );
   }
 }
@@ -49,6 +69,15 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
   // Dynamic fields (from extraction)
   List<DocumentField> _fields = [];
   final Map<String, TextEditingController> _fieldControllers = {};
+  final Map<String, String> _dropdownValues = {};
+  final Map<String, bool> _boolValues = {};
+  final Map<String, Set<String>> _multiselectValues = {};
+  final Map<String, List<Map<String, TextEditingController>>>
+      _groupFieldControllers = {};
+  final Map<String, List<Map<String, String>>> _groupDropdownValues = {};
+  final Map<String, List<Map<String, bool>>> _groupBoolValues = {};
+  final Map<String, List<Map<String, Set<String>>>> _groupMultiselectValues =
+      {};
 
   // Reference document (used for both extraction and generation)
   PlatformFile? _referenceFile;
@@ -74,12 +103,18 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
 
   // Format toggle state (true = table format, false = blank template)
   bool _useTableFormat = true;
+  late final bool _openedFromUploads;
 
   @override
   void initState() {
     super.initState();
+    _openedFromUploads =
+        UploadNavigationContext.consumeReferenceOnlyMode('rental_agreement');
     _fields = []; // No default fields
-    _loadSavedReferences();
+    _loadSavedReferences(autoSelectFirst: !_openedFromUploads);
+    if (!_openedFromUploads) {
+      _loadDefaultFields();
+    }
   }
 
   @override
@@ -87,7 +122,313 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
     for (var controller in _fieldControllers.values) {
       controller.dispose();
     }
+    _disposeGroupControllers();
     super.dispose();
+  }
+
+  void _disposeGroupControllers() {
+    for (final groupRows in _groupFieldControllers.values) {
+      for (final row in groupRows) {
+        for (final controller in row.values) {
+          controller.dispose();
+        }
+      }
+    }
+    _groupFieldControllers.clear();
+    _groupDropdownValues.clear();
+    _groupBoolValues.clear();
+    _groupMultiselectValues.clear();
+  }
+
+  Map<String, TextEditingController> _createGroupControllerRow(
+      DocumentField groupField) {
+    final controllers = <String, TextEditingController>{};
+    for (final nestedField in groupField.fields) {
+      if (nestedField.type == 'dropdown' ||
+          nestedField.type == 'boolean' ||
+          nestedField.type == 'multiselect' ||
+          (nestedField.type == 'group' && nestedField.fields.isNotEmpty)) {
+        continue;
+      }
+      controllers[nestedField.name] = TextEditingController();
+    }
+    return controllers;
+  }
+
+  Map<String, String> _createGroupDropdownRow(DocumentField groupField) {
+    final values = <String, String>{};
+    for (final nestedField in groupField.fields) {
+      if (nestedField.type == 'dropdown') {
+        values[nestedField.name] =
+            nestedField.options.isNotEmpty ? nestedField.options.first : '';
+      }
+    }
+    return values;
+  }
+
+  Map<String, bool> _createGroupBoolRow(DocumentField groupField) {
+    final values = <String, bool>{};
+    for (final nestedField in groupField.fields) {
+      if (nestedField.type == 'boolean') {
+        values[nestedField.name] = false;
+      }
+    }
+    return values;
+  }
+
+  Map<String, Set<String>> _createGroupMultiselectRow(DocumentField groupField) {
+    final values = <String, Set<String>>{};
+    for (final nestedField in groupField.fields) {
+      if (nestedField.type == 'multiselect') {
+        values[nestedField.name] = <String>{};
+      }
+    }
+    return values;
+  }
+
+  void _initializeGroupField(DocumentField field) {
+    if (field.type != 'group' || field.fields.isEmpty) {
+      return;
+    }
+
+    _groupFieldControllers[field.name] = [_createGroupControllerRow(field)];
+    _groupDropdownValues[field.name] = [_createGroupDropdownRow(field)];
+    _groupBoolValues[field.name] = [_createGroupBoolRow(field)];
+    _groupMultiselectValues[field.name] = [_createGroupMultiselectRow(field)];
+  }
+
+  void _addGroupRow(DocumentField field) {
+    if (field.type != 'group' || field.fields.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _groupFieldControllers.putIfAbsent(field.name, () => []);
+      _groupDropdownValues.putIfAbsent(field.name, () => []);
+      _groupBoolValues.putIfAbsent(field.name, () => []);
+      _groupMultiselectValues.putIfAbsent(field.name, () => []);
+
+      _groupFieldControllers[field.name]!.add(_createGroupControllerRow(field));
+      _groupDropdownValues[field.name]!.add(_createGroupDropdownRow(field));
+      _groupBoolValues[field.name]!.add(_createGroupBoolRow(field));
+      _groupMultiselectValues[field.name]!
+          .add(_createGroupMultiselectRow(field));
+    });
+  }
+
+  void _removeGroupRow(DocumentField field, int index) {
+    final controllerRows = _groupFieldControllers[field.name];
+    final dropdownRows = _groupDropdownValues[field.name];
+    final boolRows = _groupBoolValues[field.name];
+    final multiselectRows = _groupMultiselectValues[field.name];
+
+    if (controllerRows == null ||
+        dropdownRows == null ||
+        boolRows == null ||
+        multiselectRows == null ||
+        index < 0 ||
+        index >= controllerRows.length ||
+        controllerRows.length <= 1) {
+      return;
+    }
+
+    setState(() {
+      for (final controller in controllerRows[index].values) {
+        controller.dispose();
+      }
+      controllerRows.removeAt(index);
+      dropdownRows.removeAt(index);
+      boolRows.removeAt(index);
+      multiselectRows.removeAt(index);
+    });
+  }
+
+  bool _isTopLevelFieldMissing(DocumentField field) {
+    if (!field.required) {
+      return false;
+    }
+
+    if (field.type == 'dropdown') {
+      final value = _dropdownValues[field.name] ?? '';
+      return value.trim().isEmpty;
+    }
+    if (field.type == 'boolean') {
+      return false;
+    }
+    if (field.type == 'multiselect') {
+      final values = _multiselectValues[field.name] ?? <String>{};
+      return values.isEmpty;
+    }
+
+    final value = _fieldControllers[field.name]?.text ?? '';
+    return value.trim().isEmpty;
+  }
+
+  bool _isGroupSubFieldMissing(
+    DocumentField groupField,
+    DocumentField subField,
+    int rowIndex,
+  ) {
+    if (!subField.required) {
+      return false;
+    }
+
+    if (subField.type == 'dropdown') {
+      final value =
+          _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ?? '';
+      return value.trim().isEmpty;
+    }
+    if (subField.type == 'boolean') {
+      return false;
+    }
+    if (subField.type == 'multiselect') {
+      final values = _groupMultiselectValues[groupField.name]?[rowIndex]
+              [subField.name] ??
+          <String>{};
+      return values.isEmpty;
+    }
+
+    final value = _groupFieldControllers[groupField.name]?[rowIndex]
+            [subField.name]
+            ?.text ??
+        '';
+    return value.trim().isEmpty;
+  }
+
+  bool _isGroupRowEmpty(DocumentField groupField, int rowIndex) {
+    for (final subField in groupField.fields) {
+      if (subField.type == 'dropdown') {
+        final value =
+            _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
+                '';
+        if (value.trim().isNotEmpty) {
+          return false;
+        }
+        continue;
+      }
+      if (subField.type == 'boolean') {
+        final value =
+            _groupBoolValues[groupField.name]?[rowIndex][subField.name] ??
+                false;
+        if (value) {
+          return false;
+        }
+        continue;
+      }
+      if (subField.type == 'multiselect') {
+        final values = _groupMultiselectValues[groupField.name]?[rowIndex]
+                [subField.name] ??
+            <String>{};
+        if (values.isNotEmpty) {
+          return false;
+        }
+        continue;
+      }
+
+      final value = _groupFieldControllers[groupField.name]?[rowIndex]
+              [subField.name]
+              ?.text ??
+          '';
+      if (value.trim().isNotEmpty) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  List<String> _collectMissingRequiredFields() {
+    final missingFields = <String>[];
+
+    for (final field in _fields) {
+      if (field.type == 'group' && field.fields.isNotEmpty) {
+        final rows = _groupFieldControllers[field.name] ?? const [];
+        if (field.required && rows.isEmpty) {
+          missingFields.add(field.label);
+          continue;
+        }
+
+        for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+          final rowIsEmpty = _isGroupRowEmpty(field, rowIndex);
+          if (!field.required && rowIsEmpty) {
+            continue;
+          }
+
+          final hasMissingRequiredSubField =
+              field.fields.any((subField) => _isGroupSubFieldMissing(
+                    field,
+                    subField,
+                    rowIndex,
+                  ));
+          if (hasMissingRequiredSubField) {
+            missingFields.add(field.label);
+            break;
+          }
+        }
+        continue;
+      }
+
+      if (_isTopLevelFieldMissing(field)) {
+        missingFields.add(field.label);
+      }
+    }
+
+    return missingFields;
+  }
+
+  dynamic _serializeTopLevelFieldValue(DocumentField field) {
+    if (field.type == 'dropdown') {
+      return _dropdownValues[field.name] ?? '';
+    }
+    if (field.type == 'boolean') {
+      return _boolValues[field.name] ?? false;
+    }
+    if (field.type == 'multiselect') {
+      return (_multiselectValues[field.name] ?? <String>{}).toList();
+    }
+    if (field.type == 'group' && field.fields.isNotEmpty) {
+      final rows = _groupFieldControllers[field.name] ?? const [];
+      final serializedRows = <Map<String, dynamic>>[];
+
+      for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+        if (_isGroupRowEmpty(field, rowIndex)) {
+          continue;
+        }
+
+        final rowData = <String, dynamic>{};
+        for (final subField in field.fields) {
+          if (subField.type == 'dropdown') {
+            rowData[subField.name] =
+                _groupDropdownValues[field.name]?[rowIndex][subField.name] ??
+                    '';
+          } else if (subField.type == 'boolean') {
+            rowData[subField.name] =
+                _groupBoolValues[field.name]?[rowIndex][subField.name] ??
+                    false;
+          } else if (subField.type == 'multiselect') {
+            rowData[subField.name] = (_groupMultiselectValues[field.name]?[rowIndex]
+                        [subField.name] ??
+                    <String>{})
+                .toList();
+          } else {
+            rowData[subField.name] = _groupFieldControllers[field.name]?[rowIndex]
+                    [subField.name]
+                    ?.text ??
+                '';
+          }
+        }
+        serializedRows.add(rowData);
+      }
+
+      if (field.repeatable) {
+        return serializedRows;
+      }
+      return serializedRows.isNotEmpty
+          ? serializedRows.first
+          : <String, dynamic>{};
+    }
+
+    return _fieldControllers[field.name]?.text ?? '';
   }
 
   // Clear all fields and controllers
@@ -96,24 +437,44 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
       controller.dispose();
     }
     _fieldControllers.clear();
+    _dropdownValues.clear();
+    _boolValues.clear();
+    _multiselectValues.clear();
+    _disposeGroupControllers();
     _fields = [];
     setState(() {});
   }
 
-  // Rebuild text controllers when fields change
+  // Rebuild field state when fields change
   void _rebuildControllers() {
     for (var controller in _fieldControllers.values) {
       controller.dispose();
     }
     _fieldControllers.clear();
+    _dropdownValues.clear();
+    _boolValues.clear();
+    _multiselectValues.clear();
+    _disposeGroupControllers();
+
     for (var field in _fields) {
-      _fieldControllers[field.name] = TextEditingController();
+      if (field.type == 'group' && field.fields.isNotEmpty) {
+        _initializeGroupField(field);
+      } else if (field.type == 'dropdown') {
+        _dropdownValues[field.name] =
+            field.options.isNotEmpty ? field.options.first : '';
+      } else if (field.type == 'boolean') {
+        _boolValues[field.name] = false;
+      } else if (field.type == 'multiselect') {
+        _multiselectValues[field.name] = <String>{};
+      } else {
+        _fieldControllers[field.name] = TextEditingController();
+      }
     }
     setState(() {});
   }
 
   // Load saved references from server
-  Future<void> _loadSavedReferences() async {
+  Future<void> _loadSavedReferences({bool autoSelectFirst = true}) async {
     setState(() => _isLoadingReferences = true);
     try {
       final refs =
@@ -122,11 +483,40 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
         _savedReferences = refs;
         _isLoadingReferences = false;
       });
+
+      if (autoSelectFirst &&
+          _savedReferences.isNotEmpty &&
+          _selectedReferenceId == null) {
+        final autoSelectedId = _savedReferences.first['id']?.toString();
+        if (autoSelectedId != null && autoSelectedId.isNotEmpty) {
+          await _selectSavedReference(autoSelectedId);
+        }
+      }
     } catch (e) {
       setState(() => _isLoadingReferences = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load saved references: $e')),
       );
+    }
+  }
+
+  Future<void> _loadDefaultFields() async {
+    try {
+      final fieldsJson = await ApiService().getFieldsByDocumentType(
+        documentType: 'rental_agreement',
+      );
+      final fields = fieldsJson
+          .whereType<Map>()
+          .map((json) => DocumentField.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        _fields = fields;
+      });
+      _rebuildControllers();
+    } catch (_) {
+      // Silent fallback: user can still upload/select reference.
     }
   }
 
@@ -140,8 +530,10 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
     });
     try {
       final fieldsJson = await ApiService().getReferenceFields(id);
-      final fields =
-          fieldsJson.map((json) => DocumentField.fromJson(json)).toList();
+      final fields = fieldsJson
+          .whereType<Map>()
+          .map((json) => DocumentField.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
       setState(() {
         _fields = fields;
         _isExtracting = false;
@@ -206,7 +598,8 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
         );
 
         final fields = extractedFields
-            .map((json) => DocumentField.fromJson(json))
+            .whereType<Map>()
+            .map((json) => DocumentField.fromJson(Map<String, dynamic>.from(json)))
             .toList();
 
         // 2. Upload the file to server and get new ID
@@ -260,26 +653,14 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
 
   // Generate document using either saved reference or newly uploaded file
   Future<void> _generateDocument() async {
-    // Check required fields
-    final missingFields = _fields.where((f) {
-      final value = _fieldControllers[f.name]?.text ?? '';
-      return f.required && value.isEmpty;
-    }).toList();
+    final missingFields = _collectMissingRequiredFields();
 
     if (missingFields.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Please fill all required fields: ${missingFields.map((f) => f.label).join(', ')}'),
+              'Please fill all required fields: ${missingFields.join(', ')}'),
         ),
-      );
-      return;
-    }
-
-    if (_selectedReferenceId == null && _referenceFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please select or upload a reference document')),
       );
       return;
     }
@@ -290,9 +671,9 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
     });
 
     try {
-      final fields = {
+      final fields = <String, dynamic>{
         for (var field in _fields)
-          field.name: _fieldControllers[field.name]?.text ?? '',
+          field.name: _serializeTopLevelFieldValue(field),
       };
 
       final response = await ApiService().generateDocument(
@@ -334,7 +715,6 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
       );
     }
   }
-
   // Date picker for date fields
   Future<void> _selectDate(TextEditingController controller) async {
     final DateTime now = DateTime.now();
@@ -527,7 +907,7 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
                         padding: EdgeInsets.symmetric(vertical: 20),
                         child: Center(
                           child: Text(
-                            'Select or upload a reference document to see fields',
+                            'Fields will appear here after loading defaults or selecting a reference document',
                             style: TextStyle(color: Colors.grey),
                             textAlign: TextAlign.center,
                           ),
@@ -540,11 +920,7 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: (_isGenerating ||
-                                _isExtracting ||
-                                _isUploading ||
-                                (_selectedReferenceId == null &&
-                                    _referenceFile == null))
+                        onPressed: (_isGenerating || _isExtracting || _isUploading)
                             ? null
                             : _generateDocument,
                         icon: _isGenerating
@@ -559,7 +935,9 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
                             : const Icon(Icons.auto_awesome),
                         label: Text(_isGenerating
                             ? 'Generating...'
-                            : 'Generate Document'),
+                            : (_selectedReferenceId == null && _referenceFile == null)
+                                ? 'Generate AI Draft'
+                                : 'Generate Document'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: accentColor,
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -741,16 +1119,432 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
   }
 
   // Build an input field based on its type
-  Widget _buildField(DocumentField field) {
-    final controller = _fieldControllers[field.name]!;
+  Widget _buildGroupField(DocumentField field) {
+    final controllerRows = _groupFieldControllers[field.name] ?? const [];
+    final rowCount = controllerRows.length;
 
-    if (field.type == 'date') {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xfff9fafb),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    field.label + (field.required ? ' *' : ''),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                if (field.repeatable)
+                  Text(
+                    '$rowCount item${rowCount == 1 ? '' : 's'}',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+              ],
+            ),
+            if (field.hint != null && field.hint!.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(field.hint!, style: const TextStyle(color: Colors.grey)),
+            ],
+            const SizedBox(height: 12),
+            ...List.generate(rowCount, (rowIndex) {
+              return Container(
+                margin: EdgeInsets.only(bottom: rowIndex == rowCount - 1 ? 0 : 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (field.repeatable)
+                      Row(
+                        children: [
+                          Text(
+                            '${field.label} ${rowIndex + 1}',
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          const Spacer(),
+                          if (rowCount > 1)
+                            IconButton(
+                              tooltip: 'Remove item',
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () => _removeGroupRow(field, rowIndex),
+                            ),
+                        ],
+                      ),
+                    ...field.fields.map(
+                      (nestedField) => _buildGroupSubField(
+                        groupField: field,
+                        subField: nestedField,
+                        rowIndex: rowIndex,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            if (field.repeatable) ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () => _addGroupRow(field),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add item'),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroupSubField({
+    required DocumentField groupField,
+    required DocumentField subField,
+    required int rowIndex,
+  }) {
+    final type = subField.type;
+    final isRequired = subField.required;
+
+    if (type == 'dropdown') {
+      final options = subField.options;
+      final current =
+          _groupDropdownValues[groupField.name]?[rowIndex][subField.name];
+      final selected = (current != null && options.contains(current))
+          ? current
+          : (options.isNotEmpty ? options.first : null);
+      if (selected != null) {
+        _groupDropdownValues[groupField.name]?[rowIndex][subField.name] =
+            selected;
+      }
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(subField.label + (isRequired ? ' *' : '')),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String>(
+              value: selected,
+              items: options
+                  .map((option) => DropdownMenuItem<String>(
+                        value: option,
+                        child: Text(option),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _groupDropdownValues[groupField.name]?[rowIndex]
+                      [subField.name] = value ?? '';
+                });
+              },
+              decoration: InputDecoration(
+                hintText: subField.hint,
+                filled: true,
+                fillColor: const Color(0xfff9fafb),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (type == 'boolean') {
+      final current =
+          _groupBoolValues[groupField.name]?[rowIndex][subField.name] ?? false;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xfff9fafb),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: SwitchListTile(
+            title: Text(subField.label + (isRequired ? ' *' : '')),
+            subtitle: subField.hint != null ? Text(subField.hint!) : null,
+            value: current,
+            onChanged: (value) {
+              setState(() {
+                _groupBoolValues[groupField.name]?[rowIndex][subField.name] =
+                    value;
+              });
+            },
+          ),
+        ),
+      );
+    }
+
+    if (type == 'multiselect') {
+      final selected = _groupMultiselectValues[groupField.name]?[rowIndex]
+          .putIfAbsent(subField.name, () => <String>{});
+      final options = subField.options;
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(subField.label + (isRequired ? ' *' : '')),
+            if (subField.hint != null) ...[
+              const SizedBox(height: 4),
+              Text(subField.hint!, style: const TextStyle(color: Colors.grey)),
+            ],
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: options.map((option) {
+                final active = selected?.contains(option) ?? false;
+                return FilterChip(
+                  label: Text(option),
+                  selected: active,
+                  onSelected: (value) {
+                    setState(() {
+                      if (value) {
+                        selected?.add(option);
+                      } else {
+                        selected?.remove(option);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final controller = _groupFieldControllers[groupField.name]?[rowIndex]
+        .putIfAbsent(subField.name, () => TextEditingController());
+
+    if (type == 'date') {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(subField.label + (isRequired ? ' *' : '')),
+            const SizedBox(height: 6),
+            TextField(
+              controller: controller,
+              readOnly: true,
+              onTap: controller == null ? null : () => _selectDate(controller),
+              decoration: InputDecoration(
+                hintText: subField.hint ?? 'dd-mm-yyyy',
+                suffixIcon: const Icon(Icons.calendar_today),
+                filled: true,
+                fillColor: const Color(0xfff9fafb),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (type == 'textarea' || type == 'multiline') {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(subField.label + (isRequired ? ' *' : '')),
+            const SizedBox(height: 6),
+            TextField(
+              controller: controller,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: subField.hint,
+                filled: true,
+                fillColor: const Color(0xfff9fafb),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(subField.label + (isRequired ? ' *' : '')),
+          const SizedBox(height: 6),
+          TextField(
+            controller: controller,
+            keyboardType:
+                type == 'number' ? TextInputType.number : TextInputType.text,
+            decoration: InputDecoration(
+              hintText: subField.hint,
+              filled: true,
+              fillColor: const Color(0xfff9fafb),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Build an input field based on its type
+  Widget _buildField(DocumentField field) {
+    final type = field.type;
+    final isRequired = field.required;
+
+    if (type == 'group' && field.fields.isNotEmpty) {
+      return _buildGroupField(field);
+    }
+
+    if (type == 'dropdown') {
+      final options = field.options;
+      final current = _dropdownValues[field.name];
+      final selected = (current != null && options.contains(current))
+          ? current
+          : (options.isNotEmpty ? options.first : null);
+      if (selected != null) {
+        _dropdownValues[field.name] = selected;
+      }
+
       return Padding(
         padding: const EdgeInsets.only(bottom: 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(field.label + (field.required ? ' *' : '')),
+            Text(field.label + (isRequired ? ' *' : '')),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String>(
+              value: selected,
+              items: options
+                  .map((o) => DropdownMenuItem<String>(
+                        value: o,
+                        child: Text(o),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _dropdownValues[field.name] = value ?? '';
+                });
+              },
+              decoration: InputDecoration(
+                hintText: field.hint,
+                filled: true,
+                fillColor: const Color(0xfff9fafb),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (type == 'boolean') {
+      final current = _boolValues[field.name] ?? false;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 18),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xfff9fafb),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: SwitchListTile(
+            title: Text(field.label + (isRequired ? ' *' : '')),
+            subtitle: field.hint != null ? Text(field.hint!) : null,
+            value: current,
+            onChanged: (value) {
+              setState(() {
+                _boolValues[field.name] = value;
+              });
+            },
+          ),
+        ),
+      );
+    }
+
+    if (type == 'multiselect') {
+      final options = field.options;
+      final selected =
+          _multiselectValues.putIfAbsent(field.name, () => <String>{});
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(field.label + (isRequired ? ' *' : '')),
+            if (field.hint != null) ...[
+              const SizedBox(height: 4),
+              Text(field.hint!, style: const TextStyle(color: Colors.grey)),
+            ],
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: options.map((option) {
+                final active = selected.contains(option);
+                return FilterChip(
+                  label: Text(option),
+                  selected: active,
+                  onSelected: (value) {
+                    setState(() {
+                      if (value) {
+                        selected.add(option);
+                      } else {
+                        selected.remove(option);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final controller = _fieldControllers[field.name] ??= TextEditingController();
+
+    if (type == 'date') {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(field.label + (isRequired ? ' *' : '')),
             const SizedBox(height: 6),
             TextField(
               controller: controller,
@@ -769,41 +1563,26 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
           ],
         ),
       );
-    } else if (field.type == 'multiline') {
+    }
+
+    if (type == 'textarea' || type == 'multiline' || type == 'group') {
+      String? hint = field.hint;
+      if (type == 'group' && (hint == null || hint.isEmpty)) {
+        hint = 'Enter JSON array, e.g. [{"item":"value"}]';
+      }
+
       return Padding(
         padding: const EdgeInsets.only(bottom: 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(field.label + (field.required ? ' *' : '')),
+            Text(field.label + (isRequired ? ' *' : '')),
             const SizedBox(height: 6),
             TextField(
               controller: controller,
-              maxLines: 3,
+              maxLines: type == 'group' ? 5 : 3,
               decoration: InputDecoration(
-                hintText: field.hint,
-                filled: true,
-                fillColor: const Color(0xfff9fafb),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(field.label + (field.required ? ' *' : '')),
-            const SizedBox(height: 6),
-            TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                hintText: field.hint,
+                hintText: hint,
                 filled: true,
                 fillColor: const Color(0xfff9fafb),
                 border: OutlineInputBorder(
@@ -815,6 +1594,30 @@ class _RentalAgreementPageState extends State<RentalAgreementPage> {
         ),
       );
     }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(field.label + (isRequired ? ' *' : '')),
+          const SizedBox(height: 6),
+          TextField(
+            controller: controller,
+            keyboardType:
+                type == 'number' ? TextInputType.number : TextInputType.text,
+            decoration: InputDecoration(
+              hintText: field.hint,
+              filled: true,
+              fillColor: const Color(0xfff9fafb),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // Placeholder before any document is generated
@@ -1109,4 +1912,14 @@ class _GeneratedPreviewDialogState extends State<_GeneratedPreviewDialog> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
 

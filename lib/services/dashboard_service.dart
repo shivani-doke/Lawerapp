@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/app_config.dart';
 
 class DashboardService {
-  static const String baseUrl = "http://127.0.0.1:5000/dashboard";
+  static const String baseUrl = "${AppConfig.backendBaseUrl}/dashboard";
 
   /// ✅ Fetch Dashboard Data
   static Future<Map<String, dynamic>> fetchDashboardData(

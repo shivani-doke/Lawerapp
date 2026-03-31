@@ -1,0 +1,144 @@
+[
+  {
+    "name": "filing_date",
+    "label": "Filing Date",
+    "type": "date",
+    "hint": "Select the date of petition filing",
+    "required": true
+  },
+  {
+    "name": "court_name",
+    "label": "Court Name",
+    "type": "text",
+    "hint": "Enter full name of the court (e.g., District Court)",
+    "required": true
+  },
+  {
+    "name": "court_location",
+    "label": "Court Location",
+    "type": "text",
+    "hint": "Enter city and state of the court",
+    "required": true
+  },
+  {
+    "name": "adoptive_parent1_name",
+    "label": "Adoptive Parent 1 Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "adoptive_parent1_age",
+    "label": "Adoptive Parent 1 Age",
+    "type": "number",
+    "hint": "Enter age in years",
+    "required": true
+  },
+  {
+    "name": "adoptive_parent1_address",
+    "label": "Adoptive Parent 1 Address",
+    "type": "textarea",
+    "hint": "Enter full residential address",
+    "required": true
+  },
+  {
+    "name": "adoptive_parent2_name",
+    "label": "Adoptive Parent 2 Name",
+    "type": "text",
+    "hint": "Enter full legal name (if applicable)",
+    "required": false
+  },
+  {
+    "name": "adoptive_parent2_age",
+    "label": "Adoptive Parent 2 Age",
+    "type": "number",
+    "hint": "Enter age in years",
+    "required": false
+  },
+  {
+    "name": "adoptive_parent2_address",
+    "label": "Adoptive Parent 2 Address",
+    "type": "textarea",
+    "hint": "Enter full residential address",
+    "required": false
+  },
+  {
+    "name": "marital_status",
+    "label": "Marital Status of Adoptive Parents",
+    "type": "select",
+    "options": ["Single", "Married", "Divorced", "Widowed"],
+    "hint": "Select marital status",
+    "required": true
+  },
+  {
+    "name": "child_name",
+    "label": "Child Name",
+    "type": "text",
+    "hint": "Enter child's full name",
+    "required": true
+  },
+  {
+    "name": "child_gender",
+    "label": "Child Gender",
+    "type": "select",
+    "options": ["Male", "Female", "Other"],
+    "hint": "Select gender",
+    "required": false
+  },
+  {
+    "name": "child_dob",
+    "label": "Child Date of Birth",
+    "type": "date",
+    "hint": "Select date of birth",
+    "required": false
+  },
+  {
+    "name": "child_place_of_birth",
+    "label": "Place of Birth",
+    "type": "text",
+    "hint": "Enter place of birth",
+    "required": false
+  },
+  {
+    "name": "agency_or_guardian_details",
+    "label": "Agency / Guardian Details",
+    "type": "textarea",
+    "hint": "Enter details of adoption agency or legal guardian",
+    "required": true
+  },
+  {
+    "name": "biological_parent_details",
+    "label": "Biological Parent Details",
+    "type": "textarea",
+    "hint": "Enter details of biological parents (if known)",
+    "required": false
+  },
+  {
+    "name": "consent_details",
+    "label": "Consent Details",
+    "type": "textarea",
+    "hint": "Provide consent details from biological parents or legal guardian",
+    "required": true
+  },
+  {
+    "name": "reason_for_adoption",
+    "label": "Reason for Adoption",
+    "type": "textarea",
+    "hint": "State reason for adoption",
+    "required": true
+  },
+  {
+    "name": "financial_status",
+    "label": "Financial Status of Adoptive Parents",
+    "type": "textarea",
+    "hint": "Briefly describe financial stability",
+    "required": false
+  },
+  {
+    "name": "declaration",
+    "label": "Declaration",
+    "type": "textarea",
+    "hint": "Enter declaration confirming willingness and responsibility",
+    "required": true
+  }
+]

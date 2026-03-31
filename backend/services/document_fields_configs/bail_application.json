@@ -1,0 +1,260 @@
+[
+  {
+    "name": "court_name",
+    "label": "Court Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter full name of the court (e.g., Sessions Court)"
+  },
+  {
+    "name": "court_location",
+    "label": "Court Location",
+    "type": "text",
+    "required": true,
+    "hint": "Enter city and state of the court"
+  },
+  {
+    "name": "judge_name",
+    "label": "Judge Name",
+    "type": "text",
+    "hint": "Enter presiding judge name (if known)",
+    "required": false
+  },
+  {
+    "name": "case_title",
+    "label": "Case Title",
+    "type": "text",
+    "hint": "e.g., State vs Applicant Name",
+    "required": true
+  },
+  {
+    "name": "case_number",
+    "label": "Case / Crime Number",
+    "type": "text",
+    "required": true,
+    "hint": "Enter case or crime number"
+  },
+  {
+    "name": "police_station",
+    "label": "Police Station",
+    "type": "text",
+    "required": true,
+    "hint": "Enter police station name"
+  },
+  {
+    "name": "fir_number",
+    "label": "FIR Number",
+    "type": "text",
+    "hint": "Enter FIR number",
+    "required": false
+  },
+  {
+    "name": "fir_date",
+    "label": "FIR Date",
+    "type": "date",
+    "hint": "Select FIR registration date",
+    "required": false
+  },
+  {
+    "name": "sections_applied",
+    "label": "Sections Applied (IPC/CrPC/Other Laws)",
+    "type": "text",
+    "required": true,
+    "hint": "Enter applicable legal sections"
+  },
+  {
+    "name": "applicant_name",
+    "label": "Applicant Full Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter full legal name"
+  },
+  {
+    "name": "applicant_father_name",
+    "label": "Father's / Spouse Name",
+    "type": "text",
+    "hint": "Enter father's or spouse's name",
+    "required": false
+  },
+  {
+    "name": "applicant_age",
+    "label": "Age",
+    "type": "number",
+    "hint": "Enter age in years",
+    "required": true
+  },
+  {
+    "name": "applicant_occupation",
+    "label": "Occupation",
+    "type": "text",
+    "hint": "Enter occupation",
+    "required": false
+  },
+  {
+    "name": "applicant_address",
+    "label": "Residential Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter complete residential address with PIN code"
+  },
+  {
+    "name": "bail_type",
+    "label": "Type of Bail",
+    "type": "dropdown",
+    "required": true,
+    "options": [
+      "Regular Bail",
+      "Anticipatory Bail",
+      "Interim Bail",
+      "Default Bail"
+    ],
+    "hint": "Select type of bail"
+  },
+  {
+    "name": "arrest_status",
+    "label": "Arrest Status",
+    "type": "dropdown",
+    "options": [
+      "Arrested",
+      "Not Arrested"
+    ],
+    "hint": "Select arrest status",
+    "required": true
+  },
+  {
+    "name": "arrest_date",
+    "label": "Arrest Date",
+    "type": "date",
+    "hint": "Select date of arrest (if applicable)",
+    "required": false
+  },
+  {
+    "name": "custody_details",
+    "label": "Custody Details",
+    "type": "textarea",
+    "hint": "Mention whether in judicial/police custody",
+    "required": false
+  },
+  {
+    "name": "case_facts",
+    "label": "Brief Facts of the Case",
+    "type": "textarea",
+    "required": true,
+    "hint": "Provide concise case background"
+  },
+  {
+    "name": "grounds_for_bail",
+    "label": "Grounds for Bail",
+    "type": "group",
+    "repeatable": true,
+    "fields": [
+      {
+        "name": "ground",
+        "label": "Ground",
+        "type": "textarea",
+        "required": true,
+        "hint": "e.g., False implication, no criminal history, etc."
+      }
+    ],
+    "hint": "Add multiple legal grounds",
+    "required": true
+  },
+  {
+    "name": "previous_bail_applied",
+    "label": "Previously Applied for Bail",
+    "type": "boolean",
+    "hint": "Has the applicant applied for bail earlier?",
+    "required": false
+  },
+  {
+    "name": "previous_bail_details",
+    "label": "Previous Bail Details",
+    "type": "textarea",
+    "hint": "Mention court and result of previous application",
+    "required": false
+  },
+  {
+    "name": "criminal_antecedents",
+    "label": "Criminal Antecedents",
+    "type": "textarea",
+    "hint": "Mention past criminal record, if any",
+    "required": false
+  },
+  {
+    "name": "surety_amount",
+    "label": "Surety Amount",
+    "type": "number",
+    "hint": "Enter proposed surety amount",
+    "required": false
+  },
+  {
+    "name": "surety_details",
+    "label": "Surety Details",
+    "type": "textarea",
+    "hint": "Enter surety person details",
+    "required": false
+  },
+  {
+    "name": "undertaking",
+    "label": "Undertaking by Applicant",
+    "type": "textarea",
+    "hint": "e.g., Will cooperate, not tamper evidence, attend court",
+    "required": true
+  },
+  {
+    "name": "advocate_name",
+    "label": "Advocate Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter advocate full name"
+  },
+  {
+    "name": "advocate_enrollment_number",
+    "label": "Enrollment Number",
+    "type": "text",
+    "hint": "Enter Bar Council enrollment number",
+    "required": false
+  },
+  {
+    "name": "advocate_address",
+    "label": "Advocate Address",
+    "type": "textarea",
+    "hint": "Enter advocate office address",
+    "required": false
+  },
+  {
+    "name": "prayer",
+    "label": "Prayer",
+    "type": "textarea",
+    "hint": "Formal request to grant bail",
+    "required": true
+  },
+  {
+    "name": "verification_date",
+    "label": "Verification Date",
+    "type": "date",
+    "hint": "Select verification date",
+    "required": true
+  },
+  {
+    "name": "verification_place",
+    "label": "Verification Place",
+    "type": "text",
+    "hint": "Enter place of verification",
+    "required": true
+  },
+  {
+    "name": "applicant_signature",
+    "label": "Applicant Signature",
+    "type": "text",
+    "hint": "Enter applicant name as signature",
+    "required": false
+  },
+  {
+    "name": "advocate_signature",
+    "label": "Advocate Signature",
+    "type": "text",
+    "hint": "Enter advocate name as signature",
+    "required": false
+  }
+]

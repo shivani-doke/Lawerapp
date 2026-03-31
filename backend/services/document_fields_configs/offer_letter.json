@@ -1,0 +1,225 @@
+[
+  {
+    "name": "issue_date",
+    "label": "Issue Date",
+    "type": "date",
+    "hint": "Select offer letter date",
+    "required": true
+  },
+  {
+    "name": "company_name",
+    "label": "Company Name",
+    "type": "text",
+    "hint": "Enter company legal name",
+    "required": true
+  },
+  {
+    "name": "company_address",
+    "label": "Company Address",
+    "type": "textarea",
+    "hint": "Enter company address",
+    "required": true
+  },
+  {
+    "name": "company_logo",
+    "label": "Company Logo URL",
+    "type": "text",
+    "hint": "Enter logo URL (optional)",
+    "required": false
+  },
+  {
+    "name": "candidate_name",
+    "label": "Candidate Name",
+    "type": "text",
+    "hint": "Enter candidate full name",
+    "required": true
+  },
+  {
+    "name": "candidate_address",
+    "label": "Candidate Address",
+    "type": "textarea",
+    "hint": "Enter candidate address",
+    "required": false
+  },
+  {
+    "name": "designation",
+    "label": "Designation",
+    "type": "text",
+    "hint": "Enter offered role/designation",
+    "required": true
+  },
+  {
+    "name": "department",
+    "label": "Department",
+    "type": "text",
+    "hint": "Enter department name",
+    "required": false
+  },
+  {
+    "name": "reporting_manager",
+    "label": "Reporting Manager",
+    "type": "text",
+    "hint": "Enter reporting manager name/designation",
+    "required": false
+  },
+  {
+    "name": "work_location",
+    "label": "Work Location",
+    "type": "text",
+    "hint": "Enter job location",
+    "required": true
+  },
+  {
+    "name": "employment_type",
+    "label": "Employment Type",
+    "type": "dropdown",
+    "options": [
+      "Full-time",
+      "Part-time",
+      "Contract",
+      "Internship"
+    ],
+    "hint": "Select employment type",
+    "required": true
+  },
+  {
+    "name": "joining_date",
+    "label": "Proposed Joining Date",
+    "type": "date",
+    "hint": "Select expected joining date",
+    "required": true
+  },
+  {
+    "name": "probation_period_months",
+    "label": "Probation Period (Months)",
+    "type": "number",
+    "hint": "Enter probation duration",
+    "required": false
+  },
+  {
+    "name": "annual_ctc",
+    "label": "Annual CTC",
+    "type": "number",
+    "hint": "Enter total compensation",
+    "required": true
+  },
+  {
+    "name": "salary_breakup",
+    "label": "Salary Breakup",
+    "type": "textarea",
+    "hint": "Basic, HRA, bonus, allowances etc.",
+    "required": false
+  },
+  {
+    "name": "bonus_details",
+    "label": "Bonus / Incentives",
+    "type": "textarea",
+    "hint": "Performance bonus or incentives",
+    "required": false
+  },
+  {
+    "name": "working_hours",
+    "label": "Working Hours",
+    "type": "text",
+    "hint": "e.g., 9 AM to 6 PM",
+    "required": false
+  },
+  {
+    "name": "leave_policy",
+    "label": "Leave Policy",
+    "type": "textarea",
+    "hint": "Mention leave entitlement",
+    "required": false
+  },
+  {
+    "name": "notice_period_days",
+    "label": "Notice Period (Days)",
+    "type": "number",
+    "hint": "Enter notice period",
+    "required": false
+  },
+  {
+    "name": "background_verification",
+    "label": "Background Verification Required",
+    "type": "boolean",
+    "hint": "Is background check required?",
+    "required": false
+  },
+  {
+    "name": "documents_required",
+    "label": "Documents Required",
+    "type": "textarea",
+    "hint": "List documents to submit on joining",
+    "required": false
+  },
+  {
+    "name": "confidentiality_clause",
+    "label": "Confidentiality Clause",
+    "type": "textarea",
+    "hint": "Confidentiality obligations",
+    "required": false
+  },
+  {
+    "name": "termination_conditions",
+    "label": "Termination Conditions",
+    "type": "textarea",
+    "hint": "Conditions for termination",
+    "required": false
+  },
+  {
+    "name": "offer_valid_till",
+    "label": "Offer Valid Till",
+    "type": "date",
+    "hint": "Select offer expiry date",
+    "required": true
+  },
+  {
+    "name": "acceptance_required",
+    "label": "Acceptance Required",
+    "type": "boolean",
+    "hint": "Candidate must accept offer?",
+    "required": true
+  },
+  {
+    "name": "acceptance_deadline",
+    "label": "Acceptance Deadline",
+    "type": "date",
+    "hint": "Enter last date to accept offer",
+    "required": false
+  },
+  {
+    "name": "hr_name",
+    "label": "HR/Authorized Signatory Name",
+    "type": "text",
+    "hint": "Enter HR/signatory name",
+    "required": true
+  },
+  {
+    "name": "hr_designation",
+    "label": "HR Designation",
+    "type": "text",
+    "hint": "Enter designation of signatory",
+    "required": false
+  },
+  {
+    "name": "company_signature",
+    "label": "Company Signature",
+    "type": "text",
+    "hint": "Enter signatory name",
+    "required": true
+  },
+  {
+    "name": "candidate_acceptance",
+    "label": "Candidate Acceptance",
+    "type": "boolean",
+    "hint": "Has candidate accepted?",
+    "required": false
+  },
+  {
+    "name": "candidate_signature",
+    "label": "Candidate Signature",
+    "type": "text",
+    "hint": "Enter candidate name as signature",
+    "required": false
+  }
+]

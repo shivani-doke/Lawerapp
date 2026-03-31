@@ -1,0 +1,16 @@
+[
+  {
+    "name": "client_name",
+    "label": "Client Name",
+    "type": "text",
+    "hint": "Enter client full name",
+    "required": true
+  },
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "hint": "Select execution date",
+    "required": true
+  }
+]

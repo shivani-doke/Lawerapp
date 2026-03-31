@@ -1,0 +1,312 @@
+[
+  {
+    "name": "agreement_date",
+    "label": "Agreement Date",
+    "type": "date",
+    "hint": "Select agreement date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state",
+    "required": true
+  },
+
+  {
+    "name": "client_details",
+    "label": "Client/Company Details",
+    "type": "group",
+    "repeatable": false,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Company Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter legal name"
+      },
+      {
+        "name": "address",
+        "label": "Registered Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter address"
+      },
+      {
+        "name": "authorized_person",
+        "label": "Authorized Signatory",
+        "type": "text",
+        "required": false,
+        "hint": "Enter representative name"
+      }
+    ]
+  },
+
+  {
+    "name": "vendor_details",
+    "label": "Vendor Details",
+    "type": "group",
+    "repeatable": false,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Vendor Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter legal name"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter vendor address"
+      },
+      {
+        "name": "contact_details",
+        "label": "Contact Details",
+        "type": "text",
+        "required": false,
+        "hint": "Phone/email"
+      }
+    ]
+  },
+
+  {
+    "name": "agreement_type",
+    "label": "Agreement Type",
+    "type": "dropdown",
+    "options": [
+      "Goods Supply",
+      "Service Agreement",
+      "Hybrid (Goods + Services)"
+    ],
+    "hint": "Select agreement type",
+    "required": true
+  },
+
+  {
+    "name": "scope_of_work",
+    "label": "Scope of Work",
+    "type": "textarea",
+    "hint": "Describe detailed scope",
+    "required": true
+  },
+
+  {
+    "name": "deliverables",
+    "label": "Deliverables",
+    "type": "textarea",
+    "hint": "Define deliverables or items",
+    "required": true
+  },
+
+  {
+    "name": "delivery_schedule",
+    "label": "Delivery Schedule",
+    "type": "textarea",
+    "hint": "Mention timelines and milestones",
+    "required": false
+  },
+
+  {
+    "name": "pricing_structure",
+    "label": "Pricing Structure",
+    "type": "textarea",
+    "hint": "Fixed / per unit / milestone-based",
+    "required": true
+  },
+
+  {
+    "name": "tax_details",
+    "label": "Tax Details (GST etc.)",
+    "type": "text",
+    "hint": "Mention GST applicability",
+    "required": false
+  },
+
+  {
+    "name": "payment_terms",
+    "label": "Payment Terms",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "milestone",
+        "label": "Milestone",
+        "type": "text",
+        "required": false,
+        "hint": "e.g., Advance, Delivery"
+      },
+      {
+        "name": "amount",
+        "label": "Amount",
+        "type": "number",
+        "required": true,
+        "hint": "Enter amount"
+      },
+      {
+        "name": "due_days",
+        "label": "Due in Days",
+        "type": "number",
+        "required": false,
+        "hint": "Payment due timeline"
+      }
+    ]
+  },
+
+  {
+    "name": "sla_terms",
+    "label": "Service Level Agreement (SLA)",
+    "type": "textarea",
+    "hint": "Define performance standards",
+    "required": false
+  },
+
+  {
+    "name": "penalty_clause",
+    "label": "Penalty / Liquidated Damages",
+    "type": "textarea",
+    "hint": "Delay or performance penalties",
+    "required": false
+  },
+
+  {
+    "name": "quality_standards",
+    "label": "Quality Standards",
+    "type": "textarea",
+    "hint": "Define quality benchmarks",
+    "required": false
+  },
+
+  {
+    "name": "inspection_acceptance",
+    "label": "Inspection & Acceptance",
+    "type": "textarea",
+    "hint": "Acceptance criteria and process",
+    "required": false
+  },
+
+  {
+    "name": "confidentiality_clause",
+    "label": "Confidentiality Clause",
+    "type": "textarea",
+    "hint": "Data protection obligations",
+    "required": false
+  },
+
+  {
+    "name": "intellectual_property",
+    "label": "Intellectual Property Rights",
+    "type": "textarea",
+    "hint": "Ownership of work/products",
+    "required": false
+  },
+
+  {
+    "name": "indemnity_clause",
+    "label": "Indemnity Clause",
+    "type": "textarea",
+    "hint": "Vendor liability and indemnity",
+    "required": false
+  },
+
+  {
+    "name": "limitation_of_liability",
+    "label": "Limitation of Liability",
+    "type": "textarea",
+    "hint": "Cap on liability",
+    "required": false
+  },
+
+  {
+    "name": "termination_clause",
+    "label": "Termination Clause",
+    "type": "textarea",
+    "hint": "Conditions for termination",
+    "required": true
+  },
+
+  {
+    "name": "termination_notice_days",
+    "label": "Termination Notice (Days)",
+    "type": "number",
+    "hint": "Notice period",
+    "required": false
+  },
+
+  {
+    "name": "force_majeure",
+    "label": "Force Majeure",
+    "type": "textarea",
+    "hint": "Unforeseen events clause",
+    "required": false
+  },
+
+  {
+    "name": "compliance_clause",
+    "label": "Legal Compliance",
+    "type": "textarea",
+    "hint": "Regulatory compliance obligations",
+    "required": false
+  },
+
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Applicable law",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Court jurisdiction",
+    "required": true
+  },
+
+  {
+    "name": "signatures",
+    "label": "Signatures",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "party_name",
+        "label": "Party Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name"
+      },
+      {
+        "name": "authorized_signatory",
+        "label": "Authorized Signatory",
+        "type": "text",
+        "required": true,
+        "hint": "Enter signatory name"
+      }
+    ]
+  },
+
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  }
+]

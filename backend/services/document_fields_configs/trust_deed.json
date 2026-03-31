@@ -1,0 +1,192 @@
+[
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "hint": "Select trust deed execution date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city where trust deed is executed",
+    "required": true
+  },
+  {
+    "name": "trust_name",
+    "label": "Trust Name",
+    "type": "text",
+    "hint": "Enter full name of the trust",
+    "required": true
+  },
+  {
+    "name": "trust_address",
+    "label": "Registered Office Address",
+    "type": "textarea",
+    "hint": "Enter complete address of the trust",
+    "required": true
+  },
+
+  {
+    "name": "settlor_name",
+    "label": "Settlor Name",
+    "type": "text",
+    "hint": "Enter full name of settlor",
+    "required": true
+  },
+  {
+    "name": "settlor_address",
+    "label": "Settlor Address",
+    "type": "textarea",
+    "hint": "Enter settlor residential address",
+    "required": true
+  },
+  {
+    "name": "settlor_age",
+    "label": "Settlor Age",
+    "type": "number",
+    "hint": "Enter age of settlor",
+    "required": true
+  },
+  {
+    "name": "settlor_occupation",
+    "label": "Settlor Occupation",
+    "type": "text",
+    "hint": "Enter occupation of settlor",
+    "required": true
+  },
+
+  {
+    "name": "trustee_details",
+    "label": "Trustee Details",
+    "type": "textarea",
+    "hint": "Enter names, addresses, age, occupation of trustees",
+    "required": true
+  },
+  {
+    "name": "number_of_trustees",
+    "label": "Number of Trustees",
+    "type": "number",
+    "hint": "Enter total number of trustees",
+    "required": true
+  },
+  {
+    "name": "managing_trustee",
+    "label": "Managing Trustee",
+    "type": "text",
+    "hint": "Enter name of managing/chief trustee",
+    "required": false
+  },
+
+  {
+    "name": "beneficiary_details",
+    "label": "Beneficiary Details",
+    "type": "textarea",
+    "hint": "Enter beneficiaries or class of beneficiaries",
+    "required": true
+  },
+
+  {
+    "name": "trust_property_details",
+    "label": "Initial Trust Property (Corpus)",
+    "type": "textarea",
+    "hint": "Enter amount/property settled in trust (e.g., Rs. 1,000)",
+    "required": true
+  },
+
+  {
+    "name": "trust_purpose",
+    "label": "Objectives of Trust",
+    "type": "textarea",
+    "hint": "Mention charitable/religious/educational purposes",
+    "required": true
+  },
+
+  {
+    "name": "powers_of_trustees",
+    "label": "Powers of Trustees",
+    "type": "textarea",
+    "hint": "Define powers like investment, bank operations, etc.",
+    "required": true
+  },
+  {
+    "name": "duties_of_trustees",
+    "label": "Duties of Trustees",
+    "type": "textarea",
+    "hint": "Define responsibilities of trustees",
+    "required": true
+  },
+
+  {
+    "name": "bank_account_details",
+    "label": "Bank Account Clause",
+    "type": "textarea",
+    "hint": "Specify how bank accounts will be operated",
+    "required": false
+  },
+
+  {
+    "name": "appointment_removal_trustees",
+    "label": "Appointment/Removal of Trustees",
+    "type": "textarea",
+    "hint": "Mention procedure for adding/removing trustees",
+    "required": true
+  },
+
+  {
+    "name": "meeting_rules",
+    "label": "Meetings & Quorum",
+    "type": "textarea",
+    "hint": "Define meeting frequency and quorum rules",
+    "required": false
+  },
+
+  {
+    "name": "accounts_audit",
+    "label": "Accounts & Audit",
+    "type": "textarea",
+    "hint": "Mention accounting and auditing process",
+    "required": true
+  },
+
+  {
+    "name": "amendment_clause",
+    "label": "Amendment Clause",
+    "type": "textarea",
+    "hint": "Conditions to modify trust deed",
+    "required": true
+  },
+
+  {
+    "name": "dissolution_clause",
+    "label": "Dissolution Clause",
+    "type": "textarea",
+    "hint": "What happens when trust is dissolved",
+    "required": true
+  },
+
+  {
+    "name": "irrevocability_clause",
+    "label": "Irrevocability Clause",
+    "type": "textarea",
+    "hint": "Declare whether trust is irrevocable",
+    "required": true
+  },
+
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Applicable law (e.g., Indian Trusts Act, 1882)",
+    "required": true
+  },
+
+  {
+    "name": "witness_details",
+    "label": "Witness Details",
+    "type": "textarea",
+    "hint": "Enter names and addresses of witnesses",
+    "required": true
+  }
+]

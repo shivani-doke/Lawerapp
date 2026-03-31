@@ -1,0 +1,270 @@
+[
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "hint": "Select execution date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where deed is executed",
+    "required": true
+  },
+  {
+    "name": "mortgagor_name",
+    "label": "Mortgagor Name",
+    "type": "text",
+    "hint": "Enter borrower full legal name",
+    "required": true
+  },
+  {
+    "name": "mortgagor_address",
+    "label": "Mortgagor Address",
+    "type": "textarea",
+    "hint": "Enter complete residential address",
+    "required": true
+  },
+  {
+    "name": "mortgagor_id_proof",
+    "label": "Mortgagor ID Proof",
+    "type": "text",
+    "hint": "Enter Aadhaar/PAN details",
+    "required": false
+  },
+  {
+    "name": "mortgagor_type",
+    "label": "Mortgagor Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select mortgagor type",
+    "required": true
+  },
+  {
+    "name": "mortgagee_name",
+    "label": "Mortgagee Name",
+    "type": "text",
+    "hint": "Enter lender/bank name",
+    "required": true
+  },
+  {
+    "name": "mortgagee_address",
+    "label": "Mortgagee Address",
+    "type": "textarea",
+    "hint": "Enter lender address",
+    "required": true
+  },
+  {
+    "name": "mortgagee_type",
+    "label": "Mortgagee Type",
+    "type": "dropdown",
+    "options": ["Individual", "Bank", "NBFC", "Company"],
+    "hint": "Select mortgagee type",
+    "required": true
+  },
+  {
+    "name": "loan_amount",
+    "label": "Loan Amount",
+    "type": "number",
+    "hint": "Enter principal loan amount",
+    "required": true
+  },
+  {
+    "name": "loan_purpose",
+    "label": "Loan Purpose",
+    "type": "textarea",
+    "hint": "Specify purpose of loan",
+    "required": false
+  },
+  {
+    "name": "interest_rate",
+    "label": "Interest Rate (%)",
+    "type": "number",
+    "hint": "Enter annual interest rate",
+    "required": true
+  },
+  {
+    "name": "interest_type",
+    "label": "Interest Type",
+    "type": "dropdown",
+    "options": ["Fixed", "Floating"],
+    "hint": "Select interest type",
+    "required": true
+  },
+  {
+    "name": "repayment_term_months",
+    "label": "Repayment Term (Months)",
+    "type": "number",
+    "hint": "Enter repayment duration",
+    "required": true
+  },
+  {
+    "name": "emi_amount",
+    "label": "EMI Amount",
+    "type": "number",
+    "hint": "Enter monthly EMI amount",
+    "required": false
+  },
+  {
+    "name": "repayment_start_date",
+    "label": "Repayment Start Date",
+    "type": "date",
+    "hint": "Select EMI start date",
+    "required": false
+  },
+  {
+    "name": "security_type",
+    "label": "Type of Mortgage",
+    "type": "dropdown",
+    "options": [
+      "Simple Mortgage",
+      "Equitable Mortgage",
+      "Mortgage by Conditional Sale",
+      "Usufructuary Mortgage"
+    ],
+    "hint": "Select type of mortgage",
+    "required": true
+  },
+  {
+    "name": "property_description",
+    "label": "Property Description",
+    "type": "textarea",
+    "hint": "Enter detailed description of property",
+    "required": true
+  },
+  {
+    "name": "property_address",
+    "label": "Property Address",
+    "type": "textarea",
+    "hint": "Enter full address",
+    "required": true
+  },
+  {
+    "name": "property_value",
+    "label": "Property Market Value",
+    "type": "number",
+    "hint": "Enter approximate value",
+    "required": false
+  },
+  {
+    "name": "title_clearance",
+    "label": "Clear Title Declaration",
+    "type": "boolean",
+    "hint": "Confirm property has clear title",
+    "required": true
+  },
+  {
+    "name": "encumbrance_details",
+    "label": "Encumbrance Details",
+    "type": "textarea",
+    "hint": "Mention existing liabilities if any",
+    "required": false
+  },
+  {
+    "name": "insurance_required",
+    "label": "Insurance Requirement",
+    "type": "boolean",
+    "hint": "Is property insurance required?",
+    "required": false
+  },
+  {
+    "name": "maintenance_obligation",
+    "label": "Maintenance Obligation",
+    "type": "textarea",
+    "hint": "Responsibility for property maintenance",
+    "required": false
+  },
+  {
+    "name": "default_clause",
+    "label": "Default Clause",
+    "type": "textarea",
+    "hint": "Conditions of default and remedies",
+    "required": true
+  },
+  {
+    "name": "penalty_interest",
+    "label": "Penalty Interest (%)",
+    "type": "number",
+    "hint": "Interest charged on default",
+    "required": false
+  },
+  {
+    "name": "foreclosure_rights",
+    "label": "Foreclosure Rights",
+    "type": "textarea",
+    "hint": "Rights of lender in case of default",
+    "required": true
+  },
+  {
+    "name": "prepayment_terms",
+    "label": "Prepayment Terms",
+    "type": "textarea",
+    "hint": "Conditions for early repayment",
+    "required": false
+  },
+  {
+    "name": "possession_rights",
+    "label": "Possession Rights",
+    "type": "textarea",
+    "hint": "Who retains possession of property",
+    "required": true
+  },
+  {
+    "name": "registration_required",
+    "label": "Registration Required",
+    "type": "boolean",
+    "hint": "Is registration required under law?",
+    "required": true
+  },
+  {
+    "name": "stamp_duty_details",
+    "label": "Stamp Duty Details",
+    "type": "textarea",
+    "hint": "Mention stamp duty paid or applicable",
+    "required": false
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Transfer of Property Act, India)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "mortgagor_signature",
+    "label": "Mortgagor Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "mortgagee_signature",
+    "label": "Mortgagee Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": true
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": true
+  }
+]

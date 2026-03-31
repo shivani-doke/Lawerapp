@@ -1,0 +1,243 @@
+[
+  {
+    "name": "filing_date",
+    "label": "Filing Date",
+    "type": "date",
+    "hint": "Select filing date",
+    "required": true
+  },
+  {
+    "name": "application_type",
+    "label": "Application Type",
+    "type": "dropdown",
+    "options": [
+      "Provisional",
+      "Complete",
+      "PCT International",
+      "Convention Application"
+    ],
+    "hint": "Select type of patent application",
+    "required": true
+  },
+  {
+    "name": "applicant_details",
+    "label": "Applicant Details",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Applicant Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full legal name"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter complete address"
+      },
+      {
+        "name": "nationality",
+        "label": "Nationality",
+        "type": "text",
+        "required": true,
+        "hint": "Enter nationality"
+      },
+      {
+        "name": "applicant_type",
+        "label": "Applicant Type",
+        "type": "dropdown",
+        "options": ["Individual", "Company", "Startup", "Government"],
+        "required": true,
+        "hint": "Select type"
+      }
+    ]
+  },
+  {
+    "name": "inventor_details",
+    "label": "Inventor Details",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Inventor Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter inventor full name"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter address"
+      },
+      {
+        "name": "nationality",
+        "label": "Nationality",
+        "type": "text",
+        "required": true,
+        "hint": "Enter nationality"
+      }
+    ]
+  },
+  {
+    "name": "assignee_details",
+    "label": "Assignee Details",
+    "type": "textarea",
+    "hint": "Enter assignee (if rights assigned)",
+    "required": false
+  },
+  {
+    "name": "invention_title",
+    "label": "Invention Title",
+    "type": "text",
+    "hint": "Enter title of invention",
+    "required": true
+  },
+  {
+    "name": "technical_field",
+    "label": "Technical Field",
+    "type": "textarea",
+    "hint": "Define field of invention",
+    "required": true
+  },
+  {
+    "name": "background_of_invention",
+    "label": "Background of Invention",
+    "type": "textarea",
+    "hint": "Describe existing problem and prior art",
+    "required": true
+  },
+  {
+    "name": "summary_of_invention",
+    "label": "Summary of Invention",
+    "type": "textarea",
+    "hint": "Brief summary of invention",
+    "required": true
+  },
+  {
+    "name": "detailed_description",
+    "label": "Detailed Description",
+    "type": "textarea",
+    "hint": "Explain invention in detail with embodiments",
+    "required": true
+  },
+  {
+    "name": "drawings_description",
+    "label": "Drawings Description",
+    "type": "textarea",
+    "hint": "Explain diagrams/figures",
+    "required": false
+  },
+  {
+    "name": "drawings_upload",
+    "label": "Upload Drawings",
+    "type": "file",
+    "hint": "Upload technical drawings (optional)",
+    "required": false
+  },
+  {
+    "name": "claims",
+    "label": "Claims",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "claim_text",
+        "label": "Claim",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter individual claim"
+      }
+    ]
+  },
+  {
+    "name": "abstract",
+    "label": "Abstract",
+    "type": "textarea",
+    "hint": "Short technical summary (150-300 words)",
+    "required": true
+  },
+  {
+    "name": "keywords",
+    "label": "Keywords",
+    "type": "text",
+    "hint": "Enter keywords for search/classification",
+    "required": false
+  },
+  {
+    "name": "priority_claimed",
+    "label": "Priority Claimed",
+    "type": "boolean",
+    "hint": "Is priority claimed from earlier filing?",
+    "required": true
+  },
+  {
+    "name": "priority_details",
+    "label": "Priority Details",
+    "type": "textarea",
+    "hint": "Enter priority application number/date/country",
+    "required": false
+  },
+  {
+    "name": "publication_preference",
+    "label": "Publication Preference",
+    "type": "dropdown",
+    "options": [
+      "Normal Publication",
+      "Early Publication"
+    ],
+    "hint": "Select publication type",
+    "required": false
+  },
+  {
+    "name": "examination_request",
+    "label": "Request for Examination",
+    "type": "boolean",
+    "hint": "Is examination requested?",
+    "required": false
+  },
+  {
+    "name": "agent_details",
+    "label": "Patent Agent Details",
+    "type": "textarea",
+    "hint": "Enter patent agent/attorney details",
+    "required": false
+  },
+  {
+    "name": "declaration_of_inventorship",
+    "label": "Declaration of Inventorship",
+    "type": "boolean",
+    "hint": "Confirm inventorship declaration",
+    "required": true
+  },
+  {
+    "name": "assignment_document",
+    "label": "Assignment Document Uploaded",
+    "type": "boolean",
+    "hint": "Upload assignment if applicable",
+    "required": false
+  },
+  {
+    "name": "government_fee_details",
+    "label": "Government Fee Details",
+    "type": "textarea",
+    "hint": "Mention filing fees paid",
+    "required": false
+  },
+  {
+    "name": "digital_signature",
+    "label": "Digital Signature",
+    "type": "text",
+    "hint": "Enter applicant/agent signature",
+    "required": true
+  }
+]

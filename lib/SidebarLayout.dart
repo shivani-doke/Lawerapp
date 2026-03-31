@@ -1,9 +1,10 @@
 import 'package:LegalAI/Clientside.dart';
 import 'package:LegalAI/DashboardPage.dart';
 import 'package:LegalAI/DocumentPage.dart';
+import 'package:LegalAI/UploadsPage.dart';
 import 'package:flutter/material.dart';
 import 'LegalAiPage.dart';
-import 'SaleDeedPage.dart';
+import 'GiftDeedPage.dart';
 import 'RentalAgreementPage.dart';
 import 'PowerOfAttorneyPage.dart';
 import 'PartnershipDeedPage.dart';
@@ -11,6 +12,28 @@ import 'AffidavitPage.dart';
 import 'WillTestamentPage.dart';
 import 'BailApplicationPage.dart';
 import 'LoanAgreementPage.dart';
+import 'DivorcePaperPage.dart';
+import 'SaleDeedPage.dart';
+import 'MortgageDeedPage.dart';
+import 'NonDisclosureAgreementPage.dart';
+import 'EmploymentContractPage.dart';
+import 'OfferLetterPage.dart';
+import 'ServiceAgreementPage.dart';
+import 'ChildCustodyAgreementPage.dart';
+import 'AdoptionPapersPage.dart';
+import 'PartitionDeedPage.dart';
+import 'TrustDeedPage.dart';
+import 'MemorandumOfUnderstandingPage.dart';
+import 'VendorAgreementPage.dart';
+import 'NonCompeteAgreementPage.dart';
+import 'IndemnityAgreementPage.dart';
+import 'JointVentureAgreementPage.dart';
+import 'LicensingAgreementPage.dart';
+import 'AssignmentAgreementPage.dart';
+import 'SettlementAgreementPage.dart';
+import 'TrademarkApplicationPage.dart';
+import 'CopyrightAgreementPage.dart';
+import 'PatentFilingDocumentsPage.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -32,7 +55,7 @@ class _MainLayoutState extends State<MainLayout> {
       const LegalAIPage(),
       DocumentsPage(onNavigate: _changePage), // const DocumentsPage(),
       const ClientsPage(),
-      const SaleDeedPage(), // 4
+      const GiftDeedPage(), // 4
       const RentalAgreementPage(), // 5
       PowerOfAttorneyPage(), // 6
       PartnershipDeedPage(), // 7
@@ -40,6 +63,29 @@ class _MainLayoutState extends State<MainLayout> {
       const WillTestamentPage(), // 9
       const BailApplicationPage(), // 10
       LoanAgreementPage(),
+      const DivorcePaperPage(), // 12
+      const SaleDeedPage(), // 13
+      const MortgageDeedPage(), // 14
+      const NonDisclosureAgreementPage(), // 15
+      const EmploymentContractPage(), // 16
+      const OfferLetterPage(), // 17
+      const ServiceAgreementPage(), // 18
+      const ChildCustodyAgreementPage(), // 19
+      const AdoptionPapersPage(), // 20
+      const PartitionDeedPage(), // 21
+      const TrustDeedPage(), // 22
+      const MemorandumOfUnderstandingPage(), // 23
+      const VendorAgreementPage(), // 24
+      const NonCompeteAgreementPage(), // 25
+      const IndemnityAgreementPage(), // 26
+      const JointVentureAgreementPage(), // 27
+      const LicensingAgreementPage(), // 28
+      const AssignmentAgreementPage(), // 29
+      const SettlementAgreementPage(), // 30
+      const TrademarkApplicationPage(), // 31
+      const CopyrightAgreementPage(), // 32
+      const PatentFilingDocumentsPage(), // 33
+      UploadsPage(onNavigate: _changePage), // 34
     ];
   }
 
@@ -92,6 +138,7 @@ class _MainLayoutState extends State<MainLayout> {
                 _navItem(Icons.chat_bubble_outline, "AI Chat", 1),
                 _navItem(Icons.description_outlined, "Documents", 2),
                 _navItem(Icons.people_outline, "Clients", 3),
+                _navItem(Icons.upload_file_outlined, "Uploads", 34),
               ],
             ),
           ),

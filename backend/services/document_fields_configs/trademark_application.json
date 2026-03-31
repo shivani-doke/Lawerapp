@@ -1,0 +1,203 @@
+[
+  {
+    "name": "application_date",
+    "label": "Application Date",
+    "type": "date",
+    "hint": "Select filing date",
+    "required": true
+  },
+
+  {
+    "name": "application_type",
+    "label": "Application Type",
+    "type": "dropdown",
+    "options": [
+      "Individual",
+      "Startup",
+      "Small Enterprise",
+      "Company",
+      "Partnership"
+    ],
+    "hint": "Select applicant category",
+    "required": true
+  },
+
+  {
+    "name": "applicant_details",
+    "label": "Applicant Details",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Applicant Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full legal name"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter full address"
+      },
+      {
+        "name": "nationality",
+        "label": "Nationality",
+        "type": "text",
+        "required": true,
+        "hint": "Enter nationality"
+      }
+    ]
+  },
+
+  {
+    "name": "trademark_type",
+    "label": "Trademark Type",
+    "type": "dropdown",
+    "options": [
+      "Word Mark",
+      "Logo / Device Mark",
+      "Combined Mark",
+      "Sound Mark",
+      "Shape Mark"
+    ],
+    "hint": "Select type of mark",
+    "required": true
+  },
+
+  {
+    "name": "mark_name",
+    "label": "Trademark / Mark Name",
+    "type": "text",
+    "hint": "Enter mark name (for word mark)",
+    "required": true
+  },
+  {
+    "name": "logo_upload",
+    "label": "Upload Logo",
+    "type": "file",
+    "hint": "Upload logo/device mark (if applicable)",
+    "required": false
+  },
+  {
+    "name": "mark_description",
+    "label": "Mark Description",
+    "type": "textarea",
+    "hint": "Describe mark/logo (color, style, etc.)",
+    "required": false
+  },
+
+  {
+    "name": "trademark_class",
+    "label": "Trademark Class (Nice Classification)",
+    "type": "text",
+    "hint": "Enter class number (1–45)",
+    "required": true
+  },
+  {
+    "name": "multi_class",
+    "label": "Multiple Classes",
+    "type": "boolean",
+    "hint": "Is application for multiple classes?",
+    "required": false
+  },
+  {
+    "name": "goods_services_description",
+    "label": "Goods/Services Description",
+    "type": "textarea",
+    "hint": "Describe goods/services in detail",
+    "required": true
+  },
+
+  {
+    "name": "user_claim",
+    "label": "User Claim Type",
+    "type": "dropdown",
+    "options": [
+      "Proposed to be Used",
+      "Already in Use"
+    ],
+    "hint": "Select usage status",
+    "required": true
+  },
+  {
+    "name": "first_use_date",
+    "label": "First Use Date",
+    "type": "date",
+    "hint": "Select first use date (if already in use)",
+    "required": false
+  },
+  {
+    "name": "usage_description",
+    "label": "Usage Description",
+    "type": "textarea",
+    "hint": "Explain how mark is used in business",
+    "required": false
+  },
+
+  {
+    "name": "priority_claimed",
+    "label": "Priority Claimed",
+    "type": "boolean",
+    "hint": "Is priority claimed from foreign application?",
+    "required": false
+  },
+  {
+    "name": "priority_details",
+    "label": "Priority Details",
+    "type": "textarea",
+    "hint": "Enter country, application number, date",
+    "required": false
+  },
+
+  {
+    "name": "agent_details",
+    "label": "Trademark Agent Details",
+    "type": "textarea",
+    "hint": "Enter agent/attorney details",
+    "required": false
+  },
+
+  {
+    "name": "power_of_attorney",
+    "label": "Power of Attorney Uploaded",
+    "type": "boolean",
+    "hint": "Is POA submitted?",
+    "required": false
+  },
+
+  {
+    "name": "msme_or_startup_certificate",
+    "label": "Startup/MSME Certificate",
+    "type": "boolean",
+    "hint": "For fee concession eligibility",
+    "required": false
+  },
+
+  {
+    "name": "government_fee",
+    "label": "Government Fee",
+    "type": "number",
+    "hint": "Enter filing fee",
+    "required": false
+  },
+
+  {
+    "name": "declaration",
+    "label": "Declaration",
+    "type": "textarea",
+    "hint": "Applicant declaration of ownership",
+    "required": true
+  },
+
+  {
+    "name": "digital_signature",
+    "label": "Digital Signature",
+    "type": "text",
+    "hint": "Enter applicant/agent name as signature",
+    "required": true
+  }
+]

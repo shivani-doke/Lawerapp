@@ -1,0 +1,212 @@
+[
+  {
+    "name": "effective_date",
+    "label": "Effective Date",
+    "type": "date",
+    "hint": "Select agreement effective date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where agreement is executed",
+    "required": true
+  },
+  {
+    "name": "indemnifier_name",
+    "label": "Indemnifier Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "indemnifier_address",
+    "label": "Indemnifier Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "indemnifier_type",
+    "label": "Indemnifier Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select type of indemnifier",
+    "required": true
+  },
+  {
+    "name": "indemnified_party_name",
+    "label": "Indemnified Party Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "indemnified_party_address",
+    "label": "Indemnified Party Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "indemnified_party_type",
+    "label": "Indemnified Party Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select type of indemnified party",
+    "required": true
+  },
+  {
+    "name": "agreement_title",
+    "label": "Agreement Title",
+    "type": "text",
+    "hint": "e.g., Indemnity Agreement for Services",
+    "required": false
+  },
+  {
+    "name": "background_context",
+    "label": "Background / Purpose",
+    "type": "textarea",
+    "hint": "Describe context of indemnity (contract, service, event, etc.)",
+    "required": true
+  },
+  {
+    "name": "indemnity_scope",
+    "label": "Indemnity Scope",
+    "type": "textarea",
+    "hint": "Clearly define covered losses, damages, liabilities",
+    "required": true
+  },
+  {
+    "name": "covered_losses",
+    "label": "Covered Losses",
+    "type": "textarea",
+    "hint": "Specify types (legal costs, damages, third-party claims)",
+    "required": true
+  },
+  {
+    "name": "exclusions",
+    "label": "Exclusions",
+    "type": "textarea",
+    "hint": "Mention what is NOT covered (negligence, fraud, etc.)",
+    "required": false
+  },
+  {
+    "name": "liability_cap",
+    "label": "Liability Cap",
+    "type": "number",
+    "hint": "Enter maximum indemnity amount (if any)",
+    "required": false
+  },
+  {
+    "name": "claim_procedure",
+    "label": "Claim Procedure",
+    "type": "textarea",
+    "hint": "Steps for making indemnity claims",
+    "required": true
+  },
+  {
+    "name": "notice_period",
+    "label": "Notice Period for Claims",
+    "type": "text",
+    "hint": "e.g., within 30 days of claim",
+    "required": false
+  },
+  {
+    "name": "defense_control",
+    "label": "Control of Defense",
+    "type": "textarea",
+    "hint": "Who controls legal defense of claims",
+    "required": false
+  },
+  {
+    "name": "settlement_terms",
+    "label": "Settlement Terms",
+    "type": "textarea",
+    "hint": "Conditions for settlement of claims",
+    "required": false
+  },
+  {
+    "name": "duration",
+    "label": "Duration",
+    "type": "text",
+    "hint": "Enter duration (fixed term or ongoing)",
+    "required": true
+  },
+  {
+    "name": "termination_clause",
+    "label": "Termination Clause",
+    "type": "textarea",
+    "hint": "Conditions for termination",
+    "required": false
+  },
+  {
+    "name": "insurance_requirement",
+    "label": "Insurance Requirement",
+    "type": "textarea",
+    "hint": "Specify insurance obligations if any",
+    "required": false
+  },
+  {
+    "name": "confidentiality_clause",
+    "label": "Confidentiality Clause",
+    "type": "textarea",
+    "hint": "Confidentiality obligations",
+    "required": false
+  },
+  {
+    "name": "indemnity_type",
+    "label": "Type of Indemnity",
+    "type": "dropdown",
+    "options": [
+      "Third-Party Claims",
+      "First-Party Loss",
+      "Both"
+    ],
+    "hint": "Select indemnity type",
+    "required": true
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Laws of India)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "indemnifier_signature",
+    "label": "Indemnifier Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "indemnified_signature",
+    "label": "Indemnified Party Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  }
+]

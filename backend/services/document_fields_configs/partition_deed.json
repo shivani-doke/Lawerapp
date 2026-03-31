@@ -1,0 +1,271 @@
+[
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "hint": "Select execution date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where deed is executed",
+    "required": true
+  },
+  {
+    "name": "family_name",
+    "label": "Family / Group Name",
+    "type": "text",
+    "hint": "Enter family or group name (if applicable)",
+    "required": false
+  },
+  {
+    "name": "co_owners",
+    "label": "Co-owners / Parties",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Full Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter co-owner full name"
+      },
+      {
+        "name": "relation",
+        "label": "Relation",
+        "type": "text",
+        "required": false,
+        "hint": "e.g., son, daughter, brother"
+      },
+      {
+        "name": "age",
+        "label": "Age",
+        "type": "number",
+        "required": false,
+        "hint": "Enter age"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter residential address"
+      },
+      {
+        "name": "id_proof",
+        "label": "ID Proof",
+        "type": "text",
+        "required": false,
+        "hint": "Enter Aadhaar/PAN details"
+      },
+      {
+        "name": "share_percentage",
+        "label": "Pre-Partition Share (%)",
+        "type": "number",
+        "required": false,
+        "hint": "Enter ownership share before partition"
+      }
+    ]
+  },
+  {
+    "name": "property_type",
+    "label": "Property Type",
+    "type": "dropdown",
+    "options": [
+      "Residential",
+      "Commercial",
+      "Agricultural",
+      "Mixed"
+    ],
+    "hint": "Select type of property",
+    "required": true
+  },
+  {
+    "name": "property_description",
+    "label": "Property Description",
+    "type": "textarea",
+    "hint": "Enter detailed description (survey no, area, boundaries)",
+    "required": true
+  },
+  {
+    "name": "property_address",
+    "label": "Property Address",
+    "type": "textarea",
+    "hint": "Enter full address",
+    "required": true
+  },
+  {
+    "name": "title_details",
+    "label": "Title Details",
+    "type": "textarea",
+    "hint": "Mention how property was acquired (inheritance, purchase, etc.)",
+    "required": true
+  },
+  {
+    "name": "encumbrance_details",
+    "label": "Encumbrance Details",
+    "type": "textarea",
+    "hint": "Mention any loans, charges, or disputes",
+    "required": false
+  },
+  {
+    "name": "partition_mode",
+    "label": "Mode of Partition",
+    "type": "dropdown",
+    "options": [
+      "Mutual",
+      "Court Ordered",
+      "Family Settlement"
+    ],
+    "hint": "Select partition mode",
+    "required": true
+  },
+  {
+    "name": "partition_effective_date",
+    "label": "Partition Effective Date",
+    "type": "date",
+    "hint": "Select effective date of partition",
+    "required": true
+  },
+  {
+    "name": "allotment_details",
+    "label": "Allotment Details",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "party_name",
+        "label": "Party Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter co-owner name"
+      },
+      {
+        "name": "allocated_portion",
+        "label": "Allocated Portion",
+        "type": "textarea",
+        "required": true,
+        "hint": "Describe allocated share (area, boundaries)"
+      },
+      {
+        "name": "post_share_percentage",
+        "label": "Post-Partition Share (%)",
+        "type": "number",
+        "required": false,
+        "hint": "Ownership after partition"
+      }
+    ]
+  },
+  {
+    "name": "possession_clause",
+    "label": "Possession Clause",
+    "type": "textarea",
+    "hint": "Define possession of respective shares",
+    "required": true
+  },
+  {
+    "name": "common_areas",
+    "label": "Common Areas / Shared Rights",
+    "type": "textarea",
+    "hint": "Mention shared access (roads, water, etc.)",
+    "required": false
+  },
+  {
+    "name": "consideration_if_any",
+    "label": "Consideration (if any)",
+    "type": "number",
+    "hint": "Enter any monetary settlement",
+    "required": false
+  },
+  {
+    "name": "liabilities_distribution",
+    "label": "Liabilities Distribution",
+    "type": "textarea",
+    "hint": "Divide loans, taxes, or liabilities",
+    "required": false
+  },
+  {
+    "name": "indemnity_clause",
+    "label": "Indemnity Clause",
+    "type": "textarea",
+    "hint": "Protection against future claims",
+    "required": false
+  },
+  {
+    "name": "dispute_resolution",
+    "label": "Dispute Resolution",
+    "type": "textarea",
+    "hint": "Mention arbitration/settlement process",
+    "required": false
+  },
+  {
+    "name": "registration_required",
+    "label": "Registration Required",
+    "type": "boolean",
+    "hint": "Is registration required?",
+    "required": true
+  },
+  {
+    "name": "stamp_duty_details",
+    "label": "Stamp Duty Details",
+    "type": "textarea",
+    "hint": "Mention stamp duty paid/applicable",
+    "required": false
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Indian laws)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "signatures",
+    "label": "Party Signatures",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "fields": [
+      {
+        "name": "party_name",
+        "label": "Party Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name"
+      },
+      {
+        "name": "signature",
+        "label": "Signature",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name as signature"
+      }
+    ]
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": true
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": true
+  }
+]

@@ -1,0 +1,201 @@
+[
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "hint": "Select date of agreement execution",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where agreement is signed",
+    "required": true
+  },
+  {
+    "name": "parent1_name",
+    "label": "Parent 1 Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "parent1_address",
+    "label": "Parent 1 Address",
+    "type": "textarea",
+    "hint": "Enter complete residential address",
+    "required": true
+  },
+  {
+    "name": "parent2_name",
+    "label": "Parent 2 Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "parent2_address",
+    "label": "Parent 2 Address",
+    "type": "textarea",
+    "hint": "Enter complete residential address",
+    "required": true
+  },
+  {
+    "name": "relationship_status",
+    "label": "Relationship Status",
+    "type": "dropdown",
+    "options": ["Married", "Separated", "Divorced", "Unmarried"],
+    "hint": "Select relationship status of parents",
+    "required": true
+  },
+  {
+    "name": "child_details",
+    "label": "Child Details",
+    "type": "textarea",
+    "hint": "Enter name(s), date(s) of birth, and gender of child(ren)",
+    "required": true
+  },
+  {
+    "name": "number_of_children",
+    "label": "Number of Children",
+    "type": "number",
+    "hint": "Enter total number of children",
+    "required": false
+  },
+  {
+    "name": "legal_custody",
+    "label": "Legal Custody Type",
+    "type": "dropdown",
+    "options": [
+      "Joint",
+      "Sole"
+    ],
+    "hint": "Select legal custody type",
+    "required": true
+  },
+  {
+    "name": "physical_custody",
+    "label": "Physical Custody Type",
+    "type": "dropdown",
+    "options": [
+      "Joint",
+      "Sole",
+      "Primary with visitation"
+    ],
+    "hint": "Select physical custody arrangement",
+    "required": true
+  },
+  {
+    "name": "primary_custodian",
+    "label": "Primary Custodian",
+    "type": "text",
+    "hint": "Enter name of primary custodial parent (if applicable)",
+    "required": false
+  },
+  {
+    "name": "visitation_schedule",
+    "label": "Visitation Schedule",
+    "type": "textarea",
+    "hint": "Enter detailed visitation terms (weekends, holidays, etc.)",
+    "required": false
+  },
+  {
+    "name": "holiday_schedule",
+    "label": "Holiday / Vacation Schedule",
+    "type": "textarea",
+    "hint": "Define custody during holidays and vacations",
+    "required": false
+  },
+  {
+    "name": "child_support_amount",
+    "label": "Child Support Amount",
+    "type": "number",
+    "hint": "Enter monthly support amount",
+    "required": false
+  },
+  {
+    "name": "child_support_terms",
+    "label": "Child Support Terms",
+    "type": "textarea",
+    "hint": "Mention payment method, due date, and conditions",
+    "required": false
+  },
+  {
+    "name": "education_decisions",
+    "label": "Education Decisions",
+    "type": "textarea",
+    "hint": "Specify responsibility for educational decisions",
+    "required": false
+  },
+  {
+    "name": "medical_decisions",
+    "label": "Medical Decisions",
+    "type": "textarea",
+    "hint": "Specify responsibility for healthcare decisions",
+    "required": false
+  },
+  {
+    "name": "relocation_clause",
+    "label": "Relocation Clause",
+    "type": "textarea",
+    "hint": "Conditions for relocation of child",
+    "required": false
+  },
+  {
+    "name": "dispute_resolution",
+    "label": "Dispute Resolution",
+    "type": "textarea",
+    "hint": "Mention mediation/arbitration process",
+    "required": false
+  },
+  {
+    "name": "modification_clause",
+    "label": "Modification Clause",
+    "type": "textarea",
+    "hint": "Conditions under which agreement can be modified",
+    "required": false
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Laws of India)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "parent1_signature",
+    "label": "Parent 1 Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": false
+  },
+  {
+    "name": "parent2_signature",
+    "label": "Parent 2 Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": false
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  }
+]

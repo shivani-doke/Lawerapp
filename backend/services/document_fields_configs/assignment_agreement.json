@@ -1,0 +1,172 @@
+[
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "hint": "Select date of execution of the agreement",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where agreement is executed",
+    "required": true
+  },
+  {
+    "name": "assignor_name",
+    "label": "Assignor Name",
+    "type": "text",
+    "hint": "Enter full legal name of assignor",
+    "required": true
+  },
+  {
+    "name": "assignor_address",
+    "label": "Assignor Address",
+    "type": "textarea",
+    "hint": "Enter complete address of assignor",
+    "required": true
+  },
+  {
+    "name": "assignor_type",
+    "label": "Assignor Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "Partnership", "LLP", "Other"],
+    "hint": "Select type of assignor",
+    "required": true
+  },
+  {
+    "name": "assignee_name",
+    "label": "Assignee Name",
+    "type": "text",
+    "hint": "Enter full legal name of assignee",
+    "required": true
+  },
+  {
+    "name": "assignee_address",
+    "label": "Assignee Address",
+    "type": "textarea",
+    "hint": "Enter complete address of assignee",
+    "required": true
+  },
+  {
+    "name": "assignee_type",
+    "label": "Assignee Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "Partnership", "LLP", "Other"],
+    "hint": "Select type of assignee",
+    "required": true
+  },
+  {
+    "name": "agreement_title",
+    "label": "Agreement Title",
+    "type": "text",
+    "hint": "Enter title of agreement (e.g., IP Assignment Agreement)",
+    "required": false
+  },
+  {
+    "name": "assigned_rights",
+    "label": "Assigned Rights/Obligations",
+    "type": "textarea",
+    "hint": "Clearly describe rights, title, interest, or obligations being assigned",
+    "required": true
+  },
+  {
+    "name": "assignment_scope",
+    "label": "Scope of Assignment",
+    "type": "textarea",
+    "hint": "Specify scope, limitations, or conditions of assignment",
+    "required": false
+  },
+  {
+    "name": "consideration_amount",
+    "label": "Consideration Amount",
+    "type": "number",
+    "hint": "Enter amount (if any) paid for assignment",
+    "required": false
+  },
+  {
+    "name": "consideration_details",
+    "label": "Consideration Details",
+    "type": "textarea",
+    "hint": "Describe payment terms (lump sum, installments, etc.)",
+    "required": false
+  },
+  {
+    "name": "effective_from",
+    "label": "Effective From",
+    "type": "date",
+    "hint": "Select effective date of assignment",
+    "required": true
+  },
+  {
+    "name": "term_duration",
+    "label": "Term / Duration",
+    "type": "text",
+    "hint": "Enter duration of agreement (if applicable)",
+    "required": false
+  },
+  {
+    "name": "representations_warranties",
+    "label": "Representations & Warranties",
+    "type": "textarea",
+    "hint": "Enter declarations by assignor regarding ownership and authority",
+    "required": false
+  },
+  {
+    "name": "indemnity_clause",
+    "label": "Indemnity Clause",
+    "type": "textarea",
+    "hint": "Specify indemnity obligations, if any",
+    "required": false
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Laws of India)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction (city/state)",
+    "required": true
+  },
+  {
+    "name": "termination_clause",
+    "label": "Termination Clause",
+    "type": "textarea",
+    "hint": "Specify conditions under which agreement can be terminated",
+    "required": false
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter full name",
+    "required": false
+  },
+  {
+    "name": "witness1_address",
+    "label": "Witness 1 Address",
+    "type": "textarea",
+    "hint": "Enter address",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter full name",
+    "required": false
+  },
+  {
+    "name": "witness2_address",
+    "label": "Witness 2 Address",
+    "type": "textarea",
+    "hint": "Enter address",
+    "required": false
+  }
+]

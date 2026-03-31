@@ -1,0 +1,223 @@
+[
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "required": true,
+    "hint": "Select date of affidavit execution"
+  },
+  {
+    "name": "execution_city",
+    "label": "Execution City",
+    "type": "text",
+    "required": true,
+    "hint": "Enter city where affidavit is executed"
+  },
+  {
+    "name": "execution_state",
+    "label": "Execution State",
+    "type": "text",
+    "required": true,
+    "hint": "Enter state where affidavit is executed"
+  },
+  {
+    "name": "affidavit_type",
+    "label": "Type of Affidavit",
+    "type": "dropdown",
+    "required": true,
+    "options": [
+      "General",
+      "Name Change",
+      "Address Proof",
+      "Birth Date",
+      "Income",
+      "Education",
+      "Employment",
+      "Marriage",
+      "Identity Proof",
+      "Lost Document",
+      "Other"
+    ],
+    "hint": "Select affidavit type"
+  },
+  {
+    "name": "deponent_name",
+    "label": "Deponent Full Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter full legal name as per ID proof"
+  },
+  {
+    "name": "deponent_father_name",
+    "label": "Father’s / Spouse Name",
+    "type": "text",
+    "hint": "Enter father’s or spouse’s name",
+    "required": false
+  },
+  {
+    "name": "deponent_age",
+    "label": "Age",
+    "type": "number",
+    "hint": "Enter age in years",
+    "required": true
+  },
+  {
+    "name": "deponent_gender",
+    "label": "Gender",
+    "type": "dropdown",
+    "options": ["Male", "Female", "Other"],
+    "hint": "Select gender",
+    "required": false
+  },
+  {
+    "name": "deponent_occupation",
+    "label": "Occupation",
+    "type": "text",
+    "hint": "Enter occupation",
+    "required": false
+  },
+  {
+    "name": "deponent_address",
+    "label": "Residential Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter complete residential address with PIN code"
+  },
+  {
+    "name": "deponent_id_type",
+    "label": "ID Proof Type",
+    "type": "dropdown",
+    "options": ["Aadhaar", "PAN", "Passport", "Driving License", "Voter ID"],
+    "hint": "Select ID proof type",
+    "required": false
+  },
+  {
+    "name": "deponent_id_number",
+    "label": "ID Proof Number",
+    "type": "text",
+    "hint": "Enter ID proof number",
+    "required": false
+  },
+  {
+    "name": "declaration_points",
+    "label": "Affidavit Statements",
+    "type": "group",
+    "repeatable": true,
+    "fields": [
+      {
+        "name": "point",
+        "label": "Statement",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter clear and concise statement"
+      }
+    ],
+    "hint": "Add one or more statements",
+    "required": true
+  },
+  {
+    "name": "old_name",
+    "label": "Old Name (for Name Change)",
+    "type": "text",
+    "hint": "Enter previous name",
+    "required": false
+  },
+  {
+    "name": "new_name",
+    "label": "New Name",
+    "type": "text",
+    "hint": "Enter new name",
+    "required": false
+  },
+  {
+    "name": "date_of_birth",
+    "label": "Date of Birth",
+    "type": "date",
+    "hint": "Select date of birth",
+    "required": false
+  },
+  {
+    "name": "purpose",
+    "label": "Purpose of Affidavit",
+    "type": "textarea",
+    "hint": "Explain why this affidavit is being made",
+    "required": true
+  },
+  {
+    "name": "place_of_affirmation",
+    "label": "Place of Affirmation",
+    "type": "text",
+    "hint": "Enter place where affidavit is sworn",
+    "required": true
+  },
+  {
+    "name": "verification_date",
+    "label": "Verification Date",
+    "type": "date",
+    "hint": "Select verification date",
+    "required": true
+  },
+  {
+    "name": "verification_statement",
+    "label": "Verification Statement",
+    "type": "textarea",
+    "hint": "Standard declaration verifying truth of contents",
+    "required": true
+  },
+  {
+    "name": "notary_required",
+    "label": "Notary Required",
+    "type": "boolean",
+    "hint": "Is notarization required?",
+    "required": true
+  },
+  {
+    "name": "notary_name",
+    "label": "Notary Name",
+    "type": "text",
+    "hint": "Enter notary public name",
+    "required": false
+  },
+  {
+    "name": "notary_registration_number",
+    "label": "Notary Registration Number",
+    "type": "text",
+    "hint": "Enter notary registration/license number",
+    "required": false
+  },
+  {
+    "name": "notary_seal_details",
+    "label": "Notary Seal Details",
+    "type": "textarea",
+    "hint": "Enter seal or stamp details (if applicable)",
+    "required": false
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter full name",
+    "required": false
+  },
+  {
+    "name": "witness1_address",
+    "label": "Witness 1 Address",
+    "type": "textarea",
+    "hint": "Enter address",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter full name",
+    "required": false
+  },
+  {
+    "name": "witness2_address",
+    "label": "Witness 2 Address",
+    "type": "textarea",
+    "hint": "Enter address",
+    "required": false
+  }
+]

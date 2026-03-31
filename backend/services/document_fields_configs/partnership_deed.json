@@ -1,0 +1,271 @@
+[
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "required": true,
+    "hint": "Select execution date"
+  },
+  {
+    "name": "execution_city",
+    "label": "Execution City",
+    "type": "text",
+    "required": true,
+    "hint": "Enter execution city"
+  },
+  {
+    "name": "firm_name",
+    "label": "Partnership Firm Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter partnership firm name"
+  },
+  {
+    "name": "business_type",
+    "label": "Nature of Business",
+    "type": "text",
+    "required": true,
+    "hint": "Enter nature of business"
+  },
+  {
+    "name": "business_address",
+    "label": "Principal Place of Business",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter principal place of business"
+  },
+  {
+    "name": "partners",
+    "label": "Partner Details",
+    "type": "group",
+    "repeatable": true,
+    "fields": [
+      {
+        "name": "partner_name",
+        "label": "Full Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full name"
+      },
+      {
+        "name": "partner_age",
+        "label": "Age",
+        "type": "number",
+        "hint": "Enter age",
+        "required": false
+      },
+      {
+        "name": "partner_occupation",
+        "label": "Occupation",
+        "type": "text",
+        "hint": "Enter occupation",
+        "required": false
+      },
+      {
+        "name": "partner_address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter address"
+      },
+      {
+        "name": "partner_pan",
+        "label": "PAN Number",
+        "type": "text",
+        "hint": "Enter pan number",
+        "required": false
+      },
+      {
+        "name": "capital_contribution",
+        "label": "Capital Contribution",
+        "type": "number",
+        "required": true,
+        "hint": "Enter capital contribution"
+      },
+      {
+        "name": "profit_share_percentage",
+        "label": "Profit Sharing (%)",
+        "type": "number",
+        "required": true,
+        "hint": "Enter profit sharing (%)"
+      }
+    ],
+    "hint": "Add partner details",
+    "required": false
+  },
+  {
+    "name": "total_capital",
+    "label": "Total Capital of Firm",
+    "type": "number",
+    "hint": "Enter total capital of firm",
+    "required": false
+  },
+  {
+    "name": "bank_name",
+    "label": "Bank Name",
+    "type": "text",
+    "hint": "Enter bank name",
+    "required": false
+  },
+  {
+    "name": "bank_branch",
+    "label": "Bank Branch",
+    "type": "text",
+    "hint": "Enter bank branch",
+    "required": false
+  },
+  {
+    "name": "account_operation",
+    "label": "Account Operation Mode",
+    "type": "dropdown",
+    "options": [
+      "Jointly",
+      "Either or Survivor",
+      "Authorized Partner"
+    ],
+    "hint": "Select account operation mode",
+    "required": false
+  },
+  {
+    "name": "partnership_start_date",
+    "label": "Partnership Start Date",
+    "type": "date",
+    "required": true,
+    "hint": "Select partnership start date"
+  },
+  {
+    "name": "partnership_type",
+    "label": "Partnership Type",
+    "type": "dropdown",
+    "options": [
+      "At Will",
+      "Fixed Period"
+    ],
+    "hint": "Select partnership type",
+    "required": false
+  },
+  {
+    "name": "partnership_end_date",
+    "label": "End Date (if fixed)",
+    "type": "date",
+    "hint": "Select end date (if fixed)",
+    "required": false
+  },
+  {
+    "name": "managing_partner",
+    "label": "Managing Partner Name",
+    "type": "text",
+    "hint": "Enter managing partner name",
+    "required": false
+  },
+  {
+    "name": "duties_responsibilities",
+    "label": "Duties & Responsibilities",
+    "type": "textarea",
+    "hint": "Enter duties & responsibilities",
+    "required": false
+  },
+  {
+    "name": "partner_salary",
+    "label": "Salary to Partners",
+    "type": "text",
+    "hint": "Enter salary to partners",
+    "required": false
+  },
+  {
+    "name": "interest_on_capital",
+    "label": "Interest on Capital (%)",
+    "type": "number",
+    "hint": "Enter interest on capital (%)",
+    "required": false
+  },
+  {
+    "name": "profit_sharing_ratio",
+    "label": "Profit Sharing Ratio",
+    "type": "text",
+    "required": true,
+    "hint": "Enter profit sharing ratio"
+  },
+  {
+    "name": "loss_sharing_ratio",
+    "label": "Loss Sharing Ratio",
+    "type": "text",
+    "hint": "Enter loss sharing ratio",
+    "required": false
+  },
+  {
+    "name": "new_partner_admission",
+    "label": "Rules for Admission of New Partner",
+    "type": "textarea",
+    "hint": "Enter rules for admission of new partner",
+    "required": false
+  },
+  {
+    "name": "retirement_clause",
+    "label": "Retirement Clause",
+    "type": "textarea",
+    "hint": "Enter retirement clause",
+    "required": false
+  },
+  {
+    "name": "dissolution_clause",
+    "label": "Dissolution Terms",
+    "type": "textarea",
+    "hint": "Enter dissolution terms",
+    "required": false
+  },
+  {
+    "name": "dispute_resolution",
+    "label": "Dispute Resolution Method",
+    "type": "dropdown",
+    "options": [
+      "Arbitration",
+      "Court",
+      "Mutual Discussion"
+    ],
+    "hint": "Select dispute resolution method",
+    "required": false
+  },
+  {
+    "name": "jurisdiction_city",
+    "label": "Jurisdiction City",
+    "type": "text",
+    "required": true,
+    "hint": "Enter jurisdiction city"
+  },
+  {
+    "name": "registration_required",
+    "label": "Firm Registration",
+    "type": "boolean",
+    "hint": "Select yes or no for firm registration",
+    "required": false
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter witness 1 name"
+  },
+  {
+    "name": "witness1_address",
+    "label": "Witness 1 Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter witness 1 address"
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter witness 2 name"
+  },
+  {
+    "name": "witness2_address",
+    "label": "Witness 2 Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter witness 2 address"
+  }
+]

@@ -1,0 +1,282 @@
+[
+  {
+    "name": "effective_date",
+    "label": "Effective Date",
+    "type": "date",
+    "hint": "Select agreement effective date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where agreement is executed",
+    "required": true
+  },
+  {
+    "name": "licensor_name",
+    "label": "Licensor Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "licensor_address",
+    "label": "Licensor Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "licensor_type",
+    "label": "Licensor Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select type of licensor",
+    "required": true
+  },
+  {
+    "name": "licensee_name",
+    "label": "Licensee Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "licensee_address",
+    "label": "Licensee Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "licensee_type",
+    "label": "Licensee Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select type of licensee",
+    "required": true
+  },
+  {
+    "name": "agreement_title",
+    "label": "Agreement Title",
+    "type": "text",
+    "hint": "e.g., Software License Agreement",
+    "required": false
+  },
+  {
+    "name": "licensed_ip",
+    "label": "Licensed Intellectual Property",
+    "type": "textarea",
+    "hint": "Describe IP (software, trademark, content, etc.)",
+    "required": true
+  },
+  {
+    "name": "ip_type",
+    "label": "IP Type",
+    "type": "dropdown",
+    "options": [
+      "Software",
+      "Trademark",
+      "Copyright",
+      "Patent",
+      "Design",
+      "Other"
+    ],
+    "hint": "Select type of IP",
+    "required": true
+  },
+  {
+    "name": "ownership_confirmation",
+    "label": "Ownership Confirmation",
+    "type": "textarea",
+    "hint": "Confirm licensor owns the IP",
+    "required": true
+  },
+  {
+    "name": "license_type",
+    "label": "License Type",
+    "type": "dropdown",
+    "options": [
+      "Exclusive",
+      "Non-Exclusive",
+      "Sole"
+    ],
+    "hint": "Select license type",
+    "required": true
+  },
+  {
+    "name": "license_scope",
+    "label": "License Scope",
+    "type": "textarea",
+    "hint": "Define permitted use, field, and limitations",
+    "required": true
+  },
+  {
+    "name": "territory",
+    "label": "Territory",
+    "type": "text",
+    "hint": "Enter geographical scope (e.g., India, Worldwide)",
+    "required": true
+  },
+  {
+    "name": "duration",
+    "label": "Duration",
+    "type": "text",
+    "hint": "Enter term (e.g., 3 years, perpetual)",
+    "required": true
+  },
+  {
+    "name": "effective_from",
+    "label": "Effective From",
+    "type": "date",
+    "hint": "Select start date",
+    "required": true
+  },
+  {
+    "name": "consideration_type",
+    "label": "Consideration Type",
+    "type": "dropdown",
+    "options": [
+      "Royalty",
+      "Lump Sum",
+      "Both",
+      "Free"
+    ],
+    "hint": "Select payment structure",
+    "required": true
+  },
+  {
+    "name": "consideration_amount",
+    "label": "Consideration Amount",
+    "type": "number",
+    "hint": "Enter fixed payment amount",
+    "required": false
+  },
+  {
+    "name": "royalty_terms",
+    "label": "Royalty Terms",
+    "type": "textarea",
+    "hint": "Enter percentage, frequency, and calculation method",
+    "required": false
+  },
+  {
+    "name": "payment_terms",
+    "label": "Payment Terms",
+    "type": "textarea",
+    "hint": "Specify payment schedule and mode",
+    "required": false
+  },
+  {
+    "name": "sub_licensing_allowed",
+    "label": "Sub-Licensing Allowed",
+    "type": "boolean",
+    "hint": "Can licensee sub-license the IP?",
+    "required": true
+  },
+  {
+    "name": "restrictions",
+    "label": "Restrictions",
+    "type": "textarea",
+    "hint": "Specify restrictions on use",
+    "required": false
+  },
+  {
+    "name": "quality_control",
+    "label": "Quality Control",
+    "type": "textarea",
+    "hint": "Standards for use (important for trademarks)",
+    "required": false
+  },
+  {
+    "name": "intellectual_property_rights",
+    "label": "IP Rights Ownership",
+    "type": "textarea",
+    "hint": "Clarify ownership remains with licensor",
+    "required": true
+  },
+  {
+    "name": "confidentiality_clause",
+    "label": "Confidentiality Clause",
+    "type": "textarea",
+    "hint": "Confidentiality obligations",
+    "required": false
+  },
+  {
+    "name": "indemnity_clause",
+    "label": "Indemnity Clause",
+    "type": "textarea",
+    "hint": "Specify indemnification responsibilities",
+    "required": false
+  },
+  {
+    "name": "limitation_of_liability",
+    "label": "Limitation of Liability",
+    "type": "textarea",
+    "hint": "Limit liabilities of parties",
+    "required": false
+  },
+  {
+    "name": "termination_clause",
+    "label": "Termination Clause",
+    "type": "textarea",
+    "hint": "Conditions for termination",
+    "required": true
+  },
+  {
+    "name": "post_termination_obligations",
+    "label": "Post-Termination Obligations",
+    "type": "textarea",
+    "hint": "Obligations after termination",
+    "required": false
+  },
+  {
+    "name": "dispute_resolution",
+    "label": "Dispute Resolution",
+    "type": "textarea",
+    "hint": "Specify arbitration/mediation process",
+    "required": true
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Laws of India)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "licensor_signature",
+    "label": "Licensor Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "licensee_signature",
+    "label": "Licensee Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  }
+]

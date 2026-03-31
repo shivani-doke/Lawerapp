@@ -7,9 +7,10 @@ import 'package:path/path.dart' as path;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:universal_html/html.dart' as html;
 import 'package:path_provider/path_provider.dart';
+import '../config/app_config.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://127.0.0.1:5000'; // Change as needed
+  static const String baseUrl = AppConfig.backendBaseUrl;
 
   // -------------------------------------------------------------------------
   // Existing methods
@@ -19,6 +20,7 @@ class ApiService {
   Future<List<dynamic>> extractFieldsFromReference(
     PlatformFile file, {
     required String documentType,
+    String? subtype,
   }) async {
     var uri = Uri.parse('$baseUrl/extract_fields');
     var request = http.MultipartRequest('POST', uri);
@@ -46,6 +48,9 @@ class ApiService {
     }
 
     request.fields['document_type'] = documentType;
+    if (subtype != null && subtype.isNotEmpty) {
+      request.fields['subtype'] = subtype;
+    }
     var response = await request.send();
     var responseBody = await response.stream.bytesToString();
 
@@ -56,11 +61,33 @@ class ApiService {
     }
   }
 
+  /// Load backend-defined fields directly by document type.
+  Future<List<dynamic>> getFieldsByDocumentType({
+    required String documentType,
+    String? subtype,
+  }) async {
+    final body = <String, String>{
+      'document_type': documentType,
+    };
+    if (subtype != null && subtype.isNotEmpty) {
+      body['subtype'] = subtype;
+    }
+
+    final uri = Uri.parse('$baseUrl/extract_fields');
+    final response = await http.post(uri, body: body);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load fields: ${response.body}');
+    }
+  }
+
   /// Generate a final document using either a new file or a saved reference.
   /// Optional [format] can be 'table' or 'blank' to choose template style.
   Future<Map<String, dynamic>> generateDocument({
     required String documentType,
-    required Map<String, String> fields,
+    required Map<String, dynamic> fields,
     PlatformFile? referenceFile,
     String? referenceId,
     String? format, // NEW: 'table' or 'blank'
@@ -94,8 +121,6 @@ class ApiService {
           ),
         );
       }
-    } else {
-      throw Exception('Either referenceFile or referenceId must be provided');
     }
 
     var response = await request.send();
@@ -160,7 +185,9 @@ class ApiService {
   /// Upload a reference document, extract fields, and save it on the server.
   Future<Map<String, dynamic>> uploadReference(
     PlatformFile file,
-    String documentType,
+    String documentType, {
+    String? subtype,
+  }
   ) async {
     var uri = Uri.parse('$baseUrl/upload_reference');
     var request = http.MultipartRequest('POST', uri);
@@ -184,6 +211,9 @@ class ApiService {
     }
 
     request.fields['document_type'] = documentType;
+    if (subtype != null && subtype.isNotEmpty) {
+      request.fields['subtype'] = subtype;
+    }
     var response = await request.send();
     var responseBody = await response.stream.bytesToString();
 
@@ -208,6 +238,32 @@ class ApiService {
     } else {
       throw Exception('Failed to load references: ${response.body}');
     }
+  }
+
+  Future<List<Map<String, String>>> getDocumentSubtypes({
+    required String documentType,
+  }) async {
+    final uri = Uri.parse('$baseUrl/document_subtypes').replace(
+      queryParameters: {'document_type': documentType},
+    );
+    final response = await http.get(uri);
+    if (response.statusCode != 200) {
+      return [];
+    }
+    final data = jsonDecode(response.body);
+    if (data is! List) return [];
+
+    return data
+        .whereType<Map>()
+        .map((item) {
+          final map = Map<String, dynamic>.from(item);
+          return {
+            'id': (map['id'] ?? '').toString(),
+            'label': (map['label'] ?? '').toString(),
+          };
+        })
+        .where((item) => (item['id'] ?? '').isNotEmpty)
+        .toList();
   }
 
   /// Retrieve the fields for a specific saved reference.

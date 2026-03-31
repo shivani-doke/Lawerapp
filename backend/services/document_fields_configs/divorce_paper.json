@@ -1,0 +1,279 @@
+[
+  {
+    "name": "filing_date",
+    "label": "Filing Date",
+    "type": "date",
+    "hint": "Select divorce petition filing date",
+    "required": true
+  },
+  {
+    "name": "court_name",
+    "label": "Court Name",
+    "type": "text",
+    "hint": "Enter Family Court name",
+    "required": true
+  },
+  {
+    "name": "court_city",
+    "label": "Court City",
+    "type": "text",
+    "hint": "Enter city of the court",
+    "required": true
+  },
+  {
+    "name": "jurisdiction_basis",
+    "label": "Jurisdiction Basis",
+    "type": "dropdown",
+    "options": [
+      "Marriage Solemnized Here",
+      "Last Resided Together",
+      "Wife Residing Here",
+      "Other"
+    ],
+    "hint": "Select basis of court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "husband_name",
+    "label": "Husband Full Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "husband_age",
+    "label": "Husband Age",
+    "type": "number",
+    "hint": "Enter age in years",
+    "required": true
+  },
+  {
+    "name": "husband_occupation",
+    "label": "Husband Occupation",
+    "type": "text",
+    "hint": "Enter occupation",
+    "required": false
+  },
+  {
+    "name": "husband_address",
+    "label": "Husband Address",
+    "type": "textarea",
+    "hint": "Enter complete residential address",
+    "required": true
+  },
+  {
+    "name": "wife_name",
+    "label": "Wife Full Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "wife_age",
+    "label": "Wife Age",
+    "type": "number",
+    "hint": "Enter age in years",
+    "required": true
+  },
+  {
+    "name": "wife_occupation",
+    "label": "Wife Occupation",
+    "type": "text",
+    "hint": "Enter occupation",
+    "required": false
+  },
+  {
+    "name": "wife_address",
+    "label": "Wife Address",
+    "type": "textarea",
+    "hint": "Enter complete residential address",
+    "required": true
+  },
+  {
+    "name": "marriage_date",
+    "label": "Marriage Date",
+    "type": "date",
+    "hint": "Select date of marriage",
+    "required": true
+  },
+  {
+    "name": "marriage_place",
+    "label": "Marriage Place",
+    "type": "text",
+    "hint": "Enter place of marriage",
+    "required": true
+  },
+  {
+    "name": "marriage_type",
+    "label": "Marriage Type",
+    "type": "dropdown",
+    "options": ["Hindu Marriage", "Special Marriage Act", "Other"],
+    "hint": "Select applicable marriage law",
+    "required": true
+  },
+  {
+    "name": "last_cohabitation_address",
+    "label": "Last Cohabitation Address",
+    "type": "textarea",
+    "hint": "Enter last shared residence",
+    "required": true
+  },
+  {
+    "name": "separation_date",
+    "label": "Separation Date",
+    "type": "date",
+    "hint": "Select date of separation",
+    "required": true
+  },
+  {
+    "name": "divorce_type",
+    "label": "Divorce Type",
+    "type": "dropdown",
+    "options": [
+      "Mutual Consent",
+      "Contested"
+    ],
+    "hint": "Select divorce type",
+    "required": true
+  },
+  {
+    "name": "grounds_for_divorce",
+    "label": "Grounds for Divorce",
+    "type": "textarea",
+    "hint": "Enter legal grounds (cruelty, desertion, etc.)",
+    "required": true
+  },
+  {
+    "name": "children_details",
+    "label": "Children Details",
+    "type": "textarea",
+    "hint": "Enter names, ages, and DOB of children",
+    "required": false
+  },
+  {
+    "name": "child_custody_terms",
+    "label": "Child Custody Terms",
+    "type": "textarea",
+    "hint": "Specify custody and visitation arrangements",
+    "required": false
+  },
+  {
+    "name": "child_support_amount",
+    "label": "Child Support Amount",
+    "type": "number",
+    "hint": "Enter monthly support amount",
+    "required": false
+  },
+  {
+    "name": "maintenance_alimony",
+    "label": "Maintenance / Alimony",
+    "type": "number",
+    "hint": "Enter monthly or lump sum amount",
+    "required": false
+  },
+  {
+    "name": "income_details_husband",
+    "label": "Husband Income Details",
+    "type": "textarea",
+    "hint": "Mention salary/business income",
+    "required": false
+  },
+  {
+    "name": "income_details_wife",
+    "label": "Wife Income Details",
+    "type": "textarea",
+    "hint": "Mention salary/business income",
+    "required": false
+  },
+  {
+    "name": "asset_settlement",
+    "label": "Asset Settlement",
+    "type": "textarea",
+    "hint": "Divide movable and immovable assets",
+    "required": false
+  },
+  {
+    "name": "stridhan_returned",
+    "label": "Stridhan Returned",
+    "type": "boolean",
+    "hint": "Confirm if stridhan returned",
+    "required": false
+  },
+  {
+    "name": "pending_cases",
+    "label": "Pending Cases",
+    "type": "textarea",
+    "hint": "Mention any pending cases",
+    "required": false
+  },
+  {
+    "name": "mutual_consent_terms",
+    "label": "Mutual Consent Terms",
+    "type": "textarea",
+    "hint": "Enter terms agreed by both parties",
+    "required": false
+  },
+  {
+    "name": "settlement_terms",
+    "label": "Final Settlement Terms",
+    "type": "textarea",
+    "hint": "Enter complete settlement agreement",
+    "required": true
+  },
+  {
+    "name": "prayer",
+    "label": "Prayer",
+    "type": "textarea",
+    "hint": "Request to grant divorce decree",
+    "required": true
+  },
+  {
+    "name": "verification_date",
+    "label": "Verification Date",
+    "type": "date",
+    "hint": "Select verification date",
+    "required": true
+  },
+  {
+    "name": "verification_place",
+    "label": "Verification Place",
+    "type": "text",
+    "hint": "Enter place of verification",
+    "required": true
+  },
+  {
+    "name": "husband_signature",
+    "label": "Husband Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "wife_signature",
+    "label": "Wife Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "advocate_name",
+    "label": "Advocate Name",
+    "type": "text",
+    "hint": "Enter advocate full name",
+    "required": false
+  },
+  {
+    "name": "advocate_enrollment_number",
+    "label": "Advocate Enrollment Number",
+    "type": "text",
+    "hint": "Enter Bar Council enrollment number",
+    "required": false
+  },
+  {
+    "name": "advocate_address",
+    "label": "Advocate Address",
+    "type": "textarea",
+    "hint": "Enter advocate office address",
+    "required": false
+  }
+]

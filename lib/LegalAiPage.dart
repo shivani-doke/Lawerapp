@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'config/app_config.dart';
 
 class LegalAIPage extends StatefulWidget {
   const LegalAIPage({super.key});
@@ -46,7 +47,7 @@ class _LegalAIPageState extends State<LegalAIPage> {
 
     _controller.clear();
 
-    final url = Uri.parse("http://127.0.0.1:5000/legal-ai");
+    final url = Uri.parse("${AppConfig.backendBaseUrl}/legal-ai");
     try {
       final response = await http.post(
         url,
@@ -620,7 +621,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
 //             children: [
 //               _suggestionCard(
 //                   "Draft a rental agreement for a residential property in Mumbai"),
-//               _suggestionCard("What are the key clauses in a sale deed?"),
+//               _suggestionCard("What are the key clauses in a gift deed?"),
 //               _suggestionCard(
 //                   "Explain Section 138 of the Negotiable Instruments Act"),
 //               _suggestionCard("Help me prepare a power of attorney document"),
@@ -708,3 +709,5 @@ class _TypingIndicatorState extends State<TypingIndicator>
 //     );
 //   }
 // }
+
+

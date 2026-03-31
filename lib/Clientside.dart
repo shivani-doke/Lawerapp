@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'config/app_config.dart';
 
 class ClientsPage extends StatefulWidget {
   const ClientsPage({super.key});
@@ -15,7 +16,7 @@ class _ClientsPageState extends State<ClientsPage> {
   List<Map<String, dynamic>> filteredClients = [];
   bool isLoading = true;
 
-  final String baseUrl = "http://127.0.0.1:5000";
+  final String baseUrl = AppConfig.backendBaseUrl;
 
   @override
   void initState() {
@@ -546,7 +547,7 @@ class _EditClientDialogState extends State<EditClientDialog> {
   late String _selectedStatus;
   late TextEditingController _notesController;
 
-  final String baseUrl = "http://127.0.0.1:5000";
+  final String baseUrl = AppConfig.backendBaseUrl;
 
   // Case type options (same as AddClientDialog)
   final List<String> _caseTypes = [
@@ -554,7 +555,7 @@ class _EditClientDialogState extends State<EditClientDialog> {
     "Rental Agreement",
     "Criminal Defense",
     "Finance",
-    "Sale Deed",
+    "Gift Deed",
   ];
 
   late List<String>
@@ -906,7 +907,7 @@ class _AddClientDialogState extends State<AddClientDialog> {
                   "Rental Agreement",
                   "Criminal Defense",
                   "Finance",
-                  "Sale Deed"
+                  "Gift Deed"
                 ]
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                     .toList(),
@@ -956,7 +957,7 @@ class _AddClientDialogState extends State<AddClientDialog> {
                       }
 
                       final response = await http.post(
-                        Uri.parse("http://127.0.0.1:5000/clients/"),
+                        Uri.parse("${AppConfig.backendBaseUrl}/clients/"),
                         headers: {"Content-Type": "application/json"},
                         body: jsonEncode({
                           "name": nameController.text,
@@ -1019,7 +1020,7 @@ class _SendUpdateDialogState extends State<SendUpdateDialog> {
 
     try {
       final response = await http.post(
-        Uri.parse("http://127.0.0.1:5000/send-update"),
+        Uri.parse("${AppConfig.backendBaseUrl}/send-update"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": widget.clientEmail,

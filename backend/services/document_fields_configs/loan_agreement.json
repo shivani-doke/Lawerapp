@@ -1,0 +1,312 @@
+[
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "required": true,
+    "hint": "Select execution date"
+  },
+  {
+    "name": "execution_city",
+    "label": "Execution City",
+    "type": "text",
+    "required": true,
+    "hint": "Enter execution city"
+  },
+  {
+    "name": "lender_name",
+    "label": "Lender Full Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter lender full name"
+  },
+  {
+    "name": "lender_type",
+    "label": "Lender Type",
+    "type": "dropdown",
+    "required": true,
+    "options": [
+      "Individual",
+      "Company",
+      "Bank"
+    ],
+    "hint": "Select lender type"
+  },
+  {
+    "name": "lender_address",
+    "label": "Lender Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter lender address"
+  },
+  {
+    "name": "lender_id_proof",
+    "label": "Lender ID Proof (PAN/Aadhaar)",
+    "type": "text",
+    "hint": "Enter lender id proof (pan/aadhaar)",
+    "required": false
+  },
+  {
+    "name": "borrower_name",
+    "label": "Borrower Full Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter borrower full name"
+  },
+  {
+    "name": "borrower_type",
+    "label": "Borrower Type",
+    "type": "dropdown",
+    "required": true,
+    "options": [
+      "Individual",
+      "Company"
+    ],
+    "hint": "Select borrower type"
+  },
+  {
+    "name": "borrower_address",
+    "label": "Borrower Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter borrower address"
+  },
+  {
+    "name": "borrower_id_proof",
+    "label": "Borrower ID Proof (PAN/Aadhaar)",
+    "type": "text",
+    "hint": "Enter borrower id proof (pan/aadhaar)",
+    "required": false
+  },
+  {
+    "name": "loan_amount",
+    "label": "Loan Amount",
+    "type": "number",
+    "required": true,
+    "hint": "Enter loan amount"
+  },
+  {
+    "name": "loan_currency",
+    "label": "Currency",
+    "type": "dropdown",
+    "required": true,
+    "options": [
+      "INR",
+      "USD",
+      "EUR"
+    ],
+    "hint": "Select currency"
+  },
+  {
+    "name": "loan_purpose",
+    "label": "Purpose of Loan",
+    "type": "textarea",
+    "hint": "Enter purpose of loan",
+    "required": false
+  },
+  {
+    "name": "loan_type",
+    "label": "Loan Type",
+    "type": "dropdown",
+    "required": true,
+    "options": [
+      "Secured",
+      "Unsecured"
+    ],
+    "hint": "Select loan type"
+  },
+  {
+    "name": "interest_rate",
+    "label": "Interest Rate (%)",
+    "type": "number",
+    "hint": "Enter interest rate (%)",
+    "required": false
+  },
+  {
+    "name": "interest_type",
+    "label": "Interest Type",
+    "type": "dropdown",
+    "options": [
+      "Simple",
+      "Compound"
+    ],
+    "hint": "Select interest type",
+    "required": false
+  },
+  {
+    "name": "repayment_type",
+    "label": "Repayment Type",
+    "type": "dropdown",
+    "required": true,
+    "options": [
+      "EMI",
+      "Lump Sum",
+      "Flexible"
+    ],
+    "hint": "Select repayment type"
+  },
+  {
+    "name": "emi_amount",
+    "label": "EMI Amount",
+    "type": "number",
+    "hint": "Enter emi amount",
+    "required": false
+  },
+  {
+    "name": "number_of_installments",
+    "label": "Number of Installments",
+    "type": "number",
+    "hint": "Enter number of installments",
+    "required": false
+  },
+  {
+    "name": "repayment_start_date",
+    "label": "Repayment Start Date",
+    "type": "date",
+    "hint": "Select repayment start date",
+    "required": false
+  },
+  {
+    "name": "repayment_end_date",
+    "label": "Repayment End Date",
+    "type": "date",
+    "hint": "Select repayment end date",
+    "required": false
+  },
+  {
+    "name": "collateral_type",
+    "label": "Collateral Type",
+    "type": "dropdown",
+    "options": [
+      "Property",
+      "Vehicle",
+      "Gold",
+      "Other"
+    ],
+    "hint": "Select collateral type",
+    "required": false
+  },
+  {
+    "name": "collateral_description",
+    "label": "Collateral Description",
+    "type": "textarea",
+    "hint": "Enter collateral description",
+    "required": false
+  },
+  {
+    "name": "collateral_value",
+    "label": "Collateral Value",
+    "type": "number",
+    "hint": "Enter collateral value",
+    "required": false
+  },
+  {
+    "name": "default_interest_rate",
+    "label": "Default Interest Rate (%)",
+    "type": "number",
+    "hint": "Enter default interest rate (%)",
+    "required": false
+  },
+  {
+    "name": "penalty_clause",
+    "label": "Penalty Clause",
+    "type": "textarea",
+    "hint": "Enter penalty clause",
+    "required": false
+  },
+  {
+    "name": "prepayment_allowed",
+    "label": "Prepayment Allowed",
+    "type": "boolean",
+    "hint": "Select yes or no for prepayment allowed",
+    "required": false
+  },
+  {
+    "name": "prepayment_charges",
+    "label": "Prepayment Charges",
+    "type": "number",
+    "hint": "Enter prepayment charges",
+    "required": false
+  },
+  {
+    "name": "guarantor_name",
+    "label": "Guarantor Name",
+    "type": "text",
+    "hint": "Enter guarantor name",
+    "required": false
+  },
+  {
+    "name": "guarantor_address",
+    "label": "Guarantor Address",
+    "type": "textarea",
+    "hint": "Enter guarantor address",
+    "required": false
+  },
+  {
+    "name": "guarantor_id_proof",
+    "label": "Guarantor ID Proof",
+    "type": "text",
+    "hint": "Enter guarantor id proof",
+    "required": false
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "required": true,
+    "hint": "Enter jurisdiction"
+  },
+  {
+    "name": "dispute_resolution",
+    "label": "Dispute Resolution",
+    "type": "dropdown",
+    "options": [
+      "Arbitration",
+      "Court"
+    ],
+    "hint": "Select dispute resolution",
+    "required": false
+  },
+  {
+    "name": "lender_signature",
+    "label": "Lender Signature",
+    "type": "text",
+    "hint": "Enter lender signature",
+    "required": false
+  },
+  {
+    "name": "borrower_signature",
+    "label": "Borrower Signature",
+    "type": "text",
+    "hint": "Enter borrower signature",
+    "required": false
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter witness 1 name"
+  },
+  {
+    "name": "witness1_address",
+    "label": "Witness 1 Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter witness 1 address"
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter witness 2 name"
+  },
+  {
+    "name": "witness2_address",
+    "label": "Witness 2 Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter witness 2 address"
+  }
+]

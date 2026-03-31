@@ -1,0 +1,235 @@
+[
+  {
+    "name": "effective_date",
+    "label": "Effective Date",
+    "type": "date",
+    "hint": "Select MOU effective date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where MOU is signed",
+    "required": true
+  },
+  {
+    "name": "party_a_name",
+    "label": "Party A Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "party_a_address",
+    "label": "Party A Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "party_a_type",
+    "label": "Party A Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership", "Government"],
+    "hint": "Select type of Party A",
+    "required": true
+  },
+  {
+    "name": "party_b_name",
+    "label": "Party B Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "party_b_address",
+    "label": "Party B Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "party_b_type",
+    "label": "Party B Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership", "Government"],
+    "hint": "Select type of Party B",
+    "required": true
+  },
+  {
+    "name": "agreement_title",
+    "label": "MOU Title",
+    "type": "text",
+    "hint": "e.g., MOU for Business Collaboration",
+    "required": false
+  },
+  {
+    "name": "purpose",
+    "label": "Purpose",
+    "type": "textarea",
+    "hint": "Describe objective of this MOU",
+    "required": true
+  },
+  {
+    "name": "scope_of_collaboration",
+    "label": "Scope of Collaboration",
+    "type": "textarea",
+    "hint": "Define roles, responsibilities, and activities",
+    "required": true
+  },
+  {
+    "name": "roles_and_responsibilities",
+    "label": "Roles & Responsibilities",
+    "type": "textarea",
+    "hint": "Detailed duties of each party",
+    "required": true
+  },
+  {
+    "name": "deliverables",
+    "label": "Deliverables",
+    "type": "textarea",
+    "hint": "Specify expected outcomes or outputs",
+    "required": false
+  },
+  {
+    "name": "timeline",
+    "label": "Timeline",
+    "type": "textarea",
+    "hint": "Define milestones and deadlines",
+    "required": false
+  },
+  {
+    "name": "term_duration",
+    "label": "Term / Duration",
+    "type": "text",
+    "hint": "Enter duration (e.g., 12 months, until completion)",
+    "required": true
+  },
+  {
+    "name": "start_date",
+    "label": "Start Date",
+    "type": "date",
+    "hint": "Select start date",
+    "required": false
+  },
+  {
+    "name": "end_date",
+    "label": "End Date",
+    "type": "date",
+    "hint": "Select end date",
+    "required": false
+  },
+  {
+    "name": "financial_terms",
+    "label": "Financial Terms",
+    "type": "textarea",
+    "hint": "Specify cost sharing, funding, or payments",
+    "required": false
+  },
+  {
+    "name": "resource_sharing",
+    "label": "Resource Sharing",
+    "type": "textarea",
+    "hint": "Mention sharing of manpower, infrastructure, etc.",
+    "required": false
+  },
+  {
+    "name": "confidentiality_clause",
+    "label": "Confidentiality Clause",
+    "type": "textarea",
+    "hint": "Confidentiality obligations",
+    "required": false
+  },
+  {
+    "name": "non_binding_clause",
+    "label": "Non-Binding Nature",
+    "type": "boolean",
+    "hint": "Specify if MOU is non-binding",
+    "required": true
+  },
+  {
+    "name": "intellectual_property",
+    "label": "Intellectual Property Rights",
+    "type": "textarea",
+    "hint": "Define ownership of IP created",
+    "required": false
+  },
+  {
+    "name": "termination_clause",
+    "label": "Termination Clause",
+    "type": "textarea",
+    "hint": "Conditions for termination",
+    "required": true
+  },
+  {
+    "name": "amendment_clause",
+    "label": "Amendment Clause",
+    "type": "textarea",
+    "hint": "Process for modifying the MOU",
+    "required": false
+  },
+  {
+    "name": "dispute_resolution",
+    "label": "Dispute Resolution",
+    "type": "textarea",
+    "hint": "Specify mediation/arbitration process",
+    "required": false
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Laws of India)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "party_a_signatory_name",
+    "label": "Party A Signatory Name",
+    "type": "text",
+    "hint": "Authorized signatory name",
+    "required": true
+  },
+  {
+    "name": "party_b_signatory_name",
+    "label": "Party B Signatory Name",
+    "type": "text",
+    "hint": "Authorized signatory name",
+    "required": true
+  },
+  {
+    "name": "party_a_signature",
+    "label": "Party A Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "party_b_signature",
+    "label": "Party B Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  }
+]

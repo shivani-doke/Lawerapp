@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'LegalAiPage.dart';
 import 'Clientside.dart';
 import 'DocumentPage.dart';
+import 'config/app_config.dart';
 import 'services/dashboard_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -246,7 +247,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 _confirmDelete(filename);
                               } else if (value == "download") {
                                 final url =
-                                    "http://127.0.0.1:5000/dashboard/download/$filename";
+                                    "${AppConfig.backendBaseUrl}/dashboard/download/$filename";
 
                                 final uri = Uri.parse(url);
 
@@ -281,7 +282,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         final filename = doc["filename"];
                         if (filename == null) return;
 
-                        final url = "http://127.0.0.1:5000/view/$filename";
+                        final url =
+                            "${AppConfig.backendBaseUrl}/view/$filename";
                         final uri = Uri.parse(url);
 
                         if (await canLaunchUrl(uri)) {
@@ -461,3 +463,5 @@ class _DocumentTile extends StatelessWidget {
     );
   }
 }
+
+

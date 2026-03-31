@@ -1,0 +1,224 @@
+[
+  {
+    "name": "effective_date",
+    "label": "Effective Date",
+    "type": "date",
+    "hint": "Select NDA effective date",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place",
+    "type": "text",
+    "hint": "Enter city and state where agreement is signed",
+    "required": true
+  },
+  {
+    "name": "nda_type",
+    "label": "Type of NDA",
+    "type": "dropdown",
+    "options": [
+      "Unilateral",
+      "Mutual"
+    ],
+    "hint": "Select NDA type",
+    "required": true
+  },
+  {
+    "name": "disclosing_party_name",
+    "label": "Disclosing Party Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "disclosing_party_address",
+    "label": "Disclosing Party Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "disclosing_party_type",
+    "label": "Disclosing Party Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select type",
+    "required": true
+  },
+  {
+    "name": "receiving_party_name",
+    "label": "Receiving Party Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "receiving_party_address",
+    "label": "Receiving Party Address",
+    "type": "textarea",
+    "hint": "Enter complete address",
+    "required": true
+  },
+  {
+    "name": "receiving_party_type",
+    "label": "Receiving Party Type",
+    "type": "dropdown",
+    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "hint": "Select type",
+    "required": true
+  },
+  {
+    "name": "purpose",
+    "label": "Purpose of Disclosure",
+    "type": "textarea",
+    "hint": "Describe purpose of sharing confidential information",
+    "required": true
+  },
+  {
+    "name": "confidential_information_definition",
+    "label": "Confidential Information Definition",
+    "type": "textarea",
+    "hint": "Define what information is considered confidential",
+    "required": true
+  },
+  {
+    "name": "mode_of_disclosure",
+    "label": "Mode of Disclosure",
+    "type": "dropdown",
+    "options": [
+      "Written",
+      "Oral",
+      "Electronic",
+      "All"
+    ],
+    "hint": "Select how information will be shared",
+    "required": false
+  },
+  {
+    "name": "obligations_of_receiving_party",
+    "label": "Obligations of Receiving Party",
+    "type": "textarea",
+    "hint": "Define duties to protect confidential information",
+    "required": true
+  },
+  {
+    "name": "standard_of_care",
+    "label": "Standard of Care",
+    "type": "textarea",
+    "hint": "Level of care required to protect information",
+    "required": false
+  },
+  {
+    "name": "exclusions",
+    "label": "Exclusions from Confidential Information",
+    "type": "textarea",
+    "hint": "Information not considered confidential",
+    "required": true
+  },
+  {
+    "name": "confidentiality_period_months",
+    "label": "Confidentiality Period (Months)",
+    "type": "number",
+    "hint": "Duration of confidentiality obligation",
+    "required": true
+  },
+  {
+    "name": "term_of_agreement",
+    "label": "Term of Agreement",
+    "type": "text",
+    "hint": "Overall validity period of NDA",
+    "required": false
+  },
+  {
+    "name": "return_or_destruction",
+    "label": "Return/Destruction of Information",
+    "type": "textarea",
+    "hint": "Conditions for returning or destroying confidential data",
+    "required": true
+  },
+  {
+    "name": "permitted_disclosures",
+    "label": "Permitted Disclosures",
+    "type": "textarea",
+    "hint": "Situations where disclosure is allowed",
+    "required": false
+  },
+  {
+    "name": "non_use_clause",
+    "label": "Non-Use Clause",
+    "type": "textarea",
+    "hint": "Restriction on use of confidential information",
+    "required": true
+  },
+  {
+    "name": "non_circumvention_clause",
+    "label": "Non-Circumvention Clause",
+    "type": "textarea",
+    "hint": "Prevent bypassing the disclosing party",
+    "required": false
+  },
+  {
+    "name": "breach_consequences",
+    "label": "Consequences of Breach",
+    "type": "textarea",
+    "hint": "Damages, penalties, or legal actions",
+    "required": true
+  },
+  {
+    "name": "injunctive_relief",
+    "label": "Injunctive Relief Clause",
+    "type": "boolean",
+    "hint": "Allow court injunction in case of breach",
+    "required": false
+  },
+  {
+    "name": "limitation_of_liability",
+    "label": "Limitation of Liability",
+    "type": "textarea",
+    "hint": "Limitations on damages or liability",
+    "required": false
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "hint": "Enter applicable law (e.g., Laws of India)",
+    "required": true
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter court jurisdiction",
+    "required": true
+  },
+  {
+    "name": "disclosing_party_signature",
+    "label": "Disclosing Party Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "receiving_party_signature",
+    "label": "Receiving Party Signature",
+    "type": "text",
+    "hint": "Enter name as signature",
+    "required": true
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "hint": "Enter witness name",
+    "required": false
+  }
+]

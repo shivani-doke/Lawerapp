@@ -1,0 +1,294 @@
+[
+  {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "required": true,
+    "hint": "Select execution date"
+  },
+  {
+    "name": "execution_city",
+    "label": "Execution City",
+    "type": "text",
+    "required": true,
+    "hint": "Enter execution city"
+  },
+  {
+    "name": "testator_name",
+    "label": "Testator Full Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter testator full name"
+  },
+  {
+    "name": "testator_age",
+    "label": "Age",
+    "type": "number",
+    "hint": "Enter age",
+    "required": false
+  },
+  {
+    "name": "testator_occupation",
+    "label": "Occupation",
+    "type": "text",
+    "hint": "Enter occupation",
+    "required": false
+  },
+  {
+    "name": "testator_address",
+    "label": "Residential Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter residential address"
+  },
+  {
+    "name": "testator_id_proof",
+    "label": "ID Proof (Aadhaar/PAN)",
+    "type": "text",
+    "hint": "Enter id proof (aadhaar/pan)",
+    "required": false
+  },
+  {
+    "name": "marital_status",
+    "label": "Marital Status",
+    "type": "dropdown",
+    "options": [
+      "Single",
+      "Married",
+      "Widowed",
+      "Divorced"
+    ],
+    "hint": "Select marital status",
+    "required": false
+  },
+  {
+    "name": "family_members",
+    "label": "Family Members",
+    "type": "group",
+    "repeatable": true,
+    "fields": [
+      {
+        "name": "member_name",
+        "label": "Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name"
+      },
+      {
+        "name": "relationship",
+        "label": "Relationship",
+        "type": "text",
+        "required": true,
+        "hint": "Enter relationship"
+      },
+      {
+        "name": "member_age",
+        "label": "Age",
+        "type": "number",
+        "hint": "Enter age",
+        "required": false
+      }
+    ],
+    "hint": "Add family members",
+    "required": false
+  },
+  {
+    "name": "executor_name",
+    "label": "Executor Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter executor name"
+  },
+  {
+    "name": "executor_address",
+    "label": "Executor Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter executor address"
+  },
+  {
+    "name": "executor_relationship",
+    "label": "Relationship with Testator",
+    "type": "text",
+    "hint": "Enter relationship with testator",
+    "required": false
+  },
+  {
+    "name": "assets",
+    "label": "Assets Details",
+    "type": "group",
+    "repeatable": true,
+    "fields": [
+      {
+        "name": "asset_type",
+        "label": "Asset Type",
+        "type": "dropdown",
+        "required": true,
+        "options": [
+          "Property",
+          "Bank Account",
+          "Jewelry",
+          "Vehicle",
+          "Investment",
+          "Other"
+        ],
+        "hint": "Select asset type"
+      },
+      {
+        "name": "asset_description",
+        "label": "Asset Description",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter asset description"
+      },
+      {
+        "name": "asset_location",
+        "label": "Location / Details",
+        "type": "text",
+        "hint": "Enter location / details",
+        "required": false
+      },
+      {
+        "name": "asset_value",
+        "label": "Approx Value",
+        "type": "number",
+        "hint": "Enter approx value",
+        "required": false
+      }
+    ],
+    "hint": "Add assets details",
+    "required": false
+  },
+  {
+    "name": "beneficiaries",
+    "label": "Beneficiaries",
+    "type": "group",
+    "repeatable": true,
+    "fields": [
+      {
+        "name": "beneficiary_name",
+        "label": "Full Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full name"
+      },
+      {
+        "name": "beneficiary_relationship",
+        "label": "Relationship",
+        "type": "text",
+        "hint": "Enter relationship",
+        "required": false
+      },
+      {
+        "name": "beneficiary_address",
+        "label": "Address",
+        "type": "textarea",
+        "hint": "Enter address",
+        "required": false
+      }
+    ],
+    "hint": "Add beneficiaries",
+    "required": false
+  },
+  {
+    "name": "asset_distribution",
+    "label": "Asset Distribution",
+    "type": "group",
+    "repeatable": true,
+    "fields": [
+      {
+        "name": "asset_reference",
+        "label": "Asset Reference",
+        "type": "text",
+        "required": true,
+        "hint": "Enter asset reference"
+      },
+      {
+        "name": "beneficiary_name",
+        "label": "Beneficiary Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter beneficiary name"
+      },
+      {
+        "name": "share_percentage",
+        "label": "Share (%)",
+        "type": "number",
+        "hint": "Enter share (%)",
+        "required": false
+      }
+    ],
+    "hint": "Add asset distribution",
+    "required": false
+  },
+  {
+    "name": "guardian_name",
+    "label": "Guardian for Minor",
+    "type": "text",
+    "hint": "Enter guardian for minor",
+    "required": false
+  },
+  {
+    "name": "guardian_address",
+    "label": "Guardian Address",
+    "type": "textarea",
+    "hint": "Enter guardian address",
+    "required": false
+  },
+  {
+    "name": "liabilities",
+    "label": "Liabilities / Debts",
+    "type": "textarea",
+    "hint": "Enter liabilities / debts",
+    "required": false
+  },
+  {
+    "name": "special_instructions",
+    "label": "Special Instructions",
+    "type": "textarea",
+    "hint": "Enter special instructions",
+    "required": false
+  },
+  {
+    "name": "previous_will_revoked",
+    "label": "Revoke Previous Wills",
+    "type": "boolean",
+    "hint": "Select yes or no for revoke previous wills",
+    "required": false
+  },
+  {
+    "name": "jurisdiction",
+    "label": "Jurisdiction",
+    "type": "text",
+    "hint": "Enter jurisdiction",
+    "required": false
+  },
+  {
+    "name": "witness1_name",
+    "label": "Witness 1 Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter witness 1 name"
+  },
+  {
+    "name": "witness1_address",
+    "label": "Witness 1 Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter witness 1 address"
+  },
+  {
+    "name": "witness2_name",
+    "label": "Witness 2 Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter witness 2 name"
+  },
+  {
+    "name": "witness2_address",
+    "label": "Witness 2 Address",
+    "type": "textarea",
+    "required": true,
+    "hint": "Enter witness 2 address"
+  }
+]
