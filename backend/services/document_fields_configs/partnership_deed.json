@@ -76,6 +76,13 @@
         "required": false
       },
       {
+        "name": "partner_aadhaar",
+        "label": "Aadhaar Number",
+        "type": "text",
+        "hint": "Enter Aadhaar number",
+        "required": false
+      },
+      {
         "name": "capital_contribution",
         "label": "Capital Contribution",
         "type": "number",

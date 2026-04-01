@@ -17,7 +17,12 @@ from services.gemini_service import (
     generate_document_from_fields_only,
     replace_placeholders,
 )
-from services.document_service import GENERATED_FOLDER, PREVIEW_FOLDER, convert_docx_to_pdf
+from services.document_service import (
+    GENERATED_DOCS_FOLDER,
+    GENERATED_FOLDER,
+    PREVIEW_FOLDER,
+    convert_docx_to_pdf,
+)
 from services.document_fields import get_fields_for_document_type, get_subtypes_for_document_type
 
 # Folder where template DOCX files are stored
@@ -84,6 +89,66 @@ def get_document_title(document_type):
     if doc_type in title_map:
         return title_map[doc_type]
     return doc_type.replace("_", " ").strip().upper()
+
+
+def get_generated_file_directory(filename):
+    ext = os.path.splitext(filename)[1].lower()
+    if ext == ".pdf":
+        return GENERATED_FOLDER
+    if ext == ".docx":
+        return GENERATED_DOCS_FOLDER
+    return GENERATED_FOLDER
+
+def enrich_divorce_fields(fields):
+    enriched = dict(fields or {})
+    divorce_type = str(enriched.get("divorce_type", "")).strip()
+    mutual_first_petitioner = str(enriched.get("mutual_first_petitioner", "")).strip()
+    contested_filed_by = str(enriched.get("contested_filed_by", "")).strip()
+
+    husband_name = str(enriched.get("husband_name", "")).strip()
+    wife_name = str(enriched.get("wife_name", "")).strip()
+
+    if divorce_type == "Mutual Consent":
+        first_party = mutual_first_petitioner or "Husband"
+        second_party = "Wife" if first_party == "Husband" else "Husband"
+
+        enriched["husband_role_label"] = (
+            "Petitioner No. 1" if first_party == "Husband" else "Petitioner No. 2"
+        )
+        enriched["wife_role_label"] = (
+            "Petitioner No. 1" if first_party == "Wife" else "Petitioner No. 2"
+        )
+        enriched["petitioner_no_1_party"] = first_party
+        enriched["petitioner_no_2_party"] = second_party
+        enriched["petitioner_no_1_name"] = husband_name if first_party == "Husband" else wife_name
+        enriched["petitioner_no_2_name"] = wife_name if second_party == "Wife" else husband_name
+        enriched["party_role_summary"] = (
+            f"Mutual consent divorce. {first_party} is Petitioner No. 1 and "
+            f"{second_party} is Petitioner No. 2."
+        )
+        enriched["petitioner_name"] = enriched["petitioner_no_1_name"]
+        enriched["respondent_name"] = enriched["petitioner_no_2_name"]
+
+    elif divorce_type == "Contested":
+        filing_party = contested_filed_by or "Husband"
+        responding_party = "Wife" if filing_party == "Husband" else "Husband"
+
+        enriched["husband_role_label"] = (
+            "Petitioner" if filing_party == "Husband" else "Respondent"
+        )
+        enriched["wife_role_label"] = (
+            "Petitioner" if filing_party == "Wife" else "Respondent"
+        )
+        enriched["petitioner_party"] = filing_party
+        enriched["respondent_party"] = responding_party
+        enriched["petitioner_name"] = husband_name if filing_party == "Husband" else wife_name
+        enriched["respondent_name"] = wife_name if responding_party == "Wife" else husband_name
+        enriched["party_role_summary"] = (
+            f"Contested divorce. {filing_party} is the Petitioner and "
+            f"{responding_party} is the Respondent."
+        )
+
+    return enriched
 
 def extract_text_from_file(filepath, ext):
     """Extract text from a file based on its extension."""
@@ -288,6 +353,9 @@ def generate_document():
     except:
         return jsonify({"error": "Invalid fields JSON"}), 400
 
+    if document_type == "divorce_paper":
+        fields = enrich_divorce_fields(fields)
+
     reference_id = request.form.get("reference_id")
     reference_text = ""
     has_reference_context = False
@@ -416,11 +484,11 @@ def generate_document():
     # Incremental counter to avoid duplicates
     counter = 1
     output_filename = f"{base_filename}.docx"
-    while os.path.exists(os.path.join(GENERATED_FOLDER, output_filename)):
+    while os.path.exists(os.path.join(GENERATED_DOCS_FOLDER, output_filename)):
         counter += 1
         output_filename = f"{base_filename}_{counter}.docx"
 
-    output_path = os.path.join(GENERATED_FOLDER, output_filename)
+    output_path = os.path.join(GENERATED_DOCS_FOLDER, output_filename)
     try:
         # Load the server‑side template (preserves tables, formatting)
         doc = DocxDocument(template_path)
@@ -471,10 +539,11 @@ def generate_document():
 def download_file(filename):
     try:
         as_attachment = request.args.get('download', 'true').lower() != 'false'
+        directory = get_generated_file_directory(filename)
         return send_from_directory(
-            GENERATED_FOLDER,
+            directory,
             filename,
-            as_attachment=True,
+            as_attachment=as_attachment,
             download_name=filename
         )
     except Exception as e:

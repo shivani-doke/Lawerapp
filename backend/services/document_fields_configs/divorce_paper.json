@@ -34,62 +34,6 @@
     "required": true
   },
   {
-    "name": "husband_name",
-    "label": "Husband Full Name",
-    "type": "text",
-    "hint": "Enter full legal name",
-    "required": true
-  },
-  {
-    "name": "husband_age",
-    "label": "Husband Age",
-    "type": "number",
-    "hint": "Enter age in years",
-    "required": true
-  },
-  {
-    "name": "husband_occupation",
-    "label": "Husband Occupation",
-    "type": "text",
-    "hint": "Enter occupation",
-    "required": false
-  },
-  {
-    "name": "husband_address",
-    "label": "Husband Address",
-    "type": "textarea",
-    "hint": "Enter complete residential address",
-    "required": true
-  },
-  {
-    "name": "wife_name",
-    "label": "Wife Full Name",
-    "type": "text",
-    "hint": "Enter full legal name",
-    "required": true
-  },
-  {
-    "name": "wife_age",
-    "label": "Wife Age",
-    "type": "number",
-    "hint": "Enter age in years",
-    "required": true
-  },
-  {
-    "name": "wife_occupation",
-    "label": "Wife Occupation",
-    "type": "text",
-    "hint": "Enter occupation",
-    "required": false
-  },
-  {
-    "name": "wife_address",
-    "label": "Wife Address",
-    "type": "textarea",
-    "hint": "Enter complete residential address",
-    "required": true
-  },
-  {
     "name": "marriage_date",
     "label": "Marriage Date",
     "type": "date",
@@ -137,11 +81,136 @@
     "required": true
   },
   {
+    "name": "mutual_first_petitioner",
+    "label": "Petitioner No. 1",
+    "type": "dropdown",
+    "options": [
+      "Husband",
+      "Wife"
+    ],
+    "hint": "Select who will be Petitioner No. 1 in mutual consent petition",
+    "required": true,
+    "visible_when": {
+      "divorce_type": "Mutual Consent"
+    }
+  },
+  {
+    "name": "contested_filed_by",
+    "label": "Who Is Filing the Divorce?",
+    "type": "dropdown",
+    "options": [
+      "Husband",
+      "Wife"
+    ],
+    "hint": "Select who is filing the contested divorce petition",
+    "required": true,
+    "visible_when": {
+      "divorce_type": "Contested"
+    }
+  },
+  {
+    "name": "husband_name",
+    "label": "Husband Full Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "husband_age",
+    "label": "Husband Age",
+    "type": "number",
+    "hint": "Enter age in years",
+    "required": true
+  },
+  {
+    "name": "husband_occupation",
+    "label": "Husband Occupation",
+    "type": "text",
+    "hint": "Enter occupation",
+    "required": true
+  },
+  {
+    "name": "husband_address",
+    "label": "Husband Address",
+    "type": "textarea",
+    "hint": "Enter complete residential address",
+    "required": true
+  },
+  {
+    "name": "husband_mobile_no",
+    "label": "Husband Mobile Number",
+    "type": "text",
+    "hint": "Enter mobile number",
+    "required": true
+  },
+  {
+    "name": "husband_email",
+    "label": "Husband Email",
+    "type": "email",
+    "hint": "Enter email address",
+    "required": true
+  },
+  {
+    "name": "wife_name",
+    "label": "Wife Full Name",
+    "type": "text",
+    "hint": "Enter full legal name",
+    "required": true
+  },
+  {
+    "name": "wife_age",
+    "label": "Wife Age",
+    "type": "number",
+    "hint": "Enter age in years",
+    "required": true
+  },
+  {
+    "name": "wife_occupation",
+    "label": "Wife Occupation",
+    "type": "text",
+    "hint": "Enter occupation",
+    "required": true
+  },
+  {
+    "name": "wife_address",
+    "label": "Wife Address",
+    "type": "textarea",
+    "hint": "Enter complete residential address",
+    "required": true
+  },
+  {
+    "name": "wife_mobile_no",
+    "label": "Wife Mobile Number",
+    "type": "text",
+    "hint": "Enter mobile number",
+    "required": true
+  },
+  {
+    "name": "wife_email",
+    "label": "Wife Email",
+    "type": "email",
+    "hint": "Enter email address",
+    "required": true
+  },
+  {
     "name": "grounds_for_divorce",
     "label": "Grounds for Divorce",
     "type": "textarea",
-    "hint": "Enter legal grounds (cruelty, desertion, etc.)",
-    "required": true
+    "hint": "Enter legal grounds such as cruelty, desertion, adultery, etc.",
+    "required": true,
+    "visible_when": {
+      "divorce_type": "Contested"
+    }
+  },
+  {
+    "name": "mutual_consent_terms",
+    "label": "Mutual Consent Terms",
+    "type": "textarea",
+    "hint": "Enter the terms agreed between both parties",
+    "required": true,
+    "visible_when": {
+      "divorce_type": "Mutual Consent"
+    }
   },
   {
     "name": "children_details",
@@ -204,13 +273,6 @@
     "label": "Pending Cases",
     "type": "textarea",
     "hint": "Mention any pending cases",
-    "required": false
-  },
-  {
-    "name": "mutual_consent_terms",
-    "label": "Mutual Consent Terms",
-    "type": "textarea",
-    "hint": "Enter terms agreed by both parties",
     "required": false
   },
   {

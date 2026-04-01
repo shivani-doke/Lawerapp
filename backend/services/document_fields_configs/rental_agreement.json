@@ -64,6 +64,13 @@
     "hint": "Enter tenant address"
   },
   {
+    "name": "tenant_permanent_address",
+    "label": "Tenant Permanent Address",
+    "type": "textarea",
+    "required": false,
+    "hint": "Enter tenant permanent address"
+  },
+  {
     "name": "tenant_work_address",
     "label": "Tenant Work/Office Address",
     "type": "textarea",
@@ -85,9 +92,17 @@
       "Flat",
       "House",
       "Shop",
-      "Office"
+      "Office",
+      "Other"
     ],
     "hint": "Select property type",
+    "required": false
+  },
+  {
+    "name": "property_type_other",
+    "label": "Other Property Type",
+    "type": "text",
+    "hint": "Enter other property type if any",
     "required": false
   },
   {

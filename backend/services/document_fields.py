@@ -5,6 +5,15 @@ from pathlib import Path
 
 FIELDS_CONFIG_DIR = Path(__file__).resolve().parent / "document_fields_configs"
 DEFAULT_FIELDS_FILE = FIELDS_CONFIG_DIR / "default.json"
+GLOBAL_EXTRA_FIELDS = [
+    {
+        "name": "additional_information_details",
+        "label": "Additional Information",
+        "type": "textarea",
+        "hint": "Enter any extra information you want to include in the document",
+        "required": False,
+    },
+]
 
 
 def _safe_load_config(json_path):
@@ -87,5 +96,14 @@ def get_fields_for_document_type(document_type, subtype=None):
     if not fields:
         default_config = _safe_load_config(DEFAULT_FIELDS_FILE)
         fields = _extract_fields_from_config(default_config)
+
+    existing_names = {
+        str(field.get("name", "")).strip()
+        for field in fields
+        if isinstance(field, dict)
+    }
+    for extra_field in GLOBAL_EXTRA_FIELDS:
+        if extra_field["name"] not in existing_names:
+            fields.append(deepcopy(extra_field))
 
     return deepcopy(fields)

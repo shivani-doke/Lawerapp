@@ -20,6 +20,7 @@ class DocumentField {
   final List<String> options;
   final bool repeatable;
   final List<DocumentField> fields;
+  final Map<String, List<String>> visibleWhen;
 
   DocumentField({
     required this.name,
@@ -30,11 +31,36 @@ class DocumentField {
     this.options = const [],
     this.repeatable = false,
     this.fields = const [],
+    this.visibleWhen = const {},
   });
 
   factory DocumentField.fromJson(Map<String, dynamic> json) {
     final rawOptions = json['options'];
     final rawFields = json['fields'];
+    final rawVisibleWhen = json['visible_when'];
+    final parsedVisibleWhen = <String, List<String>>{};
+
+    if (rawVisibleWhen is Map) {
+      for (final entry in rawVisibleWhen.entries) {
+        final key = entry.key.toString().trim();
+        if (key.isEmpty) continue;
+        final value = entry.value;
+        if (value is List) {
+          final values = value
+              .map((e) => e.toString().trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
+          if (values.isNotEmpty) {
+            parsedVisibleWhen[key] = values;
+          }
+        } else if (value != null) {
+          final normalized = value.toString().trim();
+          if (normalized.isNotEmpty) {
+            parsedVisibleWhen[key] = [normalized];
+          }
+        }
+      }
+    }
 
     return DocumentField(
       name: json['name'],
@@ -52,6 +78,7 @@ class DocumentField {
               .map(DocumentField.fromJson)
               .toList()
           : const [],
+      visibleWhen: parsedVisibleWhen,
     );
   }
 }
@@ -243,7 +270,35 @@ class _AffidavitPageState extends State<AffidavitPage> {
     });
   }
 
+  bool _isFieldVisible(DocumentField field) {
+    if (field.visibleWhen.isEmpty) {
+      return true;
+    }
+
+    for (final entry in field.visibleWhen.entries) {
+      final selectedValue = _getConditionalFieldValue(entry.key);
+      if (!entry.value.contains(selectedValue)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  String _getConditionalFieldValue(String fieldName) {
+    if (_dropdownValues.containsKey(fieldName)) {
+      return (_dropdownValues[fieldName] ?? '').trim();
+    }
+    if (_boolValues.containsKey(fieldName)) {
+      return (_boolValues[fieldName] ?? false).toString();
+    }
+    return (_fieldControllers[fieldName]?.text ?? '').trim();
+  }
+
   bool _isTopLevelFieldMissing(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return false;
+    }
     if (!field.required) {
       return false;
     }
@@ -269,6 +324,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
     DocumentField subField,
     int rowIndex,
   ) {
+    if (!_isFieldVisible(subField)) {
+      return false;
+    }
     if (!subField.required) {
       return false;
     }
@@ -297,6 +355,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
 
   bool _isGroupRowEmpty(DocumentField groupField, int rowIndex) {
     for (final subField in groupField.fields) {
+      if (!_isFieldVisible(subField)) {
+        continue;
+      }
       if (subField.type == 'dropdown') {
         final value =
             _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
@@ -341,6 +402,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
     final missingFields = <String>[];
 
     for (final field in _fields) {
+      if (!_isFieldVisible(field)) {
+        continue;
+      }
       if (field.type == 'group' && field.fields.isNotEmpty) {
         final rows = _groupFieldControllers[field.name] ?? const [];
         if (field.required && rows.isEmpty) {
@@ -377,6 +441,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
   }
 
   dynamic _serializeTopLevelFieldValue(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return null;
+    }
     if (field.type == 'dropdown') {
       return _dropdownValues[field.name] ?? '';
     }
@@ -397,6 +464,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
 
         final rowData = <String, dynamic>{};
         for (final subField in field.fields) {
+          if (!_isFieldVisible(subField)) {
+            continue;
+          }
           if (subField.type == 'dropdown') {
             rowData[subField.name] =
                 _groupDropdownValues[field.name]?[rowIndex][subField.name] ??
@@ -878,7 +948,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
                       ))
                     else if (_fields.isNotEmpty) ...[
                       // Build dynamic fields
-                      ..._fields.map((field) => _buildField(field)),
+                      ..._fields
+                          .where(_isFieldVisible)
+                          .map((field) => _buildField(field)),
                       // Format selection toggle
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1420,6 +1492,10 @@ class _AffidavitPageState extends State<AffidavitPage> {
 
   // Build an input field based on its type
   Widget _buildField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
+
     final type = field.type;
     final isRequired = field.required;
 

@@ -3,10 +3,12 @@ import subprocess
 import os
 
 GENERATED_FOLDER = "generated"
+GENERATED_DOCS_FOLDER = "generated_docs"
 PREVIEW_FOLDER = "preview_cache"
 
 # Ensure folders exist
 os.makedirs(GENERATED_FOLDER, exist_ok=True)
+os.makedirs(GENERATED_DOCS_FOLDER, exist_ok=True)
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
 

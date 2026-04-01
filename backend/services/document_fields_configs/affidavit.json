@@ -41,6 +41,16 @@
     "hint": "Select affidavit type"
   },
   {
+    "name": "affidavit_type_other",
+    "label": "Other Affidavit Type",
+    "type": "text",
+    "hint": "Enter other affidavit type if selected",
+    "required": false,
+    "visible_when": {
+      "affidavit_type": "Other"
+    }
+  },
+  {
     "name": "deponent_name",
     "label": "Deponent Full Name",
     "type": "text",

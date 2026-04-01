@@ -1,4 +1,5 @@
 import 'package:LegalAI/Clientside.dart';
+import 'package:LegalAI/CaseStatusPage.dart';
 import 'package:LegalAI/DashboardPage.dart';
 import 'package:LegalAI/DocumentPage.dart';
 import 'package:LegalAI/UploadsPage.dart';
@@ -86,6 +87,7 @@ class _MainLayoutState extends State<MainLayout> {
       const CopyrightAgreementPage(), // 32
       const PatentFilingDocumentsPage(), // 33
       UploadsPage(onNavigate: _changePage), // 34
+      const CaseStatusPage(), // 35
     ];
   }
 
@@ -138,6 +140,7 @@ class _MainLayoutState extends State<MainLayout> {
                 _navItem(Icons.chat_bubble_outline, "AI Chat", 1),
                 _navItem(Icons.description_outlined, "Documents", 2),
                 _navItem(Icons.people_outline, "Clients", 3),
+                _navItem(Icons.fact_check_outlined, "Case Status", 35),
                 _navItem(Icons.upload_file_outlined, "Uploads", 34),
               ],
             ),

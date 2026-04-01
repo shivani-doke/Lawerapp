@@ -57,10 +57,19 @@
   },
   {
     "name": "sections_applied",
-    "label": "Sections Applied (IPC/CrPC/Other Laws)",
-    "type": "text",
+    "label": "Sections Applied",
+    "type": "multi_select_with_custom_input",
     "required": true,
-    "hint": "Enter applicable legal sections"
+    "options": [
+      "IPC",
+      "CrPC",
+      "Evidence Act",
+      "BNS (Bharatiya Nyaya Sanhita)",
+      "BNSS (Bharatiya Nagarik Suraksha Sanhita)",
+      "BSA (Bharatiya Sakshya Adhiniyam)"
+    ],
+    "allow_custom": true,
+    "hint": "Select applicable laws and enter section numbers (e.g., IPC 420, BNS 318). You can also add other laws."
   },
   {
     "name": "applicant_name",

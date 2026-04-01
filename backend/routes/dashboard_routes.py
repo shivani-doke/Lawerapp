@@ -2,12 +2,19 @@
 
 from flask import Blueprint, jsonify, request
 from models.client_model import Client
-from services.document_service import GENERATED_FOLDER
+from services.document_service import GENERATED_DOCS_FOLDER, GENERATED_FOLDER
 from database import db
 from datetime import datetime
 import os
 
 dashboard_bp = Blueprint("dashboard_bp", __name__, url_prefix="/dashboard")
+
+
+def get_matching_docx_name(pdf_filename):
+    stem, ext = os.path.splitext(pdf_filename)
+    if ext.lower() != ".pdf":
+        return None
+    return f"{stem}.docx"
 
 
 @dashboard_bp.route("/stats", methods=["GET"])
@@ -17,7 +24,11 @@ def get_dashboard_stats():
 
     # Documents count (from generated folder)
     documents_folder = GENERATED_FOLDER
-    documents_count = len(os.listdir(documents_folder)) if os.path.exists(documents_folder) else 0
+    documents_count = 0
+    if os.path.exists(documents_folder):
+        documents_count = len(
+            [f for f in os.listdir(documents_folder) if f.lower().endswith(".pdf")]
+        )
 
     # Active cases (based on status)
     active_cases = Client.query.filter_by(status="Active").count()
@@ -31,7 +42,7 @@ def get_dashboard_stats():
     if os.path.exists(documents_folder):
 
         # Filter only valid files
-        files = [f for f in os.listdir(documents_folder) if f.endswith((".pdf", ".docx"))]
+        files = [f for f in os.listdir(documents_folder) if f.lower().endswith(".pdf")]
         limit = request.args.get("limit", 4)
         files = sorted(
             files,
@@ -93,7 +104,22 @@ def rename_document():
     if os.path.exists(new_path):
         return jsonify({"error": "File with this name already exists"}), 400
 
+    old_docx_name = get_matching_docx_name(old_name)
+    new_docx_name = get_matching_docx_name(new_filename)
+    if old_docx_name and new_docx_name:
+        old_docx_path = os.path.join(GENERATED_DOCS_FOLDER, old_docx_name)
+        new_docx_path = os.path.join(GENERATED_DOCS_FOLDER, new_docx_name)
+        if os.path.exists(old_docx_path):
+            if os.path.exists(new_docx_path):
+                return jsonify({"error": "Matching DOCX file with this name already exists"}), 400
+
     os.rename(old_path, new_path)
+
+    if old_docx_name and new_docx_name:
+        old_docx_path = os.path.join(GENERATED_DOCS_FOLDER, old_docx_name)
+        new_docx_path = os.path.join(GENERATED_DOCS_FOLDER, new_docx_name)
+        if os.path.exists(old_docx_path):
+            os.rename(old_docx_path, new_docx_path)
 
     return jsonify({
         "message": "Renamed successfully",
@@ -109,6 +135,12 @@ def delete_document():
 
     if os.path.exists(file_path):
         os.remove(file_path)
+
+        docx_name = get_matching_docx_name(filename)
+        if docx_name:
+            docx_path = os.path.join(GENERATED_DOCS_FOLDER, docx_name)
+            if os.path.exists(docx_path):
+                os.remove(docx_path)
         return jsonify({"message": "Deleted successfully"})
     else:
         return jsonify({"error": "File not found"}), 404

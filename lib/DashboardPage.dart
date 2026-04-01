@@ -368,7 +368,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Colors.grey.shade200,
             Colors.black,
             () {
-              widget.onNavigate?.call(3);
+              widget.onNavigate?.call(35);
             },
           ),
         ],

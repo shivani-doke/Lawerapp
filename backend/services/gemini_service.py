@@ -243,6 +243,7 @@ CRITICAL PRESERVATION RULES:
 REPLACEMENT RULES:
 
 - Replace only variable factual information using provided field values.
+- If party role labels or role summaries are provided in the field values, use them consistently.
 - If a field value is not provided, leave the original text unchanged.
 - Do NOT invent missing data.
 - Do NOT add commentary or explanation.
@@ -314,6 +315,7 @@ RULES:
 - Draft a complete, professional legal document for the given document type.
 - Start the document with a clear standalone title derived from the document type.
 - The first non-empty line must be the document title in uppercase.
+- If field values include party role labels or role summaries, use them exactly in the draft.
 - Use clear headings, clauses, and signature sections where appropriate.
 - Use only the provided facts.
 - Do NOT invent names, dates, addresses, money amounts, or legal facts.

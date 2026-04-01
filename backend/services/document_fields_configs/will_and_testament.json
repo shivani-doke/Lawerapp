@@ -120,19 +120,72 @@
     "repeatable": true,
     "fields": [
       {
-        "name": "asset_type",
-        "label": "Asset Type",
+        "name": "asset_category",
+        "label": "Asset Category",
         "type": "dropdown",
         "required": true,
         "options": [
-          "Property",
+          "Movable",
+          "Immovable"
+        ],
+        "hint": "Select asset category"
+      },
+      {
+        "name": "asset_type_movable",
+        "label": "Movable Asset Type",
+        "type": "dropdown",
+        "required": true,
+        "options": [
           "Bank Account",
           "Jewelry",
           "Vehicle",
           "Investment",
+          "Cash",
+          "Shares / Securities",
           "Other"
         ],
-        "hint": "Select asset type"
+        "hint": "Select movable asset type",
+        "visible_when": {
+          "asset_category": "Movable"
+        }
+      },
+      {
+        "name": "asset_type_immovable",
+        "label": "Immovable Asset Type",
+        "type": "dropdown",
+        "required": true,
+        "options": [
+          "Residential Property",
+          "Commercial Property",
+          "Land",
+          "Agricultural Land",
+          "Flat / Apartment",
+          "Other"
+        ],
+        "hint": "Select immovable asset type",
+        "visible_when": {
+          "asset_category": "Immovable"
+        }
+      },
+      {
+        "name": "asset_type_other_movable",
+        "label": "Other Movable Asset Type",
+        "type": "text",
+        "required": false,
+        "hint": "Enter other movable asset type",
+        "visible_when": {
+          "asset_type_movable": "Other"
+        }
+      },
+      {
+        "name": "asset_type_other_immovable",
+        "label": "Other Immovable Asset Type",
+        "type": "text",
+        "required": false,
+        "hint": "Enter other immovable asset type",
+        "visible_when": {
+          "asset_type_immovable": "Other"
+        }
       },
       {
         "name": "asset_description",

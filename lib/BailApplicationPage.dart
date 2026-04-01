@@ -20,6 +20,7 @@ class DocumentField {
   final List<String> options;
   final bool repeatable;
   final List<DocumentField> fields;
+  final bool allowCustom;
 
   DocumentField({
     required this.name,
@@ -30,6 +31,7 @@ class DocumentField {
     this.options = const [],
     this.repeatable = false,
     this.fields = const [],
+    this.allowCustom = false,
   });
 
   factory DocumentField.fromJson(Map<String, dynamic> json) {
@@ -52,6 +54,7 @@ class DocumentField {
               .map(DocumentField.fromJson)
               .toList()
           : const [],
+      allowCustom: json['allow_custom'] == true,
     );
   }
 }
@@ -72,6 +75,12 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
   final Map<String, String> _dropdownValues = {};
   final Map<String, bool> _boolValues = {};
   final Map<String, Set<String>> _multiselectValues = {};
+  final Map<String, Map<String, TextEditingController>>
+      _multiSelectCustomControllers = {};
+  final Map<String, List<TextEditingController>> _multiSelectCustomLawControllers =
+      {};
+  final Map<String, List<TextEditingController>>
+      _multiSelectCustomSectionControllers = {};
   final Map<String, List<Map<String, TextEditingController>>>
       _groupFieldControllers = {};
   final Map<String, List<Map<String, String>>> _groupDropdownValues = {};
@@ -122,6 +131,7 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
     for (var controller in _fieldControllers.values) {
       controller.dispose();
     }
+    _disposeCustomMultiSelectControllers();
     _disposeGroupControllers();
     super.dispose();
   }
@@ -138,6 +148,126 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
     _groupDropdownValues.clear();
     _groupBoolValues.clear();
     _groupMultiselectValues.clear();
+  }
+
+  void _disposeCustomMultiSelectControllers() {
+    for (final lawControllers in _multiSelectCustomControllers.values) {
+      for (final controller in lawControllers.values) {
+        controller.dispose();
+      }
+    }
+    for (final controllers in _multiSelectCustomLawControllers.values) {
+      for (final controller in controllers) {
+        controller.dispose();
+      }
+    }
+    for (final controllers in _multiSelectCustomSectionControllers.values) {
+      for (final controller in controllers) {
+        controller.dispose();
+      }
+    }
+    _multiSelectCustomControllers.clear();
+    _multiSelectCustomLawControllers.clear();
+    _multiSelectCustomSectionControllers.clear();
+  }
+
+  void _initializeMultiSelectWithCustomInput(DocumentField field) {
+    _multiselectValues[field.name] = <String>{};
+    _multiSelectCustomControllers[field.name] = {
+      for (final option in field.options) option: TextEditingController(),
+    };
+    _multiSelectCustomLawControllers[field.name] = [];
+    _multiSelectCustomSectionControllers[field.name] = [];
+  }
+
+  void _addCustomLawEntry(String fieldName) {
+    setState(() {
+      _multiSelectCustomLawControllers
+          .putIfAbsent(fieldName, () => [])
+          .add(TextEditingController());
+      _multiSelectCustomSectionControllers
+          .putIfAbsent(fieldName, () => [])
+          .add(TextEditingController());
+    });
+  }
+
+  void _removeCustomLawEntry(String fieldName, int index) {
+    final lawControllers = _multiSelectCustomLawControllers[fieldName];
+    final sectionControllers = _multiSelectCustomSectionControllers[fieldName];
+    if (lawControllers == null ||
+        sectionControllers == null ||
+        index < 0 ||
+        index >= lawControllers.length ||
+        index >= sectionControllers.length) {
+      return;
+    }
+
+    setState(() {
+      lawControllers[index].dispose();
+      sectionControllers[index].dispose();
+      lawControllers.removeAt(index);
+      sectionControllers.removeAt(index);
+    });
+  }
+
+  bool _isMultiSelectWithCustomInputEmpty(DocumentField field) {
+    final selected = _multiselectValues[field.name] ?? <String>{};
+    final lawControllers = _multiSelectCustomLawControllers[field.name] ?? const [];
+    final sectionControllers =
+        _multiSelectCustomSectionControllers[field.name] ?? const [];
+
+    final hasSelectedSections = selected.any((option) {
+      final value =
+          _multiSelectCustomControllers[field.name]?[option]?.text.trim() ?? '';
+      return value.isNotEmpty;
+    });
+
+    final hasCustomLaw = Iterable<int>.generate(lawControllers.length).any((index) {
+      final law = lawControllers[index].text.trim();
+      final section = index < sectionControllers.length
+          ? sectionControllers[index].text.trim()
+          : '';
+      return law.isNotEmpty || section.isNotEmpty;
+    });
+
+    return !(hasSelectedSections || hasCustomLaw);
+  }
+
+  List<Map<String, String>> _serializeMultiSelectWithCustomInput(
+      DocumentField field) {
+    final selected = _multiselectValues[field.name] ?? <String>{};
+    final entries = <Map<String, String>>[];
+
+    for (final option in selected) {
+      final sections =
+          _multiSelectCustomControllers[field.name]?[option]?.text.trim() ?? '';
+      if (sections.isEmpty) {
+        continue;
+      }
+      entries.add({
+        'law': option,
+        'sections': sections,
+      });
+    }
+
+    final lawControllers = _multiSelectCustomLawControllers[field.name] ?? const [];
+    final sectionControllers =
+        _multiSelectCustomSectionControllers[field.name] ?? const [];
+    for (var index = 0; index < lawControllers.length; index++) {
+      final law = lawControllers[index].text.trim();
+      final section = index < sectionControllers.length
+          ? sectionControllers[index].text.trim()
+          : '';
+      if (law.isEmpty && section.isEmpty) {
+        continue;
+      }
+      entries.add({
+        'law': law,
+        'sections': section,
+      });
+    }
+
+    return entries;
   }
 
   Map<String, TextEditingController> _createGroupControllerRow(
@@ -258,6 +388,9 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
     if (field.type == 'multiselect') {
       final values = _multiselectValues[field.name] ?? <String>{};
       return values.isEmpty;
+    }
+    if (field.type == 'multi_select_with_custom_input') {
+      return _isMultiSelectWithCustomInputEmpty(field);
     }
 
     final value = _fieldControllers[field.name]?.text ?? '';
@@ -386,6 +519,9 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
     if (field.type == 'multiselect') {
       return (_multiselectValues[field.name] ?? <String>{}).toList();
     }
+    if (field.type == 'multi_select_with_custom_input') {
+      return _serializeMultiSelectWithCustomInput(field);
+    }
     if (field.type == 'group' && field.fields.isNotEmpty) {
       final rows = _groupFieldControllers[field.name] ?? const [];
       final serializedRows = <Map<String, dynamic>>[];
@@ -440,6 +576,7 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
     _dropdownValues.clear();
     _boolValues.clear();
     _multiselectValues.clear();
+    _disposeCustomMultiSelectControllers();
     _disposeGroupControllers();
     _fields = [];
     setState(() {});
@@ -454,6 +591,7 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
     _dropdownValues.clear();
     _boolValues.clear();
     _multiselectValues.clear();
+    _disposeCustomMultiSelectControllers();
     _disposeGroupControllers();
 
     for (var field in _fields) {
@@ -466,6 +604,8 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
         _boolValues[field.name] = false;
       } else if (field.type == 'multiselect') {
         _multiselectValues[field.name] = <String>{};
+      } else if (field.type == 'multi_select_with_custom_input') {
+        _initializeMultiSelectWithCustomInput(field);
       } else {
         _fieldControllers[field.name] = TextEditingController();
       }
@@ -1531,6 +1671,145 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
                 );
               }).toList(),
             ),
+          ],
+        ),
+      );
+    }
+
+    if (type == 'multi_select_with_custom_input') {
+      final selected =
+          _multiselectValues.putIfAbsent(field.name, () => <String>{});
+      final sectionControllers = _multiSelectCustomControllers.putIfAbsent(
+        field.name,
+        () => {
+          for (final option in field.options) option: TextEditingController(),
+        },
+      );
+      final customLawControllers =
+          _multiSelectCustomLawControllers.putIfAbsent(field.name, () => []);
+      final customSectionControllers =
+          _multiSelectCustomSectionControllers.putIfAbsent(field.name, () => []);
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(field.label + (isRequired ? ' *' : '')),
+            if (field.hint != null) ...[
+              const SizedBox(height: 4),
+              Text(field.hint!, style: const TextStyle(color: Colors.grey)),
+            ],
+            const SizedBox(height: 10),
+            ...field.options.map((option) {
+              final isSelected = selected.contains(option);
+              final controller = sectionControllers.putIfAbsent(
+                option,
+                () => TextEditingController(),
+              );
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xfff9fafb),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(option),
+                        value: isSelected,
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              selected.add(option);
+                            } else {
+                              selected.remove(option);
+                              controller.clear();
+                            }
+                          });
+                        },
+                      ),
+                      if (isSelected)
+                        TextField(
+                          controller: controller,
+                          decoration: InputDecoration(
+                            hintText: 'Enter section numbers for $option',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+            if (field.allowCustom) ...[
+              const SizedBox(height: 6),
+              const Text(
+                'Other Laws',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              ...List.generate(customLawControllers.length, (index) {
+                final lawController = customLawControllers[index];
+                final sectionController = customSectionControllers[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: lawController,
+                          decoration: InputDecoration(
+                            hintText: 'Custom law name',
+                            filled: true,
+                            fillColor: const Color(0xfff9fafb),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: sectionController,
+                          decoration: InputDecoration(
+                            hintText: 'Section numbers',
+                            filled: true,
+                            fillColor: const Color(0xfff9fafb),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => _removeCustomLawEntry(field.name, index),
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () => _addCustomLawEntry(field.name),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Custom Law'),
+                ),
+              ),
+            ],
           ],
         ),
       );

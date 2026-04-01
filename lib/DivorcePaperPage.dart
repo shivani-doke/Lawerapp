@@ -20,6 +20,7 @@ class DocumentField {
   final List<String> options;
   final bool repeatable;
   final List<DocumentField> fields;
+  final Map<String, List<String>> visibleWhen;
 
   DocumentField({
     required this.name,
@@ -30,6 +31,7 @@ class DocumentField {
     this.options = const [],
     this.repeatable = false,
     this.fields = const [],
+    this.visibleWhen = const {},
   });
 
   factory DocumentField.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,30 @@ class DocumentField {
     final parsedName = (json['name'] ?? '').toString().trim();
     final parsedLabel = (json['label'] ?? parsedName).toString().trim();
     final parsedType = (json['type'] ?? 'text').toString().trim();
+    final rawVisibleWhen = json['visible_when'];
+
+    final parsedVisibleWhen = <String, List<String>>{};
+    if (rawVisibleWhen is Map) {
+      for (final entry in rawVisibleWhen.entries) {
+        final key = entry.key.toString().trim();
+        if (key.isEmpty) continue;
+        final value = entry.value;
+        if (value is List) {
+          final options = value
+              .map((e) => e.toString().trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
+          if (options.isNotEmpty) {
+            parsedVisibleWhen[key] = options;
+          }
+        } else if (value != null) {
+          final option = value.toString().trim();
+          if (option.isNotEmpty) {
+            parsedVisibleWhen[key] = [option];
+          }
+        }
+      }
+    }
 
     return DocumentField(
       name: parsedName,
@@ -55,6 +81,7 @@ class DocumentField {
               .map((e) => DocumentField.fromJson(Map<String, dynamic>.from(e)))
               .toList()
           : const [],
+      visibleWhen: parsedVisibleWhen,
     );
   }
 }
@@ -247,6 +274,9 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
   }
 
   bool _isTopLevelFieldMissing(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return false;
+    }
     if (!field.required) {
       return false;
     }
@@ -272,6 +302,9 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
     DocumentField subField,
     int rowIndex,
   ) {
+    if (!_isFieldVisible(subField)) {
+      return false;
+    }
     if (!subField.required) {
       return false;
     }
@@ -300,6 +333,9 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
 
   bool _isGroupRowEmpty(DocumentField groupField, int rowIndex) {
     for (final subField in groupField.fields) {
+      if (!_isFieldVisible(subField)) {
+        continue;
+      }
       if (subField.type == 'dropdown') {
         final value =
             _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
@@ -344,6 +380,9 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
     final missingFields = <String>[];
 
     for (final field in _fields) {
+      if (!_isFieldVisible(field)) {
+        continue;
+      }
       if (field.type == 'group' && field.fields.isNotEmpty) {
         final rows = _groupFieldControllers[field.name] ?? const [];
         if (field.required && rows.isEmpty) {
@@ -380,6 +419,9 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
   }
 
   dynamic _serializeTopLevelFieldValue(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return null;
+    }
     if (field.type == 'dropdown') {
       return _dropdownValues[field.name] ?? '';
     }
@@ -400,6 +442,9 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
 
         final rowData = <String, dynamic>{};
         for (final subField in field.fields) {
+          if (!_isFieldVisible(subField)) {
+            continue;
+          }
           if (subField.type == 'dropdown') {
             rowData[subField.name] =
                 _groupDropdownValues[field.name]?[rowIndex][subField.name] ??
@@ -432,6 +477,128 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
     }
 
     return _fieldControllers[field.name]?.text ?? '';
+  }
+
+  bool _isFieldVisible(DocumentField field) {
+    if (field.visibleWhen.isEmpty) {
+      return true;
+    }
+
+    for (final entry in field.visibleWhen.entries) {
+      final selectedValue = _getConditionalFieldValue(entry.key);
+      if (!entry.value.contains(selectedValue)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  String _getConditionalFieldValue(String fieldName) {
+    if (_dropdownValues.containsKey(fieldName)) {
+      return (_dropdownValues[fieldName] ?? '').trim();
+    }
+    if (_boolValues.containsKey(fieldName)) {
+      return (_boolValues[fieldName] ?? false).toString();
+    }
+    if (_fieldControllers.containsKey(fieldName)) {
+      return (_fieldControllers[fieldName]?.text ?? '').trim();
+    }
+    return '';
+  }
+
+  bool _isSpouseField(DocumentField field) {
+    return field.name.startsWith('husband_') || field.name.startsWith('wife_');
+  }
+
+  List<DocumentField> _getVisibleOrderedFields() {
+    final visibleFields = _fields.where(_isFieldVisible).toList();
+    final spouseFields = visibleFields.where(_isSpouseField).toList();
+
+    if (spouseFields.isEmpty) {
+      return visibleFields;
+    }
+
+    final firstSpouseIndex = visibleFields.indexWhere(_isSpouseField);
+    if (firstSpouseIndex == -1) {
+      return visibleFields;
+    }
+
+    final beforeSpouseFields = visibleFields.take(firstSpouseIndex).toList();
+    final afterSpouseFields =
+        visibleFields.skip(firstSpouseIndex).where((field) => !_isSpouseField(field)).toList();
+
+    final spouseOrder = _getOrderedSpouseFields(spouseFields);
+
+    return [
+      ...beforeSpouseFields,
+      ...spouseOrder,
+      ...afterSpouseFields,
+    ];
+  }
+
+  List<DocumentField> _getOrderedSpouseFields(List<DocumentField> spouseFields) {
+    final husbandFields = spouseFields
+        .where((field) => field.name.startsWith('husband_'))
+        .toList();
+    final wifeFields =
+        spouseFields.where((field) => field.name.startsWith('wife_')).toList();
+
+    final divorceType = (_dropdownValues['divorce_type'] ?? '').trim();
+    final mutualFirstPetitioner =
+        (_dropdownValues['mutual_first_petitioner'] ?? '').trim();
+    final contestedFiledBy =
+        (_dropdownValues['contested_filed_by'] ?? '').trim();
+
+    if (divorceType == 'Mutual Consent') {
+      if (mutualFirstPetitioner == 'Wife') {
+        return [...wifeFields, ...husbandFields];
+      }
+      return [...husbandFields, ...wifeFields];
+    }
+
+    if (divorceType == 'Contested') {
+      if (contestedFiledBy == 'Wife') {
+        return [...wifeFields, ...husbandFields];
+      }
+      return [...husbandFields, ...wifeFields];
+    }
+
+    return [...husbandFields, ...wifeFields];
+  }
+
+  String _getFieldLabel(DocumentField field) {
+    final divorceType = (_dropdownValues['divorce_type'] ?? '').trim();
+    final mutualFirstPetitioner =
+        (_dropdownValues['mutual_first_petitioner'] ?? '').trim();
+    final contestedFiledBy =
+        (_dropdownValues['contested_filed_by'] ?? '').trim();
+
+    if (field.name.startsWith('husband_')) {
+      final suffix = field.label.replaceFirst(RegExp(r'^Husband\s*', caseSensitive: false), '').trim();
+      if (divorceType == 'Mutual Consent') {
+        final petitionerNo = mutualFirstPetitioner == 'Wife' ? 'Petitioner No. 2' : 'Petitioner No. 1';
+        return '$petitionerNo (Husband) ${suffix.isEmpty ? field.label : suffix}'.trim();
+      }
+      if (divorceType == 'Contested') {
+        final role = contestedFiledBy == 'Wife' ? 'Respondent' : 'Petitioner';
+        return '$role (Husband) ${suffix.isEmpty ? field.label : suffix}'.trim();
+      }
+    }
+
+    if (field.name.startsWith('wife_')) {
+      final suffix = field.label.replaceFirst(RegExp(r'^Wife\s*', caseSensitive: false), '').trim();
+      if (divorceType == 'Mutual Consent') {
+        final petitionerNo = mutualFirstPetitioner == 'Wife' ? 'Petitioner No. 1' : 'Petitioner No. 2';
+        return '$petitionerNo (Wife) ${suffix.isEmpty ? field.label : suffix}'.trim();
+      }
+      if (divorceType == 'Contested') {
+        final role = contestedFiledBy == 'Wife' ? 'Petitioner' : 'Respondent';
+        return '$role (Wife) ${suffix.isEmpty ? field.label : suffix}'.trim();
+      }
+    }
+
+    return field.label;
   }
 
   // Clear all fields and controllers
@@ -899,7 +1066,7 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
                       ))
                     else if (_fields.isNotEmpty) ...[
                       // Build dynamic fields
-                      ..._fields.map((field) => _buildField(field)),
+                      ..._getVisibleOrderedFields().map((field) => _buildField(field)),
                       // Format selection toggle
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1441,6 +1608,10 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
 
   // Build an input field based on its type
   Widget _buildField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
+
     final type = field.type;
     final isRequired = field.required;
 
@@ -1463,7 +1634,7 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(field.label + (isRequired ? ' *' : '')),
+            Text(_getFieldLabel(field) + (isRequired ? ' *' : '')),
             const SizedBox(height: 6),
             DropdownButtonFormField<String>(
               value: selected,
@@ -1503,7 +1674,7 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
             border: Border.all(color: Colors.grey.shade300),
           ),
           child: SwitchListTile(
-            title: Text(field.label + (isRequired ? ' *' : '')),
+            title: Text(_getFieldLabel(field) + (isRequired ? ' *' : '')),
             subtitle: field.hint != null ? Text(field.hint!) : null,
             value: current,
             onChanged: (value) {
@@ -1526,7 +1697,7 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(field.label + (isRequired ? ' *' : '')),
+            Text(_getFieldLabel(field) + (isRequired ? ' *' : '')),
             if (field.hint != null) ...[
               const SizedBox(height: 4),
               Text(field.hint!, style: const TextStyle(color: Colors.grey)),
@@ -1565,7 +1736,7 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(field.label + (isRequired ? ' *' : '')),
+            Text(_getFieldLabel(field) + (isRequired ? ' *' : '')),
             const SizedBox(height: 6),
             TextField(
               controller: controller,
@@ -1597,7 +1768,7 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(field.label + (isRequired ? ' *' : '')),
+            Text(_getFieldLabel(field) + (isRequired ? ' *' : '')),
             const SizedBox(height: 6),
             TextField(
               controller: controller,
@@ -1621,7 +1792,7 @@ class _DivorcePaperPageState extends State<DivorcePaperPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(field.label + (isRequired ? ' *' : '')),
+          Text(_getFieldLabel(field) + (isRequired ? ' *' : '')),
           const SizedBox(height: 6),
           TextField(
             controller: controller,

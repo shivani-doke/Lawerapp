@@ -20,6 +20,7 @@ class DocumentField {
   final List<String> options;
   final bool repeatable;
   final List<DocumentField> fields;
+  final Map<String, List<String>> visibleWhen;
 
   DocumentField({
     required this.name,
@@ -30,11 +31,36 @@ class DocumentField {
     this.options = const [],
     this.repeatable = false,
     this.fields = const [],
+    this.visibleWhen = const {},
   });
 
   factory DocumentField.fromJson(Map<String, dynamic> json) {
     final rawOptions = json['options'];
     final rawFields = json['fields'];
+    final rawVisibleWhen = json['visible_when'];
+    final parsedVisibleWhen = <String, List<String>>{};
+
+    if (rawVisibleWhen is Map) {
+      for (final entry in rawVisibleWhen.entries) {
+        final key = entry.key.toString().trim();
+        if (key.isEmpty) continue;
+        final value = entry.value;
+        if (value is List) {
+          final values = value
+              .map((e) => e.toString().trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
+          if (values.isNotEmpty) {
+            parsedVisibleWhen[key] = values;
+          }
+        } else if (value != null) {
+          final normalized = value.toString().trim();
+          if (normalized.isNotEmpty) {
+            parsedVisibleWhen[key] = [normalized];
+          }
+        }
+      }
+    }
 
     return DocumentField(
       name: json['name'],
@@ -52,6 +78,7 @@ class DocumentField {
               .map(DocumentField.fromJson)
               .toList()
           : const [],
+      visibleWhen: parsedVisibleWhen,
     );
   }
 }
@@ -243,7 +270,66 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
     });
   }
 
+  bool _isFieldVisible(
+    DocumentField field, {
+    DocumentField? groupField,
+    int? rowIndex,
+  }) {
+    if (field.visibleWhen.isEmpty) {
+      return true;
+    }
+
+    for (final entry in field.visibleWhen.entries) {
+      final selectedValue = _getConditionalFieldValue(
+        entry.key,
+        groupField: groupField,
+        rowIndex: rowIndex,
+      );
+      if (!entry.value.contains(selectedValue)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  String _getConditionalFieldValue(
+    String fieldName, {
+    DocumentField? groupField,
+    int? rowIndex,
+  }) {
+    if (groupField != null && rowIndex != null) {
+      final dropdownValue =
+          _groupDropdownValues[groupField.name]?[rowIndex][fieldName];
+      if (dropdownValue != null) {
+        return dropdownValue.trim();
+      }
+
+      final boolValue = _groupBoolValues[groupField.name]?[rowIndex][fieldName];
+      if (boolValue != null) {
+        return boolValue.toString();
+      }
+
+      final controllerValue =
+          _groupFieldControllers[groupField.name]?[rowIndex][fieldName]?.text;
+      if (controllerValue != null) {
+        return controllerValue.trim();
+      }
+    }
+
+    if (_dropdownValues.containsKey(fieldName)) {
+      return (_dropdownValues[fieldName] ?? '').trim();
+    }
+    if (_boolValues.containsKey(fieldName)) {
+      return (_boolValues[fieldName] ?? false).toString();
+    }
+    return (_fieldControllers[fieldName]?.text ?? '').trim();
+  }
+
   bool _isTopLevelFieldMissing(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return false;
+    }
     if (!field.required) {
       return false;
     }
@@ -269,6 +355,9 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
     DocumentField subField,
     int rowIndex,
   ) {
+    if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
+      return false;
+    }
     if (!subField.required) {
       return false;
     }
@@ -297,6 +386,9 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
 
   bool _isGroupRowEmpty(DocumentField groupField, int rowIndex) {
     for (final subField in groupField.fields) {
+      if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
+        continue;
+      }
       if (subField.type == 'dropdown') {
         final value =
             _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
@@ -341,6 +433,9 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
     final missingFields = <String>[];
 
     for (final field in _fields) {
+      if (!_isFieldVisible(field)) {
+        continue;
+      }
       if (field.type == 'group' && field.fields.isNotEmpty) {
         final rows = _groupFieldControllers[field.name] ?? const [];
         if (field.required && rows.isEmpty) {
@@ -377,6 +472,9 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
   }
 
   dynamic _serializeTopLevelFieldValue(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return null;
+    }
     if (field.type == 'dropdown') {
       return _dropdownValues[field.name] ?? '';
     }
@@ -397,6 +495,9 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
 
         final rowData = <String, dynamic>{};
         for (final subField in field.fields) {
+          if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
+            continue;
+          }
           if (subField.type == 'dropdown') {
             rowData[subField.name] =
                 _groupDropdownValues[field.name]?[rowIndex][subField.name] ??
@@ -1184,11 +1285,20 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
                         ],
                       ),
                     ...field.fields.map(
-                      (nestedField) => _buildGroupSubField(
-                        groupField: field,
-                        subField: nestedField,
-                        rowIndex: rowIndex,
-                      ),
+                      (nestedField) {
+                        if (!_isFieldVisible(
+                          nestedField,
+                          groupField: field,
+                          rowIndex: rowIndex,
+                        )) {
+                          return const SizedBox.shrink();
+                        }
+                        return _buildGroupSubField(
+                          groupField: field,
+                          subField: nestedField,
+                          rowIndex: rowIndex,
+                        );
+                      },
                     ),
                   ],
                 ),
