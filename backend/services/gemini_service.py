@@ -9,6 +9,61 @@ load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
+
+SUPPORTED_GENERATION_LANGUAGES = (
+    "English",
+    "Hindi",
+    "Marathi",
+)
+
+
+def localize_field_values(field_values, language="English"):
+    if not isinstance(field_values, dict):
+        return field_values
+
+    target_language = (language or "English").strip()
+    if target_language.lower() == "english":
+        return field_values
+
+    prompt = f"""
+You are a legal document localization engine.
+
+Your task is to localize user-provided field values into {target_language}.
+
+RULES:
+- Return ONLY a valid JSON object.
+- Keep the exact same keys as the input.
+- Translate ordinary text values into {target_language}.
+- For lists, translate each text item where appropriate.
+- Keep names of people, company names, brand names, PAN, Aadhaar, passport numbers,
+  survey numbers, account numbers, addresses, phone numbers, email addresses, dates,
+  amounts, percentages, and other factual identifiers unchanged unless a natural
+  language translation is clearly required.
+- Translate simple labels and choices when appropriate, such as relationship words,
+  marital status values, yes/no style values, and descriptive text entered by the user.
+- Preserve numbers, booleans, nulls, and object structure.
+- Do not add keys, remove keys, or explain anything.
+
+INPUT JSON:
+{json.dumps(field_values, ensure_ascii=False)}
+"""
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config={"temperature": 0.1}
+        )
+        text = response.text.strip()
+        json_str = re.sub(r'^```json\s*|\s*```$', '', text, flags=re.MULTILINE)
+        localized = json.loads(json_str)
+        if isinstance(localized, dict):
+            return localized
+    except Exception as e:
+        print(f"Gemini field localization error: {e}")
+
+    return field_values
+
 def extract_fields_from_document(document_text, document_type):
     prompt = f"""
 You are an AI system that converts legal document templates into dynamic form fields.
@@ -204,7 +259,7 @@ REFERENCE DOCUMENT:
         print(f"Gemini extraction error: {e}")
         return [] 
 
-def fill_document_with_fields(reference_text, field_values, document_type):
+def fill_document_with_fields(reference_text, field_values, document_type, language="English"):
     fields_description = "\n".join([f"- {key}: {value}" for key, value in field_values.items()])
 
     prompt = f"""
@@ -213,6 +268,7 @@ You are a legal document rendering engine.
 You are given:
 1. A reference legal document (type: {document_type})
 2. A structured set of field values
+3. A target output language
 
 Your task is to produce the FINAL document by inserting the provided field values
 while preserving the ENTIRE reference document exactly from beginning to end.
@@ -247,6 +303,13 @@ REPLACEMENT RULES:
 - If a field value is not provided, leave the original text unchanged.
 - Do NOT invent missing data.
 - Do NOT add commentary or explanation.
+- Write the final document in {language}.
+- If the reference document is in a different language, translate it fully into {language}
+  while preserving the same legal meaning, structure, numbering, and layout order.
+- Treat the provided field values as already localized for the target language.
+- Keep names, numbers, dates, addresses, property identifiers, survey numbers, PAN,
+  Aadhaar, and similar factual values exactly as supplied unless translation is required
+  for surrounding labels.
 
 OUTPUT RULES:
 
@@ -267,6 +330,10 @@ FIELD VALUES:
 --------------------------------
 {fields_description}
 
+TARGET LANGUAGE:
+--------------------------------
+{language}
+
 FINAL DOCUMENT:
 """
     try:
@@ -279,7 +346,7 @@ FINAL DOCUMENT:
     except Exception as e:
         raise Exception(f"Gemini generation failed: {str(e)}")
 
-def generate_document_from_fields_only(document_type, field_values, field_schema=None):
+def generate_document_from_fields_only(document_type, field_values, field_schema=None, language="English"):
     schema_lines = []
     for field in field_schema or []:
         if not isinstance(field, dict):
@@ -323,6 +390,9 @@ RULES:
 - If a required section needs missing information, write it in neutral generic form
   without inventing facts.
 - Keep the tone formal and legally styled.
+- Write the entire document in {language}.
+- Use natural legal drafting conventions for {language}.
+- Treat the provided field values as already localized for the target language.
 - Do NOT include commentary, explanations, checklists, or notes to the user.
 - Output only the final document text.
 - Do NOT use markdown.
@@ -357,3 +427,53 @@ def replace_placeholders(doc, field_values):
             for cell in row.cells:
                 for paragraph in cell.paragraphs:
                     replace_in_paragraph(paragraph)
+
+
+def localize_field_schema(fields, language="English"):
+    if not isinstance(fields, list):
+        return fields
+
+    target_language = (language or "English").strip()
+    if target_language.lower() == "english":
+        return fields
+
+    prompt = f"""
+You are a legal form schema localization engine.
+
+Translate this field schema into {target_language}.
+
+RULES:
+- Return ONLY valid JSON.
+- Keep the same structure and keys.
+- Translate only user-facing strings such as:
+  - label
+  - hint
+  - options values
+- Do NOT change:
+  - field name keys
+  - type values
+  - booleans
+  - numbers
+  - object/list structure
+- Preserve legal meaning.
+- Do not add or remove fields.
+
+INPUT JSON:
+{json.dumps(fields, ensure_ascii=False)}
+"""
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config={"temperature": 0.1}
+        )
+        text = response.text.strip()
+        json_str = re.sub(r'^```json\s*|\s*```$', '', text, flags=re.MULTILINE)
+        localized = json.loads(json_str)
+        if isinstance(localized, list):
+            return localized
+    except Exception as e:
+        print(f"Gemini field schema localization error: {e}")
+
+    return fields

@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import '../services/api_service.dart';
+import 'widgets/voice_dictation_button.dart';
 import 'upload_context.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
@@ -103,6 +104,34 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
 
   // Format toggle state (true = table format, false = blank template)
   bool _useTableFormat = true;
+  static const List<String> _supportedLanguages = [
+    'English',
+    'Hindi',
+    'Marathi',
+  ];
+  String _selectedLanguage = _supportedLanguages.first;
+  static const List<String> _supportedFontFamilies = [
+    'Times New Roman',
+    'Arial',
+    'Calibri',
+    'Cambria',
+    'Georgia',
+    'Garamond',
+    'Verdana',
+    'Tahoma',
+    'Trebuchet MS',
+    'Nirmala UI',
+    'Mangal',
+  ];
+  static const List<int> _supportedFontSizes = [10, 12, 14, 16, 18, 20, 22];
+  String _selectedFontFamily = _supportedFontFamilies.first;
+  int _selectedFontSize = 14;
+  static const List<String> _supportedPaperSizes = ['A4', 'Letter', 'Legal'];
+  static const List<String> _supportedLineSpacings = ['Single', '1.15', '1.5', 'Double'];
+  static const List<String> _supportedMarginSizes = ['Normal', 'Narrow', 'Moderate', 'Wide'];
+  String _selectedPaperSize = _supportedPaperSizes.first;
+  String _selectedLineSpacing = _supportedLineSpacings.first;
+  String _selectedMarginSize = _supportedMarginSizes.first;
   List<Map<String, String>> _poaSubtypes = [];
   String? _selectedPoaSubtype;
   late final bool _openedFromUploads;
@@ -185,6 +214,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
   @override
   void initState() {
     super.initState();
+    ApiService.setFieldLanguage(_selectedLanguage);
     _openedFromUploads =
         UploadNavigationContext.consumeReferenceOnlyMode('power_of_attorney');
     _fields = []; // No default fields
@@ -813,12 +843,21 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
           field.name: _serializeTopLevelFieldValue(field),
       };
 
+      fields.addAll({
+        'paper_size': _selectedPaperSize,
+        'line_spacing': _selectedLineSpacing,
+        'margin_size': _selectedMarginSize,
+      });
+
       final response = await ApiService().generateDocument(
         documentType: 'power_of_attorney',
         fields: fields,
         referenceFile: _selectedReferenceId == null ? _referenceFile : null,
         referenceId: _selectedReferenceId,
         format: _useTableFormat ? 'table' : 'blank',
+        language: _selectedLanguage,
+        fontFamily: _selectedFontFamily,
+        fontSize: _selectedFontSize,
       );
 
       final generatedPdf = response['pdf_file'] as String?;
@@ -853,7 +892,145 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
     }
   }
 
-  // Date picker for date fields
+
+  Widget _buildDocumentLanguageSettings() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Document Language:'),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: _selectedLanguage,
+            items: _supportedLanguages
+                .map((language) => DropdownMenuItem<String>(
+                      value: language,
+                      child: Text(language),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _selectedLanguage = value);
+              ApiService.setFieldLanguage(value);
+              if (_selectedReferenceId != null) {
+                _selectSavedReference(_selectedReferenceId!);
+              } else {
+                _loadDefaultFields();
+              }
+            },
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: const Color(0xfff9fafb),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentLayoutSettings() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Paper Size:'),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: _selectedPaperSize,
+                  items: _supportedPaperSizes
+                      .map((paperSize) => DropdownMenuItem<String>(
+                            value: paperSize,
+                            child: Text(paperSize),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _selectedPaperSize = value);
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xfff9fafb),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Line Spacing:'),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: _selectedLineSpacing,
+                  items: _supportedLineSpacings
+                      .map((lineSpacing) => DropdownMenuItem<String>(
+                            value: lineSpacing,
+                            child: Text(lineSpacing),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _selectedLineSpacing = value);
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xfff9fafb),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Margin:'),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: _selectedMarginSize,
+                  items: _supportedMarginSizes
+                      .map((marginSize) => DropdownMenuItem<String>(
+                            value: marginSize,
+                            child: Text(marginSize),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _selectedMarginSize = value);
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xfff9fafb),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _selectDate(TextEditingController controller) async {
     final DateTime now = DateTime.now();
     final DateTime? picked = await showDatePicker(
@@ -877,7 +1054,6 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // LEFT SIDE – Field input form
           Expanded(
             flex: 2,
             child: Container(
@@ -892,7 +1068,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "AUTHORIZATION",
+                      'DOCUMENT',
                       style: TextStyle(
                         color: accentColor,
                         fontWeight: FontWeight.w600,
@@ -901,51 +1077,13 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      "Power of Attorney",
+                      'Power Of Attorney',
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    if (_poaSubtypes.isNotEmpty && _selectedReferenceId == null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedPoaSubtype,
-                          items: _poaSubtypes
-                              .map(
-                                (item) => DropdownMenuItem<String>(
-                                  value: item['id'],
-                                  child: Text(item['label'] ?? item['id'] ?? ''),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) async {
-                            if (value == null || value == _selectedPoaSubtype) {
-                              return;
-                            }
-                            setState(() {
-                              _selectedPoaSubtype = value;
-                              _selectedReferenceId = null;
-                              _referenceFile = null;
-                              _resetFields();
-                            });
-                            await _loadDefaultFields();
-                          },
-                          decoration: InputDecoration(
-                            labelText: 'Power of Attorney Type',
-                            filled: true,
-                            fillColor: const Color(0xfff9fafb),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                    // Saved references dropdown
                     if (_isLoadingReferences)
                       const Center(child: CircularProgressIndicator())
                     else if (_savedReferences.isNotEmpty)
@@ -955,27 +1093,14 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                           DropdownButtonFormField<String>(
                             value: _selectedReferenceId,
                             hint: const Text('Select an existing document'),
-                            items: _savedReferences
-                                .map<DropdownMenuItem<String>>((ref) {
+                            items: _savedReferences.map<DropdownMenuItem<String>>((ref) {
                               return DropdownMenuItem<String>(
                                 value: ref['id'] as String,
-                                child: Text(
-                                    '${ref['original_name']} (${ref['document_type']})'),
+                                child: Text('${ref['original_name']} (${ref['document_type']})'),
                               );
                             }).toList(),
                             onChanged: (value) {
                               if (value != null) {
-                                final selectedRef = _savedReferences.firstWhere(
-                                  (ref) => ref['id']?.toString() == value,
-                                  orElse: () => {},
-                                );
-                                final refSubtype =
-                                    selectedRef['subtype']?.toString();
-                                if (refSubtype != null && refSubtype.isNotEmpty) {
-                                  setState(() {
-                                    _selectedPoaSubtype = refSubtype;
-                                  });
-                                }
                                 _selectSavedReference(value);
                               }
                             },
@@ -987,10 +1112,8 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                               ),
                             ),
                           ),
-                          // Preview button (styled exactly like Generate button)
                           if (_selectedReferenceId != null) ...[
-                            const SizedBox(
-                                height: 16), // Spacing above preview button
+                            const SizedBox(height: 16),
                             ElevatedButton.icon(
                               onPressed: _previewReference,
                               icon: const Icon(Icons.visibility),
@@ -998,8 +1121,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: accentColor,
                                 minimumSize: const Size(double.infinity, 48),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -1008,14 +1130,9 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                           ],
                         ],
                       ),
-
-                    // Extra spacing between preview button and fields (when reference selected)
                     if (_selectedReferenceId != null)
                       const SizedBox(height: 16),
-
-                    // UPLOAD BUTTON – shown only when no saved document is selected
                     if (_selectedReferenceId == null) ...[
-                      // Add spacing only if saved references exist above
                       if (_savedReferences.isNotEmpty)
                         const SizedBox(height: 16),
                       Padding(
@@ -1033,10 +1150,8 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 style: OutlinedButton.styleFrom(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
-                                  side: BorderSide(
-                                      color: accentColor, width: 1.5),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  side: BorderSide(color: accentColor, width: 1.5),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -1053,18 +1168,16 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                         ),
                       ),
                     ],
-
-                    // Show loading indicator while extracting fields
                     if (_isExtracting || _isUploading)
                       const Center(
-                          child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: CircularProgressIndicator(),
-                      ))
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
                     else if (_fields.isNotEmpty) ...[
-                      // Build dynamic fields
+                      _buildDocumentLanguageSettings(),
                       ..._buildVisibleFields(),
-                      // Format selection toggle
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Row(
@@ -1087,6 +1200,69 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                           ],
                         ),
                       ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Font Family:'),
+                                  const SizedBox(height: 8),
+                                  DropdownButtonFormField<String>(
+                                    value: _selectedFontFamily,
+                                    items: _supportedFontFamilies.map((fontFamily) => DropdownMenuItem<String>(
+                                      value: fontFamily,
+                                      child: Text(fontFamily),
+                                    )).toList(),
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      setState(() => _selectedFontFamily = value);
+                                    },
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: const Color(0xfff9fafb),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Font Size:'),
+                                  const SizedBox(height: 8),
+                                  DropdownButtonFormField<int>(
+                                    value: _selectedFontSize,
+                                    items: _supportedFontSizes.map((fontSize) => DropdownMenuItem<int>(
+                                      value: fontSize,
+                                      child: Text(fontSize.toString()),
+                                    )).toList(),
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      setState(() => _selectedFontSize = value);
+                                    },
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: const Color(0xfff9fafb),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildDocumentLayoutSettings(),
                     ] else
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 20),
@@ -1098,10 +1274,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                           ),
                         ),
                       ),
-
                     const SizedBox(height: 20),
-
-                    // Generate button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -1137,10 +1310,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
               ),
             ),
           ),
-
           const SizedBox(width: 30),
-
-          // RIGHT SIDE – Document viewer/editor
           Expanded(
             flex: 2,
             child: Container(
@@ -1166,142 +1336,586 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
     );
   }
 
-  // PDF Viewer
-  Widget _buildPdfViewer() {
-    final pdfViewUrl = _generatedPdfViewUrl ??
-        "${ApiService.baseUrl}/view/${_generatedPdf}?t=${DateTime.now().millisecondsSinceEpoch}";
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              "Generated Document",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  // Placeholder before any document is generated
+
+
+  Widget _buildField(DocumentField field) {
+    if (field.type == 'group' && field.fields.isNotEmpty) {
+      return _buildGroupField(field);
+    }
+
+    final isRequired = field.required;
+    final label = isRequired ? '${field.label} *' : field.label;
+
+    Widget input;
+    switch (field.type) {
+      case 'dropdown':
+        final items = field.options
+            .map((option) => DropdownMenuItem<String>(
+                  value: option,
+                  child: Text(option),
+                ))
+            .toList();
+        final currentValue = _dropdownValues[field.name];
+        final value = items.any((item) => item.value == currentValue)
+            ? currentValue
+            : (items.isNotEmpty ? items.first.value : null);
+        input = DropdownButtonFormField<String>(
+          value: value,
+          items: items,
+          onChanged: (selected) {
+            if (selected == null) return;
+            setState(() => _dropdownValues[field.name] = selected);
+          },
+          decoration: InputDecoration(
+            hintText: field.hint,
+            filled: true,
+            fillColor: const Color(0xfff9fafb),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            Row(
-              children: [
-                IconButton(
-                  tooltip: "Maximize Preview",
-                  icon: const Icon(Icons.open_in_full),
-                  onPressed: () {
-                    _openGeneratedPreviewDialog(pdfViewUrl);
-                  },
-                ),
-                IconButton(
-                  tooltip: "Download PDF",
-                  icon: const Icon(Icons.picture_as_pdf),
-                  onPressed: () async {
-                    await ApiService()
-                        .downloadGeneratedDocument(_generatedPdf!);
-                  },
-                ),
-                IconButton(
-                  tooltip: "Download DOCX",
-                  icon: const Icon(Icons.description),
-                  onPressed: () async {
-                    await ApiService()
-                        .downloadGeneratedDocument(_generatedDocx!);
-                  },
-                ),
-              ],
-            )
-          ],
-        ),
-        const SizedBox(height: 10),
-        Expanded(
-          child: Container(
+          ),
+        );
+        break;
+      case 'boolean':
+        input = Container(
+          decoration: BoxDecoration(
+            color: const Color(0xfff9fafb),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: CheckboxListTile(
+            value: _boolValues[field.name] ?? false,
+            onChanged: (selected) {
+              setState(() => _boolValues[field.name] = selected ?? false);
+            },
+            controlAffinity: ListTileControlAffinity.leading,
+            title: Text(field.hint ?? 'Yes'),
+            dense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          ),
+        );
+        break;
+      case 'multiselect':
+        final selectedValues = _multiselectValues.putIfAbsent(field.name, () => <String>{});
+        input = Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xfff9fafb),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: field.options.map((option) {
+              final isSelected = selectedValues.contains(option);
+              return FilterChip(
+                label: Text(option),
+                selected: isSelected,
+                selectedColor: accentColor.withValues(alpha: 0.18),
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      selectedValues.add(option);
+                    } else {
+                      selectedValues.remove(option);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+        );
+        break;
+      case 'date':
+        final controller = _fieldControllers.putIfAbsent(
+          field.name,
+          () => TextEditingController(),
+        );
+        input = TextFormField(
+          controller: controller,
+          readOnly: true,
+          onTap: () => _selectDate(controller),
+          decoration: InputDecoration(
+            hintText: field.hint ?? 'DD-MM-YYYY',
+            suffixIcon: const Icon(Icons.calendar_today),
+            filled: true,
+            fillColor: const Color(0xfff9fafb),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+        break;
+      case 'textarea':
+        final controller = _fieldControllers.putIfAbsent(
+          field.name,
+          () => TextEditingController(),
+        );
+        input = TextFormField(
+          controller: controller,
+          maxLines: 4,
+          decoration: InputDecoration(
+            hintText: field.hint,
+            suffixIcon: VoiceFieldMicIcon(
+              language: _selectedLanguage,
+              controller: controller,
+            ),
+            filled: true,
+            fillColor: const Color(0xfff9fafb),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+        break;
+      case 'number':
+        final controller = _fieldControllers.putIfAbsent(
+          field.name,
+          () => TextEditingController(),
+        );
+        input = TextFormField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            hintText: field.hint,
+            suffixIcon: VoiceFieldMicIcon(
+              language: _selectedLanguage,
+              controller: controller,
+            ),
+            filled: true,
+            fillColor: const Color(0xfff9fafb),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+        break;
+      default:
+        final controller = _fieldControllers.putIfAbsent(
+          field.name,
+          () => TextEditingController(),
+        );
+        input = TextFormField(
+          controller: controller,
+          maxLines: field.type == 'long_text' ? 4 : 1,
+          decoration: InputDecoration(
+            hintText: field.hint,
+            suffixIcon: VoiceFieldMicIcon(
+              language: _selectedLanguage,
+              controller: controller,
+            ),
+            filled: true,
+            fillColor: const Color(0xfff9fafb),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+        break;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          input,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupField(DocumentField field) {
+    final controllerRows = _groupFieldControllers[field.name] ?? const [];
+    final dropdownRows = _groupDropdownValues[field.name] ?? const [];
+    final boolRows = _groupBoolValues[field.name] ?? const [];
+    final multiselectRows = _groupMultiselectValues[field.name] ?? const [];
+
+    Widget buildSubField(DocumentField subField, int rowIndex) {
+      final label = subField.required ? '${subField.label} *' : subField.label;
+      Widget input;
+
+      switch (subField.type) {
+        case 'dropdown':
+          final row = rowIndex < dropdownRows.length ? dropdownRows[rowIndex] : <String, String>{};
+          final items = subField.options
+              .map((option) => DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(option),
+                  ))
+              .toList();
+          final currentValue = row[subField.name];
+          final value = items.any((item) => item.value == currentValue)
+              ? currentValue
+              : (items.isNotEmpty ? items.first.value : null);
+          input = DropdownButtonFormField<String>(
+            value: value,
+            items: items,
+            onChanged: (selected) {
+              if (selected == null) return;
+              setState(() {
+                _groupDropdownValues[field.name]![rowIndex][subField.name] = selected;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: subField.hint,
+              filled: true,
+              fillColor: const Color(0xfff9fafb),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          break;
+        case 'boolean':
+          final row = rowIndex < boolRows.length ? boolRows[rowIndex] : <String, bool>{};
+          input = Container(
             decoration: BoxDecoration(
+              color: const Color(0xfff9fafb),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: _buildGeneratedPreviewContent(pdfViewUrl),
+            child: CheckboxListTile(
+              value: row[subField.name] ?? false,
+              onChanged: (selected) {
+                setState(() {
+                  _groupBoolValues[field.name]![rowIndex][subField.name] = selected ?? false;
+                });
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(subField.hint ?? 'Yes'),
+              dense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+          );
+          break;
+        case 'multiselect':
+          final row = rowIndex < multiselectRows.length
+              ? multiselectRows[rowIndex]
+              : <String, Set<String>>{};
+          final selectedValues = row.putIfAbsent(subField.name, () => <String>{});
+          input = Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xfff9fafb),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: subField.options.map((option) {
+                final isSelected = selectedValues.contains(option);
+                return FilterChip(
+                  label: Text(option),
+                  selected: isSelected,
+                  selectedColor: accentColor.withValues(alpha: 0.18),
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        selectedValues.add(option);
+                      } else {
+                        selectedValues.remove(option);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          );
+          break;
+        case 'date':
+          final controller = _groupFieldControllers[field.name]![rowIndex][subField.name]!;
+          input = TextFormField(
+            controller: controller,
+            readOnly: true,
+            onTap: () => _selectDate(controller),
+            decoration: InputDecoration(
+              hintText: subField.hint ?? 'DD-MM-YYYY',
+              suffixIcon: const Icon(Icons.calendar_today),
+              filled: true,
+              fillColor: const Color(0xfff9fafb),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          break;
+        case 'textarea':
+          final controller =
+              _groupFieldControllers[field.name]![rowIndex][subField.name]!;
+          input = TextFormField(
+            controller: controller,
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText: subField.hint,
+              suffixIcon: VoiceFieldMicIcon(
+                language: _selectedLanguage,
+                controller: controller,
+              ),
+              filled: true,
+              fillColor: const Color(0xfff9fafb),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          break;
+        case 'number':
+          final controller =
+              _groupFieldControllers[field.name]![rowIndex][subField.name]!;
+          input = TextFormField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              hintText: subField.hint,
+              suffixIcon: VoiceFieldMicIcon(
+                language: _selectedLanguage,
+                controller: controller,
+              ),
+              filled: true,
+              fillColor: const Color(0xfff9fafb),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          break;
+        default:
+          final controller =
+              _groupFieldControllers[field.name]![rowIndex][subField.name]!;
+          input = TextFormField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: subField.hint,
+              suffixIcon: VoiceFieldMicIcon(
+                language: _selectedLanguage,
+                controller: controller,
+              ),
+              filled: true,
+              fillColor: const Color(0xfff9fafb),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          break;
+      }
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            input,
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xfffcfcfd),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    field.required ? '${field.label} *' : field.label,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (field.repeatable)
+                  TextButton.icon(
+                    onPressed: () => _addGroupRow(field),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...List.generate(controllerRows.length, (rowIndex) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (field.repeatable || controllerRows.length > 1)
+                      Row(
+                        children: [
+                          Text(
+                            '${field.label} ${rowIndex + 1}',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const Spacer(),
+                          if (controllerRows.length > 1)
+                            IconButton(
+                              onPressed: () => _removeGroupRow(field, rowIndex),
+                              icon: const Icon(Icons.delete_outline),
+                              tooltip: 'Remove',
+                            ),
+                        ],
+                      ),
+                    ...field.fields.map((subField) => buildSubField(subField, rowIndex)),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFallbackButton(String url) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        html.window.open(url, '_blank');
+      },
+      icon: const Icon(Icons.open_in_browser),
+      label: const Text('Open in Browser'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: accentColor,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPdfViewer() {
+    final previewUrl = _generatedPdfViewUrl;
+    final previewType = _generatedPdfViewType;
+
+    if (previewUrl == null || previewType == null) {
+      return _buildPlaceholder();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Generated Document Preview',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (_generatedPdf != null)
+              IconButton(
+                tooltip: 'Download PDF',
+                icon: const Icon(Icons.picture_as_pdf),
+                onPressed: () async {
+                  await ApiService().downloadGeneratedDocument(_generatedPdf!);
+                },
+              ),
+            if (_generatedDocx != null)
+              IconButton(
+                tooltip: 'Download DOCX',
+                icon: const Icon(Icons.description),
+                onPressed: () async {
+                  await ApiService().downloadGeneratedDocument(_generatedDocx!);
+                },
+              ),
+            IconButton(
+              tooltip: 'Open large preview',
+              icon: const Icon(Icons.open_in_full),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (dialogContext) => Dialog(
+                    insetPadding: const EdgeInsets.symmetric(horizontal: 80, vertical: 60),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: SizedBox(
+                      width: 900,
+                      height: 650,
+                      child: _GeneratedPreviewDialog(
+                        previewUrl: previewUrl,
+                        accentColor: accentColor,
+                        generatedPdf: _generatedPdf,
+                        generatedDocx: _generatedDocx,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: _pdfLoadFailed
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.picture_as_pdf, size: 64, color: Colors.grey),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Preview unavailable inside the app.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildFallbackButton(previewUrl),
+                      ],
+                    ),
+                  )
+                : kIsWeb
+                    ? web_preview.buildPreviewIframe(previewType)
+                    : SfPdfViewer.network(
+                        previewUrl,
+                        canShowScrollHead: true,
+                        canShowScrollStatus: true,
+                        onDocumentLoadFailed: (PdfDocumentLoadFailedDetails details) {
+                          setState(() {
+                            _pdfLoadFailed = true;
+                          });
+                        },
+                      ),
           ),
         ),
       ],
     );
   }
 
-  void _openGeneratedPreviewDialog(String pdfViewUrl) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        child: SizedBox(
-          width: MediaQuery.of(dialogContext).size.width * 0.9,
-          height: MediaQuery.of(dialogContext).size.height * 0.9,
-          child: _GeneratedPreviewDialog(
-            previewUrl: pdfViewUrl,
-            accentColor: accentColor,
-            generatedPdf: _generatedPdf,
-            generatedDocx: _generatedDocx,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGeneratedPreviewContent(String pdfViewUrl) {
-    if (_pdfLoadFailed) {
-      return _buildFallbackButton(pdfViewUrl);
-    }
-
-    if (kIsWeb && _generatedPdfViewType != null) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: web_preview.buildPreviewIframe(_generatedPdfViewType!),
-      );
-    }
-
-    return SfPdfViewer.network(
-      pdfViewUrl,
-      canShowScrollHead: true,
-      canShowScrollStatus: true,
-      onDocumentLoadFailed: (PdfDocumentLoadFailedDetails details) {
-        setState(() {
-          _pdfLoadFailed = true;
-        });
-      },
-    );
-  }
-
-  // Fallback button when PDF fails to load
-  Widget _buildFallbackButton(String url) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.picture_as_pdf,
-            size: 80,
-            color: Colors.grey,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            "Click to open in browser.",
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton.icon(
-            onPressed: () {
-              html.window.open(url, '_blank');
-            },
-            icon: const Icon(Icons.open_in_browser),
-            label: const Text("Open"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: accentColor,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   List<DocumentField> _getVisibleFields() {
     final fieldsByName = <String, DocumentField>{};
@@ -1331,509 +1945,6 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
     return widgets;
   }
 
-  // Build an input field based on its type
-  Widget _buildGroupField(DocumentField field) {
-    final controllerRows = _groupFieldControllers[field.name] ?? const [];
-    final rowCount = controllerRows.length;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xfff9fafb),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    field.label + (field.required ? ' *' : ''),
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-                if (field.repeatable)
-                  Text(
-                    '$rowCount item${rowCount == 1 ? '' : 's'}',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-              ],
-            ),
-            if (field.hint != null && field.hint!.trim().isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(field.hint!, style: const TextStyle(color: Colors.grey)),
-            ],
-            const SizedBox(height: 12),
-            ...List.generate(rowCount, (rowIndex) {
-              return Container(
-                margin: EdgeInsets.only(bottom: rowIndex == rowCount - 1 ? 0 : 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (field.repeatable)
-                      Row(
-                        children: [
-                          Text(
-                            '${field.label} ${rowIndex + 1}',
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          const Spacer(),
-                          if (rowCount > 1)
-                            IconButton(
-                              tooltip: 'Remove item',
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () => _removeGroupRow(field, rowIndex),
-                            ),
-                        ],
-                      ),
-                    ...field.fields.map(
-                      (nestedField) => _buildGroupSubField(
-                        groupField: field,
-                        subField: nestedField,
-                        rowIndex: rowIndex,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-            if (field.repeatable) ...[
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
-                  onPressed: () => _addGroupRow(field),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add item'),
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGroupSubField({
-    required DocumentField groupField,
-    required DocumentField subField,
-    required int rowIndex,
-  }) {
-    final type = subField.type;
-    final isRequired = subField.required;
-
-    if (type == 'dropdown') {
-      final options = subField.options;
-      final current =
-          _groupDropdownValues[groupField.name]?[rowIndex][subField.name];
-      final selected = (current != null && options.contains(current))
-          ? current
-          : (options.isNotEmpty ? options.first : null);
-      if (selected != null) {
-        _groupDropdownValues[groupField.name]?[rowIndex][subField.name] =
-            selected;
-      }
-
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(subField.label + (isRequired ? ' *' : '')),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              value: selected,
-              items: options
-                  .map((option) => DropdownMenuItem<String>(
-                        value: option,
-                        child: Text(option),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _groupDropdownValues[groupField.name]?[rowIndex]
-                      [subField.name] = value ?? '';
-                });
-              },
-              decoration: InputDecoration(
-                hintText: subField.hint,
-                filled: true,
-                fillColor: const Color(0xfff9fafb),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (type == 'boolean') {
-      final current =
-          _groupBoolValues[groupField.name]?[rowIndex][subField.name] ?? false;
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xfff9fafb),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: SwitchListTile(
-            title: Text(subField.label + (isRequired ? ' *' : '')),
-            subtitle: subField.hint != null ? Text(subField.hint!) : null,
-            value: current,
-            onChanged: (value) {
-              setState(() {
-                _groupBoolValues[groupField.name]?[rowIndex][subField.name] =
-                    value;
-              });
-            },
-          ),
-        ),
-      );
-    }
-
-    if (type == 'multiselect') {
-      final selected = _groupMultiselectValues[groupField.name]?[rowIndex]
-          .putIfAbsent(subField.name, () => <String>{});
-      final options = subField.options;
-
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(subField.label + (isRequired ? ' *' : '')),
-            if (subField.hint != null) ...[
-              const SizedBox(height: 4),
-              Text(subField.hint!, style: const TextStyle(color: Colors.grey)),
-            ],
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: options.map((option) {
-                final active = selected?.contains(option) ?? false;
-                return FilterChip(
-                  label: Text(option),
-                  selected: active,
-                  onSelected: (value) {
-                    setState(() {
-                      if (value) {
-                        selected?.add(option);
-                      } else {
-                        selected?.remove(option);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final controller = _groupFieldControllers[groupField.name]?[rowIndex]
-        .putIfAbsent(subField.name, () => TextEditingController());
-
-    if (type == 'date') {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(subField.label + (isRequired ? ' *' : '')),
-            const SizedBox(height: 6),
-            TextField(
-              controller: controller,
-              readOnly: true,
-              onTap: controller == null ? null : () => _selectDate(controller),
-              decoration: InputDecoration(
-                hintText: subField.hint ?? 'dd-mm-yyyy',
-                suffixIcon: const Icon(Icons.calendar_today),
-                filled: true,
-                fillColor: const Color(0xfff9fafb),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (type == 'textarea' || type == 'multiline') {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(subField.label + (isRequired ? ' *' : '')),
-            const SizedBox(height: 6),
-            TextField(
-              controller: controller,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: subField.hint,
-                filled: true,
-                fillColor: const Color(0xfff9fafb),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(subField.label + (isRequired ? ' *' : '')),
-          const SizedBox(height: 6),
-          TextField(
-            controller: controller,
-            keyboardType:
-                type == 'number' ? TextInputType.number : TextInputType.text,
-            decoration: InputDecoration(
-              hintText: subField.hint,
-              filled: true,
-              fillColor: const Color(0xfff9fafb),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Build an input field based on its type
-  Widget _buildField(DocumentField field) {
-    final type = field.type;
-    final isRequired = field.required;
-
-    if (type == 'group' && field.fields.isNotEmpty) {
-      return _buildGroupField(field);
-    }
-
-    if (type == 'dropdown') {
-      final options = field.options;
-      final current = _dropdownValues[field.name];
-      final selected = (current != null && options.contains(current))
-          ? current
-          : (options.isNotEmpty ? options.first : null);
-      if (selected != null) {
-        _dropdownValues[field.name] = selected;
-      }
-
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(field.label + (isRequired ? ' *' : '')),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              value: selected,
-              items: options
-                  .map((o) => DropdownMenuItem<String>(
-                        value: o,
-                        child: Text(o),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _dropdownValues[field.name] = value ?? '';
-                });
-              },
-              decoration: InputDecoration(
-                hintText: field.hint,
-                filled: true,
-                fillColor: const Color(0xfff9fafb),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (type == 'boolean') {
-      final current = _boolValues[field.name] ?? false;
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 18),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xfff9fafb),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: SwitchListTile(
-            title: Text(field.label + (isRequired ? ' *' : '')),
-            subtitle: field.hint != null ? Text(field.hint!) : null,
-            value: current,
-            onChanged: (value) {
-              setState(() {
-                _boolValues[field.name] = value;
-              });
-            },
-          ),
-        ),
-      );
-    }
-
-    if (type == 'multiselect') {
-      final options = field.options;
-      final selected =
-          _multiselectValues.putIfAbsent(field.name, () => <String>{});
-
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(field.label + (isRequired ? ' *' : '')),
-            if (field.hint != null) ...[
-              const SizedBox(height: 4),
-              Text(field.hint!, style: const TextStyle(color: Colors.grey)),
-            ],
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: options.map((option) {
-                final active = selected.contains(option);
-                return FilterChip(
-                  label: Text(option),
-                  selected: active,
-                  onSelected: (value) {
-                    setState(() {
-                      if (value) {
-                        selected.add(option);
-                      } else {
-                        selected.remove(option);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final controller = _fieldControllers[field.name] ??= TextEditingController();
-
-    if (type == 'date') {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(field.label + (isRequired ? ' *' : '')),
-            const SizedBox(height: 6),
-            TextField(
-              controller: controller,
-              readOnly: true,
-              onTap: () => _selectDate(controller),
-              decoration: InputDecoration(
-                hintText: field.hint ?? 'dd-mm-yyyy',
-                suffixIcon: const Icon(Icons.calendar_today),
-                filled: true,
-                fillColor: const Color(0xfff9fafb),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (type == 'textarea' || type == 'multiline' || type == 'group') {
-      String? hint = field.hint;
-      if (type == 'group' && (hint == null || hint.isEmpty)) {
-        hint = 'Enter JSON array, e.g. [{"item":"value"}]';
-      }
-
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(field.label + (isRequired ? ' *' : '')),
-            const SizedBox(height: 6),
-            TextField(
-              controller: controller,
-              maxLines: type == 'group' ? 5 : 3,
-              decoration: InputDecoration(
-                hintText: hint,
-                filled: true,
-                fillColor: const Color(0xfff9fafb),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(field.label + (isRequired ? ' *' : '')),
-          const SizedBox(height: 6),
-          TextField(
-            controller: controller,
-            keyboardType:
-                type == 'number' ? TextInputType.number : TextInputType.text,
-            decoration: InputDecoration(
-              hintText: field.hint,
-              filled: true,
-              fillColor: const Color(0xfff9fafb),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Placeholder before any document is generated
   Widget _buildPlaceholder() {
     return const Center(
       child: Column(
@@ -2125,6 +2236,14 @@ class _GeneratedPreviewDialogState extends State<_GeneratedPreviewDialog> {
     );
   }
 }
+
+
+
+
+
+
+
+
 
 
 

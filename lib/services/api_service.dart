@@ -11,6 +11,11 @@ import '../config/app_config.dart';
 
 class ApiService {
   static const String baseUrl = AppConfig.backendBaseUrl;
+  static String _fieldLanguage = 'English';
+
+  static void setFieldLanguage(String language) {
+    _fieldLanguage = language.trim().isEmpty ? 'English' : language;
+  }
 
   // -------------------------------------------------------------------------
   // Existing methods
@@ -21,6 +26,7 @@ class ApiService {
     PlatformFile file, {
     required String documentType,
     String? subtype,
+    String? language,
   }) async {
     var uri = Uri.parse('$baseUrl/extract_fields');
     var request = http.MultipartRequest('POST', uri);
@@ -48,6 +54,7 @@ class ApiService {
     }
 
     request.fields['document_type'] = documentType;
+    request.fields['language'] = language ?? _fieldLanguage;
     if (subtype != null && subtype.isNotEmpty) {
       request.fields['subtype'] = subtype;
     }
@@ -65,9 +72,11 @@ class ApiService {
   Future<List<dynamic>> getFieldsByDocumentType({
     required String documentType,
     String? subtype,
+    String? language,
   }) async {
     final body = <String, String>{
       'document_type': documentType,
+      'language': language ?? _fieldLanguage,
     };
     if (subtype != null && subtype.isNotEmpty) {
       body['subtype'] = subtype;
@@ -91,6 +100,9 @@ class ApiService {
     PlatformFile? referenceFile,
     String? referenceId,
     String? format, // NEW: 'table' or 'blank'
+    String? language,
+    String? fontFamily,
+    int? fontSize,
   }) async {
     var uri = Uri.parse('$baseUrl/generate-document');
     var request = http.MultipartRequest('POST', uri);
@@ -99,6 +111,15 @@ class ApiService {
     request.fields['fields'] = jsonEncode(fields);
     if (format != null) {
       request.fields['format'] = format; // Send format to backend
+    }
+    if (language != null && language.isNotEmpty) {
+      request.fields['language'] = language;
+    }
+    if (fontFamily != null && fontFamily.isNotEmpty) {
+      request.fields['font_family'] = fontFamily;
+    }
+    if (fontSize != null) {
+      request.fields['font_size'] = fontSize.toString();
     }
 
     if (referenceId != null) {
@@ -187,6 +208,7 @@ class ApiService {
     PlatformFile file,
     String documentType, {
     String? subtype,
+    String? language,
   }
   ) async {
     var uri = Uri.parse('$baseUrl/upload_reference');
@@ -211,6 +233,7 @@ class ApiService {
     }
 
     request.fields['document_type'] = documentType;
+    request.fields['language'] = language ?? _fieldLanguage;
     if (subtype != null && subtype.isNotEmpty) {
       request.fields['subtype'] = subtype;
     }
@@ -267,8 +290,15 @@ class ApiService {
   }
 
   /// Retrieve the fields for a specific saved reference.
-  Future<List<dynamic>> getReferenceFields(String documentId) async {
-    final uri = Uri.parse('$baseUrl/get_reference/$documentId');
+  Future<List<dynamic>> getReferenceFields(
+    String documentId, {
+    String? language,
+  }) async {
+    final uri = Uri.parse('$baseUrl/get_reference/$documentId').replace(
+      queryParameters: {
+        'language': language ?? _fieldLanguage,
+      },
+    );
     final response = await http.get(uri);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);

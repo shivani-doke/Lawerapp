@@ -19,5 +19,19 @@
     "document_type": "power_of_attorney",
     "subtype": "general_poa",
     "timestamp": "2026-03-29T20:31:52.258442"
+  },
+  "4b8f1b39-3170-4fd4-9bdf-79c3a9763fe4": {
+    "original_name": "Eshwari Petition Affidavit.docx",
+    "filename": "4b8f1b39-3170-4fd4-9bdf-79c3a9763fe4.docx",
+    "document_type": "affidavit",
+    "subtype": "",
+    "timestamp": "2026-04-01T12:24:38.005517"
+  },
+  "2df3b065-2e2e-4b5f-a7f2-d1dff68f3b94": {
+    "original_name": "final Will Paritosh Dube 21.07.2025.docx",
+    "filename": "2df3b065-2e2e-4b5f-a7f2-d1dff68f3b94.docx",
+    "document_type": "will_and_testament",
+    "subtype": "",
+    "timestamp": "2026-04-01T12:28:14.008977"
   }
 }

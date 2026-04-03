@@ -9,12 +9,16 @@ from flask import Blueprint, request, jsonify, send_from_directory, abort
 from werkzeug.utils import secure_filename
 
 from docx import Document as DocxDocument
-from docx.shared import Pt
+from docx.oxml.ns import qn
+from docx.shared import Inches, Mm, Pt
 import PyPDF2
 
 from services.gemini_service import (
+    SUPPORTED_GENERATION_LANGUAGES,
     fill_document_with_fields,
     generate_document_from_fields_only,
+    localize_field_schema,
+    localize_field_values,
     replace_placeholders,
 )
 from services.document_service import (
@@ -24,6 +28,24 @@ from services.document_service import (
     convert_docx_to_pdf,
 )
 from services.document_fields import get_fields_for_document_type, get_subtypes_for_document_type
+
+SUPPORTED_FONT_FAMILIES = (
+    "Times New Roman",
+    "Arial",
+    "Calibri",
+    "Cambria",
+    "Georgia",
+    "Garamond",
+    "Verdana",
+    "Tahoma",
+    "Trebuchet MS",
+    "Nirmala UI",
+    "Mangal",
+)
+
+DEFAULT_FONT_SIZE = 14
+MIN_FONT_SIZE = 8
+MAX_FONT_SIZE = 28
 
 # Folder where template DOCX files are stored
 TEMPLATES_FOLDER = "templates"
@@ -98,6 +120,144 @@ def get_generated_file_directory(filename):
     if ext == ".docx":
         return GENERATED_DOCS_FOLDER
     return GENERATED_FOLDER
+
+
+def normalize_generation_language(language):
+    requested = (language or "").strip().lower()
+    for supported_language in SUPPORTED_GENERATION_LANGUAGES:
+        if requested == supported_language.lower():
+            return supported_language
+    return SUPPORTED_GENERATION_LANGUAGES[0]
+
+
+def normalize_font_family(font_family):
+    requested = (font_family or "").strip().lower()
+    for supported_font_family in SUPPORTED_FONT_FAMILIES:
+        if requested == supported_font_family.lower():
+            return supported_font_family
+    return SUPPORTED_FONT_FAMILIES[0]
+
+
+def normalize_font_size(font_size):
+    try:
+        parsed_size = int(str(font_size).strip())
+    except (TypeError, ValueError):
+        return DEFAULT_FONT_SIZE
+    return max(MIN_FONT_SIZE, min(MAX_FONT_SIZE, parsed_size))
+
+
+def normalize_paper_size(paper_size):
+    requested = str(paper_size or "").strip().lower()
+    supported_sizes = {
+        "a4": "A4",
+        "letter": "Letter",
+        "legal": "Legal",
+    }
+    return supported_sizes.get(requested, "A4")
+
+
+def normalize_line_spacing(line_spacing):
+    requested = str(line_spacing or "").strip().lower()
+    supported_spacing = {
+        "single": 1.0,
+        "1": 1.0,
+        "1.0": 1.0,
+        "1.15": 1.15,
+        "1.5": 1.5,
+        "double": 2.0,
+        "2": 2.0,
+        "2.0": 2.0,
+    }
+    return supported_spacing.get(requested, 1.0)
+
+
+def normalize_margin_size(margin_size):
+    requested = str(margin_size or "").strip().lower()
+    supported_margins = {
+        "normal": "Normal",
+        "narrow": "Narrow",
+        "moderate": "Moderate",
+        "wide": "Wide",
+    }
+    return supported_margins.get(requested, "Normal")
+
+
+def apply_font_to_run(run, font_family, font_size):
+    run.font.name = font_family
+    run.font.size = Pt(font_size)
+    run_properties = run._element.get_or_add_rPr()
+    run_properties.rFonts.set(qn("w:ascii"), font_family)
+    run_properties.rFonts.set(qn("w:hAnsi"), font_family)
+    run_properties.rFonts.set(qn("w:eastAsia"), font_family)
+    run_properties.rFonts.set(qn("w:cs"), font_family)
+
+
+def apply_font_settings(doc, font_family, font_size):
+    normal_style = doc.styles["Normal"]
+    normal_style.font.name = font_family
+    normal_style.font.size = Pt(font_size)
+    style_properties = normal_style.element.get_or_add_rPr()
+    style_properties.rFonts.set(qn("w:ascii"), font_family)
+    style_properties.rFonts.set(qn("w:hAnsi"), font_family)
+    style_properties.rFonts.set(qn("w:eastAsia"), font_family)
+    style_properties.rFonts.set(qn("w:cs"), font_family)
+
+    for paragraph in doc.paragraphs:
+        for run in paragraph.runs:
+            apply_font_to_run(run, font_family, font_size)
+
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    for run in paragraph.runs:
+                        apply_font_to_run(run, font_family, font_size)
+
+
+def apply_paper_size(doc, paper_size):
+    for section in doc.sections:
+        if paper_size == "Letter":
+            section.page_width = Inches(8.5)
+            section.page_height = Inches(11)
+        elif paper_size == "Legal":
+            section.page_width = Inches(8.5)
+            section.page_height = Inches(14)
+        else:
+            section.page_width = Mm(210)
+            section.page_height = Mm(297)
+
+
+def apply_margin_settings(doc, margin_size):
+    margin_map = {
+        "Normal": Inches(1.0),
+        "Narrow": Inches(0.5),
+        "Moderate": Inches(0.75),
+        "Wide": Inches(1.5),
+    }
+    margin_value = margin_map.get(margin_size, margin_map["Normal"])
+
+    for section in doc.sections:
+        section.top_margin = margin_value
+        section.bottom_margin = margin_value
+        section.left_margin = margin_value
+        section.right_margin = margin_value
+
+
+def apply_line_spacing_settings(doc, line_spacing):
+    for paragraph in doc.paragraphs:
+        paragraph.paragraph_format.line_spacing = line_spacing
+
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    paragraph.paragraph_format.line_spacing = line_spacing
+
+
+def apply_document_layout_settings(doc, paper_size, line_spacing, margin_size):
+    apply_paper_size(doc, paper_size)
+    apply_margin_settings(doc, margin_size)
+    apply_line_spacing_settings(doc, line_spacing)
 
 def enrich_divorce_fields(fields):
     enriched = dict(fields or {})
@@ -177,7 +337,9 @@ def extract_fields():
     """Return backend-defined fields for a document type."""
     doc_type = normalize_document_type(request.form.get("document_type", "power_of_attorney"))
     subtype = (request.form.get("subtype") or "").strip()
+    language = normalize_generation_language(request.form.get("language", "English"))
     fields = get_fields_for_document_type(doc_type, subtype=subtype)
+    fields = localize_field_schema(fields, language=language)
     return jsonify(fields)
 
 
@@ -201,6 +363,7 @@ def upload_reference():
 
     doc_type = normalize_document_type(request.form.get("document_type", "power_of_attorney"))
     subtype = (request.form.get("subtype") or "").strip()
+    language = normalize_generation_language(request.form.get("language", "English"))
     ext = os.path.splitext(file.filename)[1].lower()
 
     # Generate unique ID and save file
@@ -211,6 +374,7 @@ def upload_reference():
 
     # Use backend-defined fields (no AI extraction)
     fields = get_fields_for_document_type(doc_type, subtype=subtype)
+    fields = localize_field_schema(fields, language=language)
 
     # Save metadata
     metadata = load_metadata()
@@ -259,7 +423,9 @@ def get_reference(doc_id):
         return jsonify({"error": "Document not found"}), 404
     doc_type = normalize_document_type(info.get("document_type", "power_of_attorney"))
     subtype = (info.get("subtype") or "").strip()
+    language = normalize_generation_language(request.args.get("language", "English"))
     fields = get_fields_for_document_type(doc_type, subtype=subtype)
+    fields = localize_field_schema(fields, language=language)
     return jsonify(fields)
 
 # -------------------------------------------------------------------
@@ -347,14 +513,23 @@ def generate_document():
     fields_json = request.form.get("fields", "{}")
     # Read format parameter (default to 'table' for backward compatibility)
     format_type = request.form.get("format", "table")  # 'table' or 'blank'
+    language = normalize_generation_language(request.form.get("language", "English"))
+    font_family = normalize_font_family(request.form.get("font_family", SUPPORTED_FONT_FAMILIES[0]))
+    font_size = normalize_font_size(request.form.get("font_size", DEFAULT_FONT_SIZE))
 
     try:
         fields = json.loads(fields_json)
     except:
         return jsonify({"error": "Invalid fields JSON"}), 400
 
+    paper_size = normalize_paper_size(fields.get("paper_size"))
+    line_spacing = normalize_line_spacing(fields.get("line_spacing"))
+    margin_size = normalize_margin_size(fields.get("margin_size"))
+
     if document_type == "divorce_paper":
         fields = enrich_divorce_fields(fields)
+
+    localized_fields = localize_field_values(fields, language=language)
 
     reference_id = request.form.get("reference_id")
     reference_text = ""
@@ -457,14 +632,16 @@ def generate_document():
         if has_reference_context:
             final_document_text = fill_document_with_fields(
                 reference_text,
-                fields,
+                localized_fields,
                 document_type,
+                language=language,
             )
         else:
             final_document_text = generate_document_from_fields_only(
                 document_type,
-                fields,
+                localized_fields,
                 field_schema=field_schema,
+                language=language,
             )
             document_title = get_document_title(document_type)
             stripped_document = final_document_text.lstrip()
@@ -492,7 +669,9 @@ def generate_document():
     try:
         # Load the server‑side template (preserves tables, formatting)
         doc = DocxDocument(template_path)
-        replace_placeholders(doc, fields)
+        replace_placeholders(doc, localized_fields)
+        apply_font_settings(doc, font_family, font_size)
+        apply_document_layout_settings(doc, paper_size, line_spacing, margin_size)
         # Split Gemini output paragraphs
         gen_paragraphs = final_document_text.split("\n\n")
 
@@ -509,16 +688,16 @@ def generate_document():
             for text in reversed(gen_paragraphs):
                 if text.strip():
                     p = doc.add_paragraph(text.strip())
-                    p.runs[0].font.name = "Times New Roman"
-                    p.runs[0].font.size = Pt(14)
+                    p.paragraph_format.line_spacing = line_spacing
+                    apply_font_to_run(p.runs[0], font_family, font_size)
                     body.insert(table_paragraph_index, p._element)
         else:
             # If no table exists, append normally
             for text in gen_paragraphs:
                 if text.strip():
                     p = doc.add_paragraph(text.strip())
-                    p.runs[0].font.name = "Times New Roman"
-                    p.runs[0].font.size = Pt(14)
+                    p.paragraph_format.line_spacing = line_spacing
+                    apply_font_to_run(p.runs[0], font_family, font_size)
 
 
         doc.save(output_path)
@@ -564,6 +743,7 @@ def view_pdf(filename):
         return response
     except Exception as e:
         return jsonify({"error": str(e)}), 404
+
 
 
 

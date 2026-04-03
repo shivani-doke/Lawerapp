@@ -22,6 +22,7 @@ dependencies:
   url_launcher: ^6.2.5
   flutter_markdown: ^0.7.0
   webview_windows: ^0.4.0
+  speech_to_text: ^7.0.0
   
 
   
