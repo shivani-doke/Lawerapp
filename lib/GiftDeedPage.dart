@@ -21,6 +21,11 @@ class DocumentField {
   final List<String> options;
   final bool repeatable;
   final List<DocumentField> fields;
+  final String? validation;
+  final dynamic defaultValue;
+  final String? showIf;
+  final int? minItems;
+  final int? maxItems;
 
   DocumentField({
     required this.name,
@@ -31,6 +36,11 @@ class DocumentField {
     this.options = const [],
     this.repeatable = false,
     this.fields = const [],
+    this.validation,
+    this.defaultValue,
+    this.showIf,
+    this.minItems,
+    this.maxItems,
   });
 
   factory DocumentField.fromJson(Map<String, dynamic> json) {
@@ -50,6 +60,11 @@ class DocumentField {
           ? rawOptions.map((e) => e.toString()).toList()
           : const [],
       repeatable: json['repeatable'] == true,
+      validation: json['validation']?.toString(),
+      defaultValue: json['default'],
+      showIf: json['show_if']?.toString(),
+      minItems: json['min'] is num ? (json['min'] as num).toInt() : null,
+      maxItems: json['max'] is num ? (json['max'] as num).toInt() : null,
       fields: rawFields is List
           ? rawFields
               .whereType<Map>()
@@ -82,6 +97,7 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
   final Map<String, List<Map<String, bool>>> _groupBoolValues = {};
   final Map<String, List<Map<String, Set<String>>>> _groupMultiselectValues =
       {};
+  final Map<String, String> _validationErrors = {};
 
   // Reference document (used for both extraction and generation)
   PlatformFile? _referenceFile;
@@ -161,17 +177,31 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
     _groupMultiselectValues.clear();
   }
 
+  String _groupValidationKey(
+    DocumentField groupField,
+    int rowIndex,
+    DocumentField subField,
+  ) {
+    return '${groupField.name}.$rowIndex.${subField.name}';
+  }
+
+  bool _usesChoiceState(String type) {
+    return type == 'dropdown' || type == 'radio';
+  }
+
   Map<String, TextEditingController> _createGroupControllerRow(
       DocumentField groupField) {
     final controllers = <String, TextEditingController>{};
     for (final nestedField in groupField.fields) {
-      if (nestedField.type == 'dropdown' ||
+      if (_usesChoiceState(nestedField.type) ||
           nestedField.type == 'boolean' ||
           nestedField.type == 'multiselect' ||
           (nestedField.type == 'group' && nestedField.fields.isNotEmpty)) {
         continue;
       }
-      controllers[nestedField.name] = TextEditingController();
+      controllers[nestedField.name] = TextEditingController(
+        text: nestedField.defaultValue?.toString() ?? '',
+      );
     }
     return controllers;
   }
@@ -179,9 +209,12 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
   Map<String, String> _createGroupDropdownRow(DocumentField groupField) {
     final values = <String, String>{};
     for (final nestedField in groupField.fields) {
-      if (nestedField.type == 'dropdown') {
+      if (_usesChoiceState(nestedField.type)) {
+        final defaultValue = nestedField.defaultValue?.toString();
         values[nestedField.name] =
-            nestedField.options.isNotEmpty ? nestedField.options.first : '';
+            defaultValue != null && nestedField.options.contains(defaultValue)
+                ? defaultValue
+                : (nestedField.options.isNotEmpty ? nestedField.options.first : '');
       }
     }
     return values;
@@ -223,6 +256,17 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
       return;
     }
 
+    final maxItems = field.maxItems;
+    final currentCount = _groupFieldControllers[field.name]?.length ?? 0;
+    if (maxItems != null && currentCount >= maxItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${field.label} allows a maximum of $maxItems entries.'),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _groupFieldControllers.putIfAbsent(field.name, () => []);
       _groupDropdownValues.putIfAbsent(field.name, () => []);
@@ -253,6 +297,16 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
       return;
     }
 
+    final minItems = field.minItems;
+    if (minItems != null && controllerRows.length <= minItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${field.label} requires at least $minItems entries.'),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       for (final controller in controllerRows[index].values) {
         controller.dispose();
@@ -261,28 +315,224 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
       dropdownRows.removeAt(index);
       boolRows.removeAt(index);
       multiselectRows.removeAt(index);
+      final keyPrefix = '${field.name}.$index.';
+      _validationErrors.removeWhere((key, value) => key.startsWith(keyPrefix));
     });
   }
 
-  bool _isTopLevelFieldMissing(DocumentField field) {
-    if (!field.required) {
-      return false;
-    }
-
-    if (field.type == 'dropdown') {
-      final value = _dropdownValues[field.name] ?? '';
-      return value.trim().isEmpty;
+  dynamic _getTopLevelFieldValue(DocumentField field) {
+    if (_usesChoiceState(field.type)) {
+      return _dropdownValues[field.name] ?? '';
     }
     if (field.type == 'boolean') {
-      return false;
+      return _boolValues[field.name] ?? false;
     }
     if (field.type == 'multiselect') {
-      final values = _multiselectValues[field.name] ?? <String>{};
-      return values.isEmpty;
+      return _multiselectValues[field.name] ?? <String>{};
+    }
+    return _fieldControllers[field.name]?.text ?? '';
+  }
+
+  dynamic _getGroupFieldValue(
+    DocumentField groupField,
+    DocumentField subField,
+    int rowIndex,
+  ) {
+    if (_usesChoiceState(subField.type)) {
+      return _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ?? '';
+    }
+    if (subField.type == 'boolean') {
+      return _groupBoolValues[groupField.name]?[rowIndex][subField.name] ?? false;
+    }
+    if (subField.type == 'multiselect') {
+      return _groupMultiselectValues[groupField.name]?[rowIndex][subField.name] ??
+          <String>{};
+    }
+    return _groupFieldControllers[groupField.name]?[rowIndex][subField.name]?.text ?? '';
+  }
+
+  double? _parseNumericValue(dynamic rawValue) {
+    if (rawValue == null) return null;
+    final normalized = rawValue
+        .toString()
+        .replaceAll(',', '')
+        .replaceAll('%', '')
+        .replaceAll(RegExp(r'[^\d.\-]'), '')
+        .trim();
+    if (normalized.isEmpty) return null;
+    return double.tryParse(normalized);
+  }
+
+  bool _matchesShowIfCondition(
+    dynamic actualValue,
+    String operator,
+    String expectedToken,
+  ) {
+    final actualNumber = _parseNumericValue(actualValue);
+    final expectedNumber = double.tryParse(expectedToken);
+
+    if (actualNumber != null && expectedNumber != null) {
+      switch (operator) {
+        case '<':
+          return actualNumber < expectedNumber;
+        case '<=':
+          return actualNumber <= expectedNumber;
+        case '>':
+          return actualNumber > expectedNumber;
+        case '>=':
+          return actualNumber >= expectedNumber;
+        case '!=':
+          return actualNumber != expectedNumber;
+        case '=':
+        case '==':
+          return actualNumber == expectedNumber;
+      }
     }
 
-    final value = _fieldControllers[field.name]?.text ?? '';
-    return value.trim().isEmpty;
+    final normalizedActual = (actualValue ?? '').toString().trim().toLowerCase();
+    final normalizedExpected = expectedToken.trim().toLowerCase();
+
+    switch (operator) {
+      case '!=':
+        return normalizedActual != normalizedExpected;
+      case '=':
+      case '==':
+        return normalizedActual == normalizedExpected;
+      default:
+        return false;
+    }
+  }
+
+  bool _isFieldVisible(
+    DocumentField field, {
+    DocumentField? groupField,
+    int? rowIndex,
+  }) {
+    final condition = field.showIf?.trim();
+    if (condition == null || condition.isEmpty) {
+      return true;
+    }
+
+    final match = RegExp(r'^\s*([a-zA-Z0-9_]+)\s*(<=|>=|==|!=|=|<|>)\s*(.+?)\s*$')
+        .firstMatch(condition);
+    if (match == null) {
+      return true;
+    }
+
+    final targetFieldName = match.group(1)!;
+    final operator = match.group(2)!;
+    var expectedToken = match.group(3)!.trim();
+    if ((expectedToken.startsWith('"') && expectedToken.endsWith('"')) ||
+        (expectedToken.startsWith("'") && expectedToken.endsWith("'"))) {
+      expectedToken = expectedToken.substring(1, expectedToken.length - 1);
+    }
+
+    dynamic actualValue;
+    if (groupField != null && rowIndex != null) {
+      final matches = groupField.fields.where((nested) => nested.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getGroupFieldValue(groupField, matches.first, rowIndex);
+    } else {
+      final matches = _fields.where((candidate) => candidate.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getTopLevelFieldValue(matches.first);
+    }
+
+    return _matchesShowIfCondition(actualValue, operator, expectedToken);
+  }
+
+  bool _isFieldValueEmpty(dynamic value) {
+    if (value is Set) return value.isEmpty;
+    if (value is List) return value.isEmpty;
+    if (value is String) return value.trim().isEmpty;
+    return value == null;
+  }
+
+  String? _validateFieldValue(DocumentField field, dynamic rawValue) {
+    if (!_isFieldVisible(field) || _isFieldValueEmpty(rawValue)) {
+      return null;
+    }
+
+    final value = rawValue.toString().trim();
+    final validation = field.validation?.trim().toLowerCase();
+
+    if (validation == 'pan' &&
+        !RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]$').hasMatch(value.toUpperCase())) {
+      return 'Enter a valid PAN number.';
+    }
+
+    if (validation == 'aadhaar' &&
+        !RegExp(r'^\d{12}$').hasMatch(value.replaceAll(' ', ''))) {
+      return 'Enter a valid 12-digit Aadhaar number.';
+    }
+
+    if (field.type == 'percentage') {
+      final parsed = _parseNumericValue(value);
+      if (parsed == null || parsed < 0 || parsed > 100) {
+        return 'Enter a percentage between 0 and 100.';
+      }
+    }
+
+    if (field.type == 'currency' && _parseNumericValue(value) == null) {
+      return 'Enter a valid amount.';
+    }
+
+    return null;
+  }
+
+  String? _validateGroupFieldValue(
+    DocumentField groupField,
+    DocumentField subField,
+    int rowIndex,
+  ) {
+    if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
+      return null;
+    }
+    return _validateFieldValue(subField, _getGroupFieldValue(groupField, subField, rowIndex));
+  }
+
+  Map<String, String> _collectValidationErrors() {
+    final errors = <String, String>{};
+
+    for (final field in _fields) {
+      if (!_isFieldVisible(field)) {
+        continue;
+      }
+
+      if (field.type == 'group' && field.fields.isNotEmpty) {
+        final rows = _groupFieldControllers[field.name] ?? const [];
+        for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+          if (_isGroupRowEmpty(field, rowIndex)) {
+            continue;
+          }
+          for (final subField in field.fields) {
+            final error = _validateGroupFieldValue(field, subField, rowIndex);
+            if (error != null) {
+              errors[_groupValidationKey(field, rowIndex, subField)] = error;
+            }
+          }
+        }
+        continue;
+      }
+
+      final error = _validateFieldValue(field, _getTopLevelFieldValue(field));
+      if (error != null) {
+        errors[field.name] = error;
+      }
+    }
+
+    return errors;
+  }
+
+  bool _isTopLevelFieldMissing(DocumentField field) {
+    if (!_isFieldVisible(field) || !field.required) {
+      return false;
+    }
+    return _isFieldValueEmpty(_getTopLevelFieldValue(field));
   }
 
   bool _isGroupSubFieldMissing(
@@ -290,67 +540,19 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
     DocumentField subField,
     int rowIndex,
   ) {
-    if (!subField.required) {
+    if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex) ||
+        !subField.required) {
       return false;
     }
-
-    if (subField.type == 'dropdown') {
-      final value =
-          _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ?? '';
-      return value.trim().isEmpty;
-    }
-    if (subField.type == 'boolean') {
-      return false;
-    }
-    if (subField.type == 'multiselect') {
-      final values = _groupMultiselectValues[groupField.name]?[rowIndex]
-              [subField.name] ??
-          <String>{};
-      return values.isEmpty;
-    }
-
-    final value = _groupFieldControllers[groupField.name]?[rowIndex]
-            [subField.name]
-            ?.text ??
-        '';
-    return value.trim().isEmpty;
+    return _isFieldValueEmpty(_getGroupFieldValue(groupField, subField, rowIndex));
   }
 
   bool _isGroupRowEmpty(DocumentField groupField, int rowIndex) {
     for (final subField in groupField.fields) {
-      if (subField.type == 'dropdown') {
-        final value =
-            _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
-                '';
-        if (value.trim().isNotEmpty) {
-          return false;
-        }
+      if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
         continue;
       }
-      if (subField.type == 'boolean') {
-        final value =
-            _groupBoolValues[groupField.name]?[rowIndex][subField.name] ??
-                false;
-        if (value) {
-          return false;
-        }
-        continue;
-      }
-      if (subField.type == 'multiselect') {
-        final values = _groupMultiselectValues[groupField.name]?[rowIndex]
-                [subField.name] ??
-            <String>{};
-        if (values.isNotEmpty) {
-          return false;
-        }
-        continue;
-      }
-
-      final value = _groupFieldControllers[groupField.name]?[rowIndex]
-              [subField.name]
-              ?.text ??
-          '';
-      if (value.trim().isNotEmpty) {
+      if (!_isFieldValueEmpty(_getGroupFieldValue(groupField, subField, rowIndex))) {
         return false;
       }
     }
@@ -362,9 +564,17 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
     final missingFields = <String>[];
 
     for (final field in _fields) {
+      if (!_isFieldVisible(field)) {
+        continue;
+      }
       if (field.type == 'group' && field.fields.isNotEmpty) {
         final rows = _groupFieldControllers[field.name] ?? const [];
-        if (field.required && rows.isEmpty) {
+        final minItems = field.minItems ?? (field.required ? 1 : 0);
+        final visibleRowCount = List.generate(rows.length, (index) => index)
+            .where((rowIndex) => !_isGroupRowEmpty(field, rowIndex))
+            .length;
+
+        if (minItems > 0 && visibleRowCount < minItems) {
           missingFields.add(field.label);
           continue;
         }
@@ -398,7 +608,10 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
   }
 
   dynamic _serializeTopLevelFieldValue(DocumentField field) {
-    if (field.type == 'dropdown') {
+    if (!_isFieldVisible(field)) {
+      return null;
+    }
+    if (_usesChoiceState(field.type)) {
       return _dropdownValues[field.name] ?? '';
     }
     if (field.type == 'boolean') {
@@ -418,7 +631,10 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
 
         final rowData = <String, dynamic>{};
         for (final subField in field.fields) {
-          if (subField.type == 'dropdown') {
+          if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
+            continue;
+          }
+          if (_usesChoiceState(subField.type)) {
             rowData[subField.name] =
                 _groupDropdownValues[field.name]?[rowIndex][subField.name] ??
                     '';
@@ -461,6 +677,7 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
     _dropdownValues.clear();
     _boolValues.clear();
     _multiselectValues.clear();
+    _validationErrors.clear();
     _disposeGroupControllers();
     _fields = [];
     setState(() {});
@@ -475,20 +692,26 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
     _dropdownValues.clear();
     _boolValues.clear();
     _multiselectValues.clear();
+    _validationErrors.clear();
     _disposeGroupControllers();
 
     for (var field in _fields) {
       if (field.type == 'group' && field.fields.isNotEmpty) {
         _initializeGroupField(field);
-      } else if (field.type == 'dropdown') {
+      } else if (_usesChoiceState(field.type)) {
+        final defaultValue = field.defaultValue?.toString();
         _dropdownValues[field.name] =
-            field.options.isNotEmpty ? field.options.first : '';
+            defaultValue != null && field.options.contains(defaultValue)
+                ? defaultValue
+                : (field.options.isNotEmpty ? field.options.first : '');
       } else if (field.type == 'boolean') {
-        _boolValues[field.name] = false;
+        _boolValues[field.name] = field.defaultValue == true;
       } else if (field.type == 'multiselect') {
         _multiselectValues[field.name] = <String>{};
       } else {
-        _fieldControllers[field.name] = TextEditingController();
+        _fieldControllers[field.name] = TextEditingController(
+          text: field.defaultValue?.toString() ?? '',
+        );
       }
     }
     setState(() {});
@@ -666,12 +889,28 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
   // Generate document using either saved reference or newly uploaded file
   Future<void> _generateDocument() async {
     final missingFields = _collectMissingRequiredFields();
+    final validationErrors = _collectValidationErrors();
+
+    setState(() {
+      _validationErrors
+        ..clear()
+        ..addAll(validationErrors);
+    });
 
     if (missingFields.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
               'Please fill all required fields: ${missingFields.join(', ')}'),
+        ),
+      );
+      return;
+    }
+
+    if (validationErrors.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please correct the highlighted field values.'),
         ),
       );
       return;
@@ -684,7 +923,8 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
 
     try {
       final fields = <String, dynamic>{
-        for (var field in _fields) field.name: _serializeTopLevelFieldValue(field),
+        for (var field in _fields)
+          if (_isFieldVisible(field)) field.name: _serializeTopLevelFieldValue(field),
       };
 
       fields.addAll({
@@ -1211,12 +1451,16 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
 
 
   Widget _buildField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     if (field.type == 'group' && field.fields.isNotEmpty) {
       return _buildGroupField(field);
     }
 
     final isRequired = field.required;
     final label = isRequired ? '${field.label} *' : field.label;
+    final errorText = _validationErrors[field.name];
 
     Widget input;
     switch (field.type) {
@@ -1236,15 +1480,48 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
           items: items,
           onChanged: (selected) {
             if (selected == null) return;
-            setState(() => _dropdownValues[field.name] = selected);
+            setState(() {
+              _dropdownValues[field.name] = selected;
+              _validationErrors.remove(field.name);
+            });
           },
           decoration: InputDecoration(
             hintText: field.hint,
+            errorText: errorText,
             filled: true,
             fillColor: const Color(0xfff9fafb),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),
+          ),
+        );
+        break;
+      case 'radio':
+        final currentValue = _dropdownValues[field.name];
+        input = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xfff9fafb),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Column(
+            children: field.options.map((option) {
+              return RadioListTile<String>(
+                value: option,
+                groupValue: currentValue,
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text(option),
+                onChanged: (selected) {
+                  if (selected == null) return;
+                  setState(() {
+                    _dropdownValues[field.name] = selected;
+                    _validationErrors.remove(field.name);
+                  });
+                },
+              );
+            }).toList(),
           ),
         );
         break;
@@ -1303,7 +1580,7 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
       case 'date':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1311,6 +1588,7 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
           onTap: () => _selectDate(controller),
           decoration: InputDecoration(
             hintText: field.hint ?? 'DD-MM-YYYY',
+            errorText: errorText,
             suffixIcon: const Icon(Icons.calendar_today),
             filled: true,
             fillColor: const Color(0xfff9fafb),
@@ -1323,13 +1601,17 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
       case 'textarea':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
           maxLines: 4,
+          onChanged: (_) {
+            setState(() => _validationErrors.remove(field.name));
+          },
           decoration: InputDecoration(
             hintText: field.hint,
+            errorText: errorText,
             suffixIcon: VoiceFieldMicIcon(
               language: _selectedLanguage,
               controller: controller,
@@ -1343,15 +1625,23 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
         );
         break;
       case 'number':
+      case 'percentage':
+      case 'currency':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: (_) {
+            setState(() => _validationErrors.remove(field.name));
+          },
           decoration: InputDecoration(
             hintText: field.hint,
+            prefixText: field.type == 'currency' ? 'Rs. ' : null,
+            suffixText: field.type == 'percentage' ? '%' : null,
+            errorText: errorText,
             suffixIcon: VoiceFieldMicIcon(
               language: _selectedLanguage,
               controller: controller,
@@ -1367,13 +1657,17 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
       default:
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
           maxLines: field.type == 'long_text' ? 4 : 1,
+          onChanged: (_) {
+            setState(() => _validationErrors.remove(field.name));
+          },
           decoration: InputDecoration(
             hintText: field.hint,
+            errorText: errorText,
             suffixIcon: VoiceFieldMicIcon(
               language: _selectedLanguage,
               controller: controller,
@@ -1405,13 +1699,21 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
   }
 
   Widget _buildGroupField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     final controllerRows = _groupFieldControllers[field.name] ?? const [];
     final dropdownRows = _groupDropdownValues[field.name] ?? const [];
     final boolRows = _groupBoolValues[field.name] ?? const [];
     final multiselectRows = _groupMultiselectValues[field.name] ?? const [];
 
     Widget buildSubField(DocumentField subField, int rowIndex) {
+      if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
+        return const SizedBox.shrink();
+      }
       final label = subField.required ? '${subField.label} *' : subField.label;
+      final errorText =
+          _validationErrors[_groupValidationKey(field, rowIndex, subField)];
       Widget input;
 
       switch (subField.type) {
@@ -1434,15 +1736,52 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
               if (selected == null) return;
               setState(() {
                 _groupDropdownValues[field.name]![rowIndex][subField.name] = selected;
+                _validationErrors.remove(
+                  _groupValidationKey(field, rowIndex, subField),
+                );
               });
             },
             decoration: InputDecoration(
               hintText: subField.hint,
+              errorText: errorText,
               filled: true,
               fillColor: const Color(0xfff9fafb),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
+            ),
+          );
+          break;
+        case 'radio':
+          final row = rowIndex < dropdownRows.length ? dropdownRows[rowIndex] : <String, String>{};
+          final currentValue = row[subField.name];
+          input = Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xfff9fafb),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Column(
+              children: subField.options.map((option) {
+                return RadioListTile<String>(
+                  value: option,
+                  groupValue: currentValue,
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(option),
+                  onChanged: (selected) {
+                    if (selected == null) return;
+                    setState(() {
+                      _groupDropdownValues[field.name]![rowIndex][subField.name] =
+                          selected;
+                      _validationErrors.remove(
+                        _groupValidationKey(field, rowIndex, subField),
+                      );
+                    });
+                  },
+                );
+              }).toList(),
             ),
           );
           break;
@@ -1512,6 +1851,7 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
             onTap: () => _selectDate(controller),
             decoration: InputDecoration(
               hintText: subField.hint ?? 'DD-MM-YYYY',
+              errorText: errorText,
               suffixIcon: const Icon(Icons.calendar_today),
               filled: true,
               fillColor: const Color(0xfff9fafb),
@@ -1527,8 +1867,16 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
           input = TextFormField(
             controller: controller,
             maxLines: 4,
+            onChanged: (_) {
+              setState(() {
+                _validationErrors.remove(
+                  _groupValidationKey(field, rowIndex, subField),
+                );
+              });
+            },
             decoration: InputDecoration(
               hintText: subField.hint,
+              errorText: errorText,
               suffixIcon: VoiceFieldMicIcon(
                 language: _selectedLanguage,
                 controller: controller,
@@ -1542,13 +1890,25 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
           );
           break;
         case 'number':
+        case 'percentage':
+        case 'currency':
           final controller =
               _groupFieldControllers[field.name]![rowIndex][subField.name]!;
           input = TextFormField(
             controller: controller,
-            keyboardType: TextInputType.number,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (_) {
+              setState(() {
+                _validationErrors.remove(
+                  _groupValidationKey(field, rowIndex, subField),
+                );
+              });
+            },
             decoration: InputDecoration(
               hintText: subField.hint,
+              prefixText: subField.type == 'currency' ? 'Rs. ' : null,
+              suffixText: subField.type == 'percentage' ? '%' : null,
+              errorText: errorText,
               suffixIcon: VoiceFieldMicIcon(
                 language: _selectedLanguage,
                 controller: controller,
@@ -1566,8 +1926,16 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
               _groupFieldControllers[field.name]![rowIndex][subField.name]!;
           input = TextFormField(
             controller: controller,
+            onChanged: (_) {
+              setState(() {
+                _validationErrors.remove(
+                  _groupValidationKey(field, rowIndex, subField),
+                );
+              });
+            },
             decoration: InputDecoration(
               hintText: subField.hint,
+              errorText: errorText,
               suffixIcon: VoiceFieldMicIcon(
                 language: _selectedLanguage,
                 controller: controller,
@@ -1624,7 +1992,10 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
                 ),
                 if (field.repeatable)
                   TextButton.icon(
-                    onPressed: () => _addGroupRow(field),
+                    onPressed: field.maxItems != null &&
+                            controllerRows.length >= field.maxItems!
+                        ? null
+                        : () => _addGroupRow(field),
                     icon: const Icon(Icons.add),
                     label: const Text('Add'),
                   ),

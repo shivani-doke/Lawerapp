@@ -1,348 +1,337 @@
 [
   {
-    "section": "Execution Details",
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "hint": "Select the date on which the gift deed is executed",
+    "required": true
+  },
+  {
+    "name": "execution_place",
+    "label": "Execution Place (City)",
+    "type": "text",
+    "hint": "Enter city where deed is executed",
+    "required": true
+  },
+
+  {
+    "name": "donor_details",
+    "label": "Donor Details",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
     "fields": [
       {
-        "name": "execution_date",
-        "label": "Execution Date",
-        "type": "date",
+        "name": "name",
+        "label": "Donor Name",
+        "type": "text",
         "required": true,
-        "hint": "Select execution date"
+        "hint": "Enter full legal name of donor"
       },
       {
-        "name": "execution_year",
-        "label": "Execution Year",
+        "name": "age",
+        "label": "Age",
         "type": "number",
         "required": true,
-        "hint": "Enter execution year"
+        "hint": "Enter age in years"
       },
       {
-        "name": "execution_place",
-        "label": "Execution Place (City)",
+        "name": "occupation",
+        "label": "Occupation",
         "type": "text",
         "required": true,
-        "hint": "Enter execution place (city)"
+        "hint": "Enter occupation"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter complete residential address"
+      },
+      {
+        "name": "pan",
+        "label": "PAN Number",
+        "type": "text",
+        "validation": "pan",
+        "hint": "Enter PAN (ABCDE1234F)"
+      },
+      {
+        "name": "aadhaar",
+        "label": "Aadhaar Number",
+        "type": "text",
+        "validation": "aadhaar",
+        "hint": "Enter 12-digit Aadhaar number"
+      },
+      {
+        "name": "share",
+        "label": "Ownership Share (%)",
+        "type": "percentage",
+        "required": true,
+        "hint": "Enter donor's ownership percentage"
       }
     ]
   },
+
   {
-    "section": "Donor Details",
+    "name": "donee_details",
+    "label": "Donee Details",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
     "fields": [
       {
-        "name": "donor_name",
-        "label": "Donor Full Name",
+        "name": "name",
+        "label": "Donee Name",
         "type": "text",
         "required": true,
-        "hint": "Enter donor full name"
+        "hint": "Enter full legal name of donee"
       },
       {
-        "name": "donor_age",
-        "label": "Donor Age",
+        "name": "age",
+        "label": "Age",
         "type": "number",
         "required": true,
-        "hint": "Enter donor age"
+        "hint": "Enter age in years"
       },
       {
-        "name": "donor_occupation",
-        "label": "Donor Occupation",
+        "name": "occupation",
+        "label": "Occupation",
         "type": "text",
         "required": true,
-        "hint": "Enter donor occupation"
+        "hint": "Enter occupation"
       },
       {
-        "name": "donor_address",
-        "label": "Donor Address",
+        "name": "address",
+        "label": "Address",
         "type": "textarea",
         "required": true,
-        "hint": "Enter donor address"
+        "hint": "Enter complete residential address"
       },
       {
-        "name": "donor_pan",
-        "label": "Donor PAN Number",
+        "name": "pan",
+        "label": "PAN Number",
         "type": "text",
-        "required": false,
-        "hint": "Enter donor pan number"
+        "validation": "pan",
+        "hint": "Enter PAN (ABCDE1234F)"
       },
       {
-        "name": "donor_aadhar",
-        "label": "Donor Aadhaar Number",
+        "name": "aadhaar",
+        "label": "Aadhaar Number",
         "type": "text",
-        "required": false,
-        "hint": "Enter donor aadhaar number"
+        "validation": "aadhaar",
+        "hint": "Enter 12-digit Aadhaar number"
+      },
+      {
+        "name": "share",
+        "label": "Gift Share (%)",
+        "type": "percentage",
+        "required": true,
+        "hint": "Enter share being gifted to this donee"
+      },
+      {
+        "name": "guardian_name",
+        "label": "Guardian Name",
+        "type": "text",
+        "hint": "Enter guardian name if donee is minor",
+        "show_if": "age < 18"
       }
     ]
   },
+
   {
-    "section": "Donee Details",
+    "name": "relationship",
+    "label": "Relationship between Donor and Donee",
+    "type": "dropdown",
+    "options": ["Father", "Mother", "Brother", "Sister", "Spouse", "Other"],
+    "hint": "Select relationship between donor and donee",
+    "required": true
+  },
+
+  {
+    "name": "gift_nature",
+    "label": "Nature of Gift",
+    "type": "dropdown",
+    "options": ["Voluntary", "Without Consideration"],
+    "hint": "Select nature of gift",
+    "required": true
+  },
+  {
+    "name": "consideration",
+    "label": "Consideration",
+    "type": "text",
+    "hint": "Gift is made without monetary consideration",
+    "default": "Without any monetary consideration",
+    "required": true
+  },
+  {
+    "name": "possession_status",
+    "label": "Possession Status",
+    "type": "radio",
+    "options": ["Given", "Will be Given"],
+    "hint": "Select possession transfer status",
+    "required": true
+  },
+  {
+    "name": "acceptance",
+    "label": "Accepted by Donee",
+    "type": "boolean",
+    "hint": "Confirm donee acceptance",
+    "required": true
+  },
+  {
+    "name": "market_value",
+    "label": "Market Value",
+    "type": "currency",
+    "hint": "Enter current market value of property",
+    "required": true
+  },
+
+  {
+    "name": "property_type",
+    "label": "Property Type",
+    "type": "dropdown",
+    "options": ["Flat", "Land", "House", "Commercial"],
+    "hint": "Select property type",
+    "required": true
+  },
+  {
+    "name": "property_number",
+    "label": "Property Number",
+    "type": "text",
+    "hint": "Enter flat/property number",
+    "required": true
+  },
+  {
+    "name": "floor_number",
+    "label": "Floor Number",
+    "type": "text",
+    "hint": "Enter floor number if applicable"
+  },
+  {
+    "name": "building_name",
+    "label": "Building Name",
+    "type": "text",
+    "hint": "Enter building or society name",
+    "required": true
+  },
+  {
+    "name": "survey_number",
+    "label": "Survey Number",
+    "type": "text",
+    "hint": "Enter survey or plot number",
+    "required": true
+  },
+  {
+    "name": "location",
+    "label": "Location",
+    "type": "text",
+    "hint": "Enter area and city",
+    "required": true
+  },
+  {
+    "name": "district",
+    "label": "District",
+    "type": "text",
+    "hint": "Enter district name",
+    "required": true
+  },
+  {
+    "name": "flat_area",
+    "label": "Area (sq ft)",
+    "type": "number",
+    "hint": "Enter area in square feet",
+    "required": true
+  },
+  {
+    "name": "terrace_area",
+    "label": "Terrace Area",
+    "type": "number",
+    "hint": "Enter terrace area if applicable"
+  },
+  {
+    "name": "parking_details",
+    "label": "Parking Details",
+    "type": "text",
+    "hint": "Enter parking details if any"
+  },
+
+  {
+    "name": "ownership_description",
+    "label": "Ownership Description",
+    "type": "textarea",
+    "hint": "Describe ownership and acquisition",
+    "required": true
+  },
+  {
+    "name": "acquisition_date",
+    "label": "Acquisition Date",
+    "type": "date",
+    "hint": "Select original acquisition date",
+    "required": true
+  },
+  {
+    "name": "registration_number",
+    "label": "Registration Number",
+    "type": "text",
+    "hint": "Enter deed registration number",
+    "required": true
+  },
+  {
+    "name": "sub_registrar",
+    "label": "Sub-Registrar Office",
+    "type": "text",
+    "hint": "Enter sub-registrar office name",
+    "required": true
+  },
+
+  {
+    "name": "boundary_east",
+    "label": "Boundary East",
+    "type": "text",
+    "hint": "Enter eastern boundary"
+  },
+  {
+    "name": "boundary_west",
+    "label": "Boundary West",
+    "type": "text",
+    "hint": "Enter western boundary"
+  },
+  {
+    "name": "boundary_north",
+    "label": "Boundary North",
+    "type": "text",
+    "hint": "Enter northern boundary"
+  },
+  {
+    "name": "boundary_south",
+    "label": "Boundary South",
+    "type": "text",
+    "hint": "Enter southern boundary"
+  },
+
+  {
+    "name": "witness_details",
+    "label": "Witness Details",
+    "type": "group",
+    "repeatable": true,
+    "min": 2,
+    "max": 2,
+    "required": true,
     "fields": [
       {
-        "name": "donee_name",
-        "label": "Donee Full Name",
+        "name": "name",
+        "label": "Witness Name",
         "type": "text",
         "required": true,
-        "hint": "Enter donee full name"
+        "hint": "Enter full name of witness"
       },
       {
-        "name": "donee_age",
-        "label": "Donee Age",
-        "type": "number",
-        "required": true,
-        "hint": "Enter donee age"
-      },
-      {
-        "name": "donee_occupation",
-        "label": "Donee Occupation",
-        "type": "text",
-        "required": true,
-        "hint": "Enter donee occupation"
-      },
-      {
-        "name": "donee_address",
-        "label": "Donee Address",
+        "name": "address",
+        "label": "Address",
         "type": "textarea",
         "required": true,
-        "hint": "Enter donee address"
-      },
-      {
-        "name": "donee_pan",
-        "label": "Donee PAN Number",
-        "type": "text",
-        "required": false,
-        "hint": "Enter donee pan number"
-      },
-      {
-        "name": "donee_aadhar",
-        "label": "Donee Aadhaar Number",
-        "type": "text",
-        "required": false,
-        "hint": "Enter donee aadhaar number"
-      }
-    ]
-  },
-  {
-    "section": "Relationship Details",
-    "fields": [
-      {
-        "name": "relationship",
-        "label": "Relationship between Donor and Donee",
-        "type": "text",
-        "required": true,
-        "placeholder": "e.g., Mother-Daughter",
-        "hint": "Enter relationship between donor and donee"
-      }
-    ]
-  },
-  {
-    "section": "Property Details",
-    "fields": [
-      {
-        "name": "property_type",
-        "label": "Property Type",
-        "type": "dropdown",
-        "options": [
-          "Flat",
-          "Land",
-          "House",
-          "Commercial Property"
-        ],
-        "required": true,
-        "hint": "Select property type"
-      },
-      {
-        "name": "flat_number",
-        "label": "Flat / Property Number",
-        "type": "text",
-        "required": true,
-        "hint": "Enter flat / property number"
-      },
-      {
-        "name": "floor_number",
-        "label": "Floor Number",
-        "type": "text",
-        "required": false,
-        "hint": "Enter floor number"
-      },
-      {
-        "name": "building_name",
-        "label": "Building Name",
-        "type": "text",
-        "required": true,
-        "hint": "Enter building name"
-      },
-      {
-        "name": "survey_number",
-        "label": "Survey Number",
-        "type": "text",
-        "required": true,
-        "hint": "Enter survey number"
-      },
-      {
-        "name": "location",
-        "label": "Property Location (Area, City)",
-        "type": "text",
-        "required": true,
-        "hint": "Enter property location (area, city)"
-      },
-      {
-        "name": "district",
-        "label": "District",
-        "type": "text",
-        "required": true,
-        "hint": "Enter district"
-      },
-      {
-        "name": "flat_area",
-        "label": "Flat Area (sq. ft.)",
-        "type": "number",
-        "required": true,
-        "hint": "Enter flat area (sq. ft.)"
-      },
-      {
-        "name": "terrace_area",
-        "label": "Terrace Area (sq. ft.)",
-        "type": "number",
-        "required": false,
-        "hint": "Enter terrace area (sq. ft.)"
-      },
-      {
-        "name": "parking_details",
-        "label": "Parking Details",
-        "type": "text",
-        "required": false,
-        "hint": "Enter parking details"
-      },
-      {
-        "name": "share_percentage",
-        "label": "Gift Share Percentage",
-        "type": "text",
-        "required": true,
-        "placeholder": "e.g., 1/2 or 50%",
-        "hint": "Enter gift share percentage"
-      }
-    ]
-  },
-  {
-    "section": "Ownership Details",
-    "fields": [
-      {
-        "name": "co_owner_name",
-        "label": "Co-owner Name (if any)",
-        "type": "text",
-        "required": false,
-        "hint": "Enter co-owner name (if any)"
-      },
-      {
-        "name": "ownership_details",
-        "label": "Ownership Description",
-        "type": "textarea",
-        "required": true,
-        "hint": "Enter ownership description"
-      },
-      {
-        "name": "acquisition_date",
-        "label": "Original Acquisition Date",
-        "type": "date",
-        "required": true,
-        "hint": "Select original acquisition date"
-      },
-      {
-        "name": "registration_number",
-        "label": "Deed Registration Number",
-        "type": "text",
-        "required": true,
-        "hint": "Enter deed registration number"
-      },
-      {
-        "name": "sub_registrar_office",
-        "label": "Sub-Registrar Office",
-        "type": "text",
-        "required": true,
-        "hint": "Enter sub-registrar office"
-      }
-    ]
-  },
-  {
-    "section": "Boundaries",
-    "fields": [
-      {
-        "name": "boundary_east",
-        "label": "Boundary East",
-        "type": "text",
-        "required": false,
-        "hint": "Enter boundary east"
-      },
-      {
-        "name": "boundary_west",
-        "label": "Boundary West",
-        "type": "text",
-        "required": false,
-        "hint": "Enter boundary west"
-      },
-      {
-        "name": "boundary_north",
-        "label": "Boundary North",
-        "type": "text",
-        "required": false,
-        "hint": "Enter boundary north"
-      },
-      {
-        "name": "boundary_south",
-        "label": "Boundary South",
-        "type": "text",
-        "required": false,
-        "hint": "Enter boundary south"
-      }
-    ]
-  },
-  {
-    "section": "Additional Details",
-    "fields": [
-      {
-        "name": "common_area_percentage",
-        "label": "Undivided Share in Common Areas (%)",
-        "type": "text",
-        "required": false,
-        "hint": "Enter undivided share in common areas (%)"
-      },
-      {
-        "name": "society_name",
-        "label": "Society / Scheme Name",
-        "type": "text",
-        "required": false,
-        "hint": "Enter society / scheme name"
-      }
-    ]
-  },
-  {
-    "section": "Witness Details",
-    "fields": [
-      {
-        "name": "witness_1_name",
-        "label": "Witness 1 Name",
-        "type": "text",
-        "required": true,
-        "hint": "Enter witness 1 name"
-      },
-      {
-        "name": "witness_1_address",
-        "label": "Witness 1 Address",
-        "type": "textarea",
-        "required": true,
-        "hint": "Enter witness 1 address"
-      },
-      {
-        "name": "witness_2_name",
-        "label": "Witness 2 Name",
-        "type": "text",
-        "required": true,
-        "hint": "Enter witness 2 name"
-      },
-      {
-        "name": "witness_2_address",
-        "label": "Witness 2 Address",
-        "type": "textarea",
-        "required": true,
-        "hint": "Enter witness 2 address"
+        "hint": "Enter address of witness"
       }
     ]
   }
