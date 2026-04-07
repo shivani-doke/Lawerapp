@@ -15,74 +15,92 @@
   },
   
   {
-    "name": "owner_name",
-    "label": "Owner Full Name",
-    "type": "text",
+    "name": "owner_details",
+    "label": "Owner Details",
+    "type": "group",
+    "repeatable": true,
     "required": true,
-    "hint": "Enter owner full name"
+    "fields": [
+      {
+        "name": "name",
+        "label": "Owner Full Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter owner full name"
+      },
+      {
+        "name": "parent_name",
+        "label": "Owner Father/Mother Name",
+        "type": "text",
+        "hint": "Enter owner father/mother name",
+        "required": false
+      },
+      {
+        "name": "address",
+        "label": "Owner Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter owner address"
+      },
+      {
+        "name": "id_proof",
+        "label": "Owner ID Proof (PAN/Aadhaar)",
+        "type": "text",
+        "hint": "Enter owner id proof (PAN/Aadhaar)",
+        "required": false
+      }
+    ]
   },
   {
-    "name": "owner_parent_name",
-    "label": "Owner Father/Mother Name",
-    "type": "text",
-    "hint": "Enter owner father/mother name",
-    "required": false
-  },
-  {
-    "name": "owner_address",
-    "label": "Owner Address",
-    "type": "textarea",
+    "name": "tenant_details",
+    "label": "Tenant Details",
+    "type": "group",
+    "repeatable": true,
     "required": true,
-    "hint": "Enter owner address"
-  },
-  {
-    "name": "owner_id_proof",
-    "label": "Owner ID Proof (PAN/Aadhaar)",
-    "type": "text",
-    "hint": "Enter owner id proof (pan/aadhaar)",
-    "required": false
-  },
-  {
-    "name": "tenant_name",
-    "label": "Tenant Full Name",
-    "type": "text",
-    "required": true,
-    "hint": "Enter tenant full name"
-  },
-  {
-    "name": "tenant_parent_name",
-    "label": "Tenant Father/Mother Name",
-    "type": "text",
-    "hint": "Enter tenant father/mother name",
-    "required": false
-  },
-  {
-    "name": "tenant_address",
-    "label": "Tenant Address",
-    "type": "textarea",
-    "required": true,
-    "hint": "Enter tenant address"
-  },
-  {
-    "name": "tenant_permanent_address",
-    "label": "Tenant Permanent Address",
-    "type": "textarea",
-    "required": false,
-    "hint": "Enter tenant permanent address"
-  },
-  {
-    "name": "tenant_work_address",
-    "label": "Tenant Work/Office Address",
-    "type": "textarea",
-    "hint": "Enter tenant work/office address",
-    "required": false
-  },
-  {
-    "name": "tenant_id_proof",
-    "label": "Tenant ID Proof (PAN/Aadhaar)",
-    "type": "text",
-    "hint": "Enter tenant id proof (pan/aadhaar)",
-    "required": false
+    "fields": [
+      {
+        "name": "name",
+        "label": "Tenant Full Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter tenant full name"
+      },
+      {
+        "name": "parent_name",
+        "label": "Tenant Father/Mother Name",
+        "type": "text",
+        "hint": "Enter tenant father/mother name",
+        "required": false
+      },
+      {
+        "name": "address",
+        "label": "Tenant Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter tenant address"
+      },
+      {
+        "name": "permanent_address",
+        "label": "Tenant Permanent Address",
+        "type": "textarea",
+        "required": false,
+        "hint": "Enter tenant permanent address"
+      },
+      {
+        "name": "work_address",
+        "label": "Tenant Work/Office Address",
+        "type": "textarea",
+        "hint": "Enter tenant work/office address",
+        "required": false
+      },
+      {
+        "name": "id_proof",
+        "label": "Tenant ID Proof (PAN/Aadhaar)",
+        "type": "text",
+        "hint": "Enter tenant id proof (PAN/Aadhaar)",
+        "required": false
+      }
+    ]
   },
   {
     "name": "property_type",
@@ -111,6 +129,20 @@
     "type": "textarea",
     "required": true,
     "hint": "Enter property address"
+  },
+  {
+    "name": "property_registration_number",
+    "label": "Property Registration Number",
+    "type": "text",
+    "required": false,
+    "hint": "Enter flat registration, society, or municipal property number if applicable"
+  },
+  {
+    "name": "cts_survey_number",
+    "label": "CTS / Survey Number",
+    "type": "text",
+    "required": false,
+    "hint": "Enter CTS number, city survey number, or survey number"
   },
   {
     "name": "property_area_sqft",
@@ -181,6 +213,27 @@
     "hint": "Enter security deposit"
   },
   {
+    "name": "security_deposit_deductions_allowed",
+    "label": "Deposit Refund Subject to Deductions",
+    "type": "boolean",
+    "hint": "Confirm unpaid bills, rent arrears, damages, or other dues may be deducted from the security deposit",
+    "required": false
+  },
+  {
+    "name": "security_deposit_deduction_basis",
+    "label": "Deposit Deduction Basis",
+    "type": "textarea",
+    "hint": "Describe the items for which deductions may be made from the security deposit",
+    "required": false
+  },
+  {
+    "name": "security_deposit_refund_timeline_days",
+    "label": "Deposit Refund Timeline (days)",
+    "type": "number",
+    "hint": "Enter number of days after vacating within which the deposit will be refunded",
+    "required": false
+  },
+  {
     "name": "payment_mode",
     "label": "Payment Mode",
     "type": "dropdown",
@@ -199,6 +252,27 @@
     "type": "number",
     "hint": "Enter rent due date (day of month)",
     "required": false
+  },
+  {
+    "name": "late_payment_penalty_type",
+    "label": "Late Payment Penalty Type",
+    "type": "dropdown",
+    "options": [
+      "None",
+      "Daily Penalty",
+      "Monthly Interest",
+      "Fixed Charge"
+    ],
+    "hint": "Select the penalty applicable for delayed rent payment",
+    "required": false
+  },
+  {
+    "name": "late_payment_penalty_value",
+    "label": "Late Payment Penalty Value",
+    "type": "number",
+    "hint": "Enter daily amount, monthly interest percentage, or fixed late fee",
+    "required": false,
+    "show_if": "late_payment_penalty_type != 'None'"
   },
   {
     "name": "rent_increase_percentage",
@@ -241,6 +315,58 @@
     "required": false
   },
   {
+    "name": "minor_repairs_paid_by",
+    "label": "Minor Repairs Paid By",
+    "type": "dropdown",
+    "options": [
+      "Tenant",
+      "Owner",
+      "Shared"
+    ],
+    "hint": "Select who bears minor day-to-day repair expenses",
+    "required": false
+  },
+  {
+    "name": "minor_repair_limit",
+    "label": "Minor Repair Limit",
+    "type": "number",
+    "hint": "Enter minor repair threshold amount, for example 500 or 1000",
+    "required": false
+  },
+  {
+    "name": "major_repairs_paid_by",
+    "label": "Major Repairs Paid By",
+    "type": "dropdown",
+    "options": [
+      "Owner",
+      "Tenant",
+      "Shared"
+    ],
+    "hint": "Select who bears structural or major repair expenses",
+    "required": false
+  },
+  {
+    "name": "painting_cleaning_charge_type",
+    "label": "Painting / Cleaning Charge Type",
+    "type": "dropdown",
+    "options": [
+      "None",
+      "One Month Rent",
+      "Fixed Amount",
+      "Actual Cost"
+    ],
+    "hint": "Select how painting or cleaning charges will be handled on vacating",
+    "required": false
+  },
+  {
+    "name": "painting_cleaning_charge_value",
+    "label": "Painting / Cleaning Charge Value",
+    "type": "number",
+    "hint": "Enter fixed charge amount if applicable",
+    "required": false,
+    "show_if": "painting_cleaning_charge_type == 'Fixed Amount'"
+  },
+  {
     "name": "usage_type",
     "label": "Usage Type",
     "type": "dropdown",
@@ -250,6 +376,14 @@
     ],
     "hint": "Select usage type",
     "required": false
+  },
+  {
+    "name": "commercial_activity_restricted",
+    "label": "Commercial Activity Restricted",
+    "type": "boolean",
+    "hint": "Confirm that no commercial or professional activity is permitted in the premises",
+    "required": false,
+    "show_if": "usage_type == 'Residential'"
   },
   {
     "name": "number_of_occupants",
@@ -280,6 +414,161 @@
     "required": false
   },
   {
+    "name": "pre_existing_damages",
+    "label": "Pre-existing Damages",
+    "type": "boolean",
+    "hint": "Indicate whether any existing damage, defect, or wear and tear is recorded at possession handover",
+    "required": false
+  },
+  {
+    "name": "pre_existing_damages_details",
+    "label": "Pre-existing Damages Details",
+    "type": "textarea",
+    "hint": "Describe any cracks, seepage, stains, broken fixtures, or other existing issues",
+    "required": false,
+    "show_if": "pre_existing_damages == true"
+  },
+  {
+    "name": "parking_included",
+    "label": "Parking Included",
+    "type": "boolean",
+    "hint": "Confirm whether parking space is included with the premises",
+    "required": false
+  },
+  {
+    "name": "parking_type",
+    "label": "Parking Type",
+    "type": "dropdown",
+    "options": [
+      "Car",
+      "Two-wheeler",
+      "Car and Two-wheeler",
+      "Other"
+    ],
+    "hint": "Select the type of parking included",
+    "required": false,
+    "show_if": "parking_included == true"
+  },
+  {
+    "name": "parking_space_style",
+    "label": "Parking Space Style",
+    "type": "dropdown",
+    "options": [
+      "Open",
+      "Covered",
+      "Stilt",
+      "Basement",
+      "Other"
+    ],
+    "hint": "Select the style of parking space",
+    "required": false,
+    "show_if": "parking_included == true"
+  },
+  {
+    "name": "parking_slot_number",
+    "label": "Parking Slot Number",
+    "type": "text",
+    "hint": "Enter slot or bay number if allotted",
+    "required": false,
+    "show_if": "parking_included == true"
+  },
+  {
+    "name": "inspection_allowed",
+    "label": "Owner Inspection Rights",
+    "type": "boolean",
+    "hint": "Confirm whether the owner may inspect the premises during the term",
+    "required": false
+  },
+  {
+    "name": "inspection_notice_hours",
+    "label": "Inspection Notice (hours)",
+    "type": "number",
+    "hint": "Enter prior notice hours required before inspection, for example 24",
+    "required": false,
+    "show_if": "inspection_allowed == true"
+  },
+  {
+    "name": "police_verification_status",
+    "label": "Police Verification Status",
+    "type": "dropdown",
+    "options": [
+      "Completed",
+      "Will be Completed",
+      "Not Applicable"
+    ],
+    "hint": "Select tenant police verification status",
+    "required": false
+  },
+  {
+    "name": "renewal_allowed",
+    "label": "Agreement Renewable",
+    "type": "boolean",
+    "hint": "Confirm whether the agreement may be renewed on expiry",
+    "required": false
+  },
+  {
+    "name": "renewal_rent_basis",
+    "label": "Renewal Rent Basis",
+    "type": "dropdown",
+    "options": [
+      "Fresh Market Rate",
+      "Fixed Percentage Increase",
+      "Mutual Agreement"
+    ],
+    "hint": "Select how rent will be determined on renewal",
+    "required": false,
+    "show_if": "renewal_allowed == true"
+  },
+  {
+    "name": "renewal_documentation_charges_paid_by",
+    "label": "Renewal Documentation Charges Paid By",
+    "type": "dropdown",
+    "options": [
+      "Owner",
+      "Tenant",
+      "Shared"
+    ],
+    "hint": "Select who bears documentation and registration expenses on renewal",
+    "required": false,
+    "show_if": "renewal_allowed == true"
+  },
+  {
+    "name": "early_termination_penalty",
+    "label": "Early Termination Penalty",
+    "type": "dropdown",
+    "options": [
+      "None",
+      "Deposit Forfeiture",
+      "Remaining Lock-in Rent",
+      "Fixed Penalty",
+      "Mutual Settlement"
+    ],
+    "hint": "Select the consequence of vacating before expiry of the lock-in or agreed term",
+    "required": false
+  },
+  {
+    "name": "early_termination_penalty_value",
+    "label": "Early Termination Penalty Value",
+    "type": "number",
+    "hint": "Enter fixed penalty amount if applicable",
+    "required": false,
+    "show_if": "early_termination_penalty == 'Fixed Penalty'"
+  },
+  {
+    "name": "non_payment_breach_months",
+    "label": "Non-payment Breach Threshold (months)",
+    "type": "number",
+    "hint": "Enter the number of months of unpaid rent after which breach action may be initiated",
+    "required": false
+  },
+  {
+    "name": "illegal_activity_eviction",
+    "label": "Immediate Eviction for Illegal Activity",
+    "type": "boolean",
+    "hint": "Confirm that illegal or unlawful activity is treated as material breach permitting immediate action",
+    "required": false
+  },
+  {
     "name": "jurisdiction_city",
     "label": "Jurisdiction City",
     "type": "text",
@@ -299,31 +588,28 @@
     "required": false
   },
   {
-    "name": "witness1_name",
-    "label": "Witness 1 Name",
-    "type": "text",
+    "name": "witness_details",
+    "label": "Witness Details",
+    "type": "group",
+    "repeatable": true,
+    "min": 2,
+    "max": 2,
     "required": true,
-    "hint": "Enter witness 1 name"
-  },
-  {
-    "name": "witness1_address",
-    "label": "Witness 1 Address",
-    "type": "textarea",
-    "required": true,
-    "hint": "Enter witness 1 address"
-  },
-  {
-    "name": "witness2_name",
-    "label": "Witness 2 Name",
-    "type": "text",
-    "required": true,
-    "hint": "Enter witness 2 name"
-  },
-  {
-    "name": "witness2_address",
-    "label": "Witness 2 Address",
-    "type": "textarea",
-    "required": true,
-    "hint": "Enter witness 2 address"
+    "fields": [
+      {
+        "name": "name",
+        "label": "Witness Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full name of witness"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter address of witness"
+      }
+    ]
   }
 ]

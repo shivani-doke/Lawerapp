@@ -115,6 +115,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
   String? _selectedReferenceId;
   bool _isLoadingReferences = false;
   bool _isUploading = false;
+  List<Map<String, dynamic>> _clients = [];
+  bool _isLoadingClients = false;
+  String? _linkedDeponentClientName;
 
   // UI state
   bool _isGenerating = false;
@@ -169,6 +172,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
         UploadNavigationContext.consumeReferenceOnlyMode('affidavit');
     _fields = []; // No default fields
     _loadSavedReferences(autoSelectFirst: !_openedFromUploads);
+    _loadClients();
     if (!_openedFromUploads) {
       _loadDefaultFields();
     }
@@ -195,6 +199,169 @@ class _AffidavitPageState extends State<AffidavitPage> {
     _groupDropdownValues.clear();
     _groupBoolValues.clear();
     _groupMultiselectValues.clear();
+  }
+
+  Future<void> _loadClients() async {
+    setState(() => _isLoadingClients = true);
+    try {
+      final clients = await ApiService().getClients();
+      if (!mounted) return;
+      setState(() {
+        _clients = clients;
+        _isLoadingClients = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingClients = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load clients: $e')),
+      );
+    }
+  }
+
+  void _setFieldText(String fieldName, String value) {
+    final controller =
+        _fieldControllers.putIfAbsent(fieldName, () => TextEditingController());
+    controller.text = value;
+  }
+
+  void _applyClientToDeponent(Map<String, dynamic> client) {
+    final pan = (client['pan_number'] ?? '').toString().trim();
+    final aadhar = (client['aadhar_number'] ?? '').toString().trim();
+    setState(() {
+      _setFieldText('deponent_name', (client['name'] ?? '').toString());
+      _setFieldText('deponent_age', (client['age'] ?? '').toString());
+      _setFieldText(
+        'deponent_occupation',
+        (client['occupation'] ?? '').toString(),
+      );
+      _setFieldText('deponent_address', (client['address'] ?? '').toString());
+      if (pan.isNotEmpty) {
+        _dropdownValues['deponent_id_type'] = 'PAN';
+        _setFieldText('deponent_id_number', pan);
+      } else if (aadhar.isNotEmpty) {
+        _dropdownValues['deponent_id_type'] = 'Aadhaar';
+        _setFieldText('deponent_id_number', aadhar);
+      }
+      _linkedDeponentClientName = (client['name'] ?? '').toString();
+    });
+  }
+
+  Future<void> _showClientAutofillDialog() async {
+    if (_isLoadingClients) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Clients are still loading. Please wait.')),
+      );
+      return;
+    }
+    if (_clients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No clients available for autofill yet.')),
+      );
+      return;
+    }
+    final selectedClient = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dialogContext) {
+        final searchController = TextEditingController();
+        var filteredClients = List<Map<String, dynamic>>.from(_clients);
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            void applySearch(String query) {
+              final normalized = query.trim().toLowerCase();
+              setModalState(() {
+                filteredClients = _clients.where((client) {
+                  final name = (client['name'] ?? '').toString().toLowerCase();
+                  final phone =
+                      (client['phone'] ?? '').toString().toLowerCase();
+                  final pan =
+                      (client['pan_number'] ?? '').toString().toLowerCase();
+                  final aadhar =
+                      (client['aadhar_number'] ?? '').toString().toLowerCase();
+                  return normalized.isEmpty ||
+                      name.contains(normalized) ||
+                      phone.contains(normalized) ||
+                      pan.contains(normalized) ||
+                      aadhar.contains(normalized);
+                }).toList();
+              });
+            }
+
+            return AlertDialog(
+              title: const Text('Autofill Deponent Details'),
+              content: SizedBox(
+                width: 520,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      onChanged: applySearch,
+                      decoration: const InputDecoration(
+                        hintText: 'Search by name, phone, PAN, or Aadhar',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: filteredClients.isEmpty
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Text('No matching clients found.'),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: filteredClients.length,
+                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final client = filteredClients[index];
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        accentColor.withValues(alpha: 0.18),
+                                    child: const Icon(
+                                      Icons.person,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    (client['name'] ?? 'Unnamed Client')
+                                        .toString(),
+                                  ),
+                                  subtitle: Text(
+                                    [
+                                      (client['phone'] ?? '').toString(),
+                                      (client['pan_number'] ?? '').toString(),
+                                      (client['aadhar_number'] ?? '')
+                                          .toString(),
+                                    ]
+                                        .where((value) => value.trim().isNotEmpty)
+                                        .join(' • '),
+                                  ),
+                                  onTap: () =>
+                                      Navigator.of(dialogContext).pop(client),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (!mounted || selectedClient == null) return;
+    _applyClientToDeponent(selectedClient);
   }
 
   Map<String, TextEditingController> _createGroupControllerRow(
@@ -1278,6 +1445,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
 
     final isRequired = field.required;
     final label = isRequired ? '${field.label} *' : field.label;
+    final supportsClientAutofill = field.name == 'deponent_name';
 
     Widget input;
     switch (field.type) {
@@ -1454,9 +1622,40 @@ class _AffidavitPageState extends State<AffidavitPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    if (supportsClientAutofill &&
+                        _linkedDeponentClientName != null &&
+                        _linkedDeponentClientName!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Linked client: $_linkedDeponentClientName',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (supportsClientAutofill)
+                TextButton.icon(
+                  onPressed: _showClientAutofillDialog,
+                  icon: const Icon(Icons.person_search, size: 18),
+                  label: const Text('Autofill from Client'),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           input,

@@ -91,6 +91,10 @@ class _SettlementAgreementPageState extends State<SettlementAgreementPage> {
   String? _selectedReferenceId;
   bool _isLoadingReferences = false;
   bool _isUploading = false;
+  List<Map<String, dynamic>> _clients = [];
+  bool _isLoadingClients = false;
+  final Map<String, List<String?>> _linkedClientNamesByGroup = {};
+  final Map<String, List<String?>> _linkedClientIdsByGroup = {};
 
   // UI state
   bool _isGenerating = false;
@@ -145,6 +149,7 @@ class _SettlementAgreementPageState extends State<SettlementAgreementPage> {
         UploadNavigationContext.consumeReferenceOnlyMode('settlement_agreement');
     _fields = []; // No default fields
     _loadSavedReferences(autoSelectFirst: !_openedFromUploads);
+    _loadClients();
     if (!_openedFromUploads) {
       _loadDefaultFields();
     }
@@ -171,6 +176,237 @@ class _SettlementAgreementPageState extends State<SettlementAgreementPage> {
     _groupDropdownValues.clear();
     _groupBoolValues.clear();
     _groupMultiselectValues.clear();
+    _linkedClientNamesByGroup.clear();
+    _linkedClientIdsByGroup.clear();
+  }
+
+  Future<void> _loadClients() async {
+    setState(() => _isLoadingClients = true);
+    try {
+      final clients = await ApiService().getClients();
+      if (!mounted) return;
+      setState(() {
+        _clients = clients;
+        _isLoadingClients = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingClients = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load clients: $e')),
+      );
+    }
+  }
+
+  void _applyClientToSettlementParty({
+    required String groupName,
+    required Map<String, dynamic> client,
+    required int rowIndex,
+  }) {
+    final rows = _groupFieldControllers[groupName];
+    if (rows == null || rows.length <= rowIndex) return;
+    final controllerRow = rows[rowIndex];
+    final mappedValues = <String, String>{
+      'name': (client['name'] ?? '').toString(),
+      'address': (client['address'] ?? '').toString(),
+      'contact':
+          (client['phone'] ?? client['email'] ?? '').toString(),
+    };
+
+    setState(() {
+      _linkedClientNamesByGroup.putIfAbsent(groupName, () => <String?>[]);
+      _linkedClientIdsByGroup.putIfAbsent(groupName, () => <String?>[]);
+      while (_linkedClientNamesByGroup[groupName]!.length <= rowIndex) {
+        _linkedClientNamesByGroup[groupName]!.add(null);
+      }
+      while (_linkedClientIdsByGroup[groupName]!.length <= rowIndex) {
+        _linkedClientIdsByGroup[groupName]!.add(null);
+      }
+      _linkedClientNamesByGroup[groupName]![rowIndex] =
+          (client['name'] ?? '').toString();
+      _linkedClientIdsByGroup[groupName]![rowIndex] =
+          (client['id'] ?? '').toString();
+      mappedValues.forEach((fieldName, value) {
+        final controller = controllerRow[fieldName];
+        if (controller != null && value.isNotEmpty) {
+          controller.text = value;
+        }
+      });
+    });
+  }
+
+  String? _settlementClientAssignmentLabel({
+    required String clientId,
+    required String currentGroupName,
+    required int currentRowIndex,
+  }) {
+    for (final entry in _linkedClientIdsByGroup.entries) {
+      for (var rowIndex = 0; rowIndex < entry.value.length; rowIndex++) {
+        final linkedId = entry.value[rowIndex];
+        if (linkedId == null || linkedId.isEmpty || linkedId != clientId) {
+          continue;
+        }
+        if (entry.key == currentGroupName && rowIndex == currentRowIndex) {
+          continue;
+        }
+        return entry.key == 'party_a_details' ? 'Party A Details' : 'Party B Details';
+      }
+    }
+    return null;
+  }
+
+  Future<void> _showClientAutofillDialog({
+    required DocumentField field,
+    required int rowIndex,
+  }) async {
+    if (_isLoadingClients) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Clients are still loading. Please wait.')),
+      );
+      return;
+    }
+    if (_clients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No clients available for autofill yet.')),
+      );
+      return;
+    }
+
+    final selectedClient = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dialogContext) {
+        final searchController = TextEditingController();
+        var filteredClients = List<Map<String, dynamic>>.from(_clients);
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            void applySearch(String query) {
+              final normalized = query.trim().toLowerCase();
+              setModalState(() {
+                filteredClients = _clients.where((client) {
+                  final name = (client['name'] ?? '').toString().toLowerCase();
+                  final phone = (client['phone'] ?? '').toString().toLowerCase();
+                  final pan = (client['pan_number'] ?? '').toString().toLowerCase();
+                  final aadhar =
+                      (client['aadhar_number'] ?? '').toString().toLowerCase();
+                  return normalized.isEmpty ||
+                      name.contains(normalized) ||
+                      phone.contains(normalized) ||
+                      pan.contains(normalized) ||
+                      aadhar.contains(normalized);
+                }).toList();
+              });
+            }
+
+            return AlertDialog(
+              title: Text('Autofill ${field.label}'),
+              content: SizedBox(
+                width: 520,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      onChanged: applySearch,
+                      decoration: const InputDecoration(
+                        hintText: 'Search by name, phone, PAN, or Aadhar',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: filteredClients.isEmpty
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Text(
+                                  'No matching clients found.',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: filteredClients.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final client = filteredClients[index];
+                                final clientId =
+                                    (client['id'] ?? '').toString();
+                                final assignmentLabel =
+                                    _settlementClientAssignmentLabel(
+                                  clientId: clientId,
+                                  currentGroupName: field.name,
+                                  currentRowIndex: rowIndex,
+                                );
+                                final isAssignedElsewhere =
+                                    assignmentLabel != null;
+                                final clientName =
+                                    (client['name'] ?? 'Unnamed Client').toString();
+                                final phone =
+                                    (client['phone'] ?? '').toString().trim();
+                                final occupation =
+                                    (client['occupation'] ?? '').toString().trim();
+                                final subtitleParts = [
+                                  if (phone.isNotEmpty) phone,
+                                  if (occupation.isNotEmpty) occupation,
+                                  if (assignmentLabel != null)
+                                    'Already linked to $assignmentLabel',
+                                ];
+                                return ListTile(
+                                  title: Text(clientName),
+                                  subtitle: subtitleParts.isEmpty
+                                      ? null
+                                      : Text(subtitleParts.join(' • ')),
+                                  trailing: isAssignedElsewhere
+                                      ? const Icon(Icons.block, color: Colors.grey)
+                                      : const Icon(Icons.chevron_right),
+                                  enabled: !isAssignedElsewhere,
+                                  onTap: isAssignedElsewhere
+                                      ? null
+                                      : () => Navigator.of(dialogContext).pop(client),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selectedClient == null) return;
+    final selectedClientId = (selectedClient['id'] ?? '').toString();
+    final assignmentLabel = _settlementClientAssignmentLabel(
+      clientId: selectedClientId,
+      currentGroupName: field.name,
+      currentRowIndex: rowIndex,
+    );
+    if (assignmentLabel != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'This client is already linked to $assignmentLabel. Please choose a different client.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    _applyClientToSettlementParty(
+      groupName: field.name,
+      client: selectedClient,
+      rowIndex: rowIndex,
+    );
   }
 
   Map<String, TextEditingController> _createGroupControllerRow(
@@ -228,6 +464,8 @@ class _SettlementAgreementPageState extends State<SettlementAgreementPage> {
     _groupDropdownValues[field.name] = [_createGroupDropdownRow(field)];
     _groupBoolValues[field.name] = [_createGroupBoolRow(field)];
     _groupMultiselectValues[field.name] = [_createGroupMultiselectRow(field)];
+    _linkedClientNamesByGroup[field.name] = [null];
+    _linkedClientIdsByGroup[field.name] = [null];
   }
 
   void _addGroupRow(DocumentField field) {
@@ -246,6 +484,10 @@ class _SettlementAgreementPageState extends State<SettlementAgreementPage> {
       _groupBoolValues[field.name]!.add(_createGroupBoolRow(field));
       _groupMultiselectValues[field.name]!
           .add(_createGroupMultiselectRow(field));
+      _linkedClientNamesByGroup.putIfAbsent(field.name, () => <String?>[]);
+      _linkedClientIdsByGroup.putIfAbsent(field.name, () => <String?>[]);
+      _linkedClientNamesByGroup[field.name]!.add(null);
+      _linkedClientIdsByGroup[field.name]!.add(null);
     });
   }
 
@@ -273,6 +515,14 @@ class _SettlementAgreementPageState extends State<SettlementAgreementPage> {
       dropdownRows.removeAt(index);
       boolRows.removeAt(index);
       multiselectRows.removeAt(index);
+      if (_linkedClientNamesByGroup[field.name] != null &&
+          _linkedClientNamesByGroup[field.name]!.length > index) {
+        _linkedClientNamesByGroup[field.name]!.removeAt(index);
+      }
+      if (_linkedClientIdsByGroup[field.name] != null &&
+          _linkedClientIdsByGroup[field.name]!.length > index) {
+        _linkedClientIdsByGroup[field.name]!.removeAt(index);
+      }
     });
   }
 
@@ -1421,6 +1671,8 @@ class _SettlementAgreementPageState extends State<SettlementAgreementPage> {
     final dropdownRows = _groupDropdownValues[field.name] ?? const [];
     final boolRows = _groupBoolValues[field.name] ?? const [];
     final multiselectRows = _groupMultiselectValues[field.name] ?? const [];
+    final supportsClientAutofill =
+        field.name == 'party_a_details' || field.name == 'party_b_details';
 
     Widget buildSubField(DocumentField subField, int rowIndex) {
       final label = subField.required ? '${subField.label} *' : subField.label;
@@ -1658,11 +1910,43 @@ class _SettlementAgreementPageState extends State<SettlementAgreementPage> {
                     if (field.repeatable || controllerRows.length > 1)
                       Row(
                         children: [
-                          Text(
-                            '${field.label} ${rowIndex + 1}',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${field.label} ${rowIndex + 1}',
+                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                if (supportsClientAutofill &&
+                                    _linkedClientNamesByGroup[field.name] != null &&
+                                    _linkedClientNamesByGroup[field.name]!.length >
+                                        rowIndex &&
+                                    (_linkedClientNamesByGroup[field.name]![rowIndex] ??
+                                            '')
+                                        .isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      'Linked client: ${_linkedClientNamesByGroup[field.name]![rowIndex]!}',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                          const Spacer(),
+                          if (supportsClientAutofill)
+                            TextButton.icon(
+                              onPressed: () => _showClientAutofillDialog(
+                                field: field,
+                                rowIndex: rowIndex,
+                              ),
+                              icon: const Icon(Icons.person_search, size: 18),
+                              label: const Text('Autofill from Client'),
+                            ),
                           if (controllerRows.length > 1)
                             IconButton(
                               onPressed: () => _removeGroupRow(field, rowIndex),

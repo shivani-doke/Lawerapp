@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:universal_html/html.dart' as html;
 import 'package:path_provider/path_provider.dart';
 import '../config/app_config.dart';
+import 'session_service.dart';
 
 class ApiService {
   static const String baseUrl = AppConfig.backendBaseUrl;
@@ -15,6 +16,29 @@ class ApiService {
 
   static void setFieldLanguage(String language) {
     _fieldLanguage = language.trim().isEmpty ? 'English' : language;
+  }
+
+  Future<Map<String, String>> _authHeaders({
+    Map<String, String>? extra,
+  }) async {
+    final username = await SessionService.getLoggedInUsername();
+    return {
+      'X-Username': username,
+      ...?extra,
+    };
+  }
+
+  Future<Uri> _authorizedUri(
+    String path, {
+    Map<String, String>? queryParameters,
+  }) async {
+    final username = await SessionService.getLoggedInUsername();
+    return Uri.parse('$baseUrl$path').replace(
+      queryParameters: {
+        ...?queryParameters,
+        'username': username,
+      },
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -28,8 +52,9 @@ class ApiService {
     String? subtype,
     String? language,
   }) async {
-    var uri = Uri.parse('$baseUrl/extract_fields');
+    var uri = await _authorizedUri('/extract_fields');
     var request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(await _authHeaders());
 
     if (kIsWeb) {
       request.files.add(
@@ -82,8 +107,12 @@ class ApiService {
       body['subtype'] = subtype;
     }
 
-    final uri = Uri.parse('$baseUrl/extract_fields');
-    final response = await http.post(uri, body: body);
+    final uri = await _authorizedUri('/extract_fields');
+    final response = await http.post(
+      uri,
+      headers: await _authHeaders(),
+      body: body,
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -104,8 +133,9 @@ class ApiService {
     String? fontFamily,
     int? fontSize,
   }) async {
-    var uri = Uri.parse('$baseUrl/generate-document');
+    var uri = await _authorizedUri('/generate-document');
     var request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(await _authHeaders());
 
     request.fields['document_type'] = documentType;
     request.fields['fields'] = jsonEncode(fields);
@@ -156,7 +186,8 @@ class ApiService {
 
   /// Download a generated document (PDF or DOCX).
   Future<void> downloadGeneratedDocument(String filename) async {
-    final url = '$baseUrl/download/$filename';
+    final username = await SessionService.getLoggedInUsername();
+    final url = '$baseUrl/download/$filename?username=$username';
 
     if (kIsWeb) {
       html.AnchorElement anchor = html.AnchorElement(href: url);
@@ -176,8 +207,8 @@ class ApiService {
 
   /// Retrieve the content of a document (for editing).
   Future<String> getDocumentContent(String filename) async {
-    final url = Uri.parse('$baseUrl/document-content/$filename');
-    final response = await http.get(url);
+    final url = await _authorizedUri('/document-content/$filename');
+    final response = await http.get(url, headers: await _authHeaders());
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       return data['content'];
@@ -188,10 +219,12 @@ class ApiService {
 
   /// Update a document after editing.
   Future<void> updateDocument(String filename, String content) async {
-    final url = Uri.parse('$baseUrl/update-document/$filename');
+    final url = await _authorizedUri('/update-document/$filename');
     final response = await http.post(
       url,
-      headers: {'Content-Type': 'application/json'},
+      headers: await _authHeaders(
+        extra: {'Content-Type': 'application/json'},
+      ),
       body: jsonEncode({'content': content}),
     );
     if (response.statusCode != 200) {
@@ -211,8 +244,9 @@ class ApiService {
     String? language,
   }
   ) async {
-    var uri = Uri.parse('$baseUrl/upload_reference');
+    var uri = await _authorizedUri('/upload_reference');
     var request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(await _authHeaders());
 
     if (kIsWeb) {
       request.files.add(
@@ -250,11 +284,9 @@ class ApiService {
   /// List all saved references, optionally filtered by document type.
   Future<List<Map<String, dynamic>>> listReferences(
       {String? documentType}) async {
-    final uri = Uri.parse('$baseUrl/list_references').replace(
-      queryParameters:
-          documentType != null ? {'document_type': documentType} : {},
-    );
-    final response = await http.get(uri);
+    final uri = await _authorizedUri('/list_references', queryParameters:
+          documentType != null ? {'document_type': documentType} : {});
+    final response = await http.get(uri, headers: await _authHeaders());
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.cast<Map<String, dynamic>>();
@@ -266,10 +298,11 @@ class ApiService {
   Future<List<Map<String, String>>> getDocumentSubtypes({
     required String documentType,
   }) async {
-    final uri = Uri.parse('$baseUrl/document_subtypes').replace(
+    final uri = await _authorizedUri(
+      '/document_subtypes',
       queryParameters: {'document_type': documentType},
     );
-    final response = await http.get(uri);
+    final response = await http.get(uri, headers: await _authHeaders());
     if (response.statusCode != 200) {
       return [];
     }
@@ -289,17 +322,123 @@ class ApiService {
         .toList();
   }
 
+  Future<List<Map<String, dynamic>>> getClients() async {
+    final response = await http.get(
+      await _authorizedUri('/clients/'),
+      headers: await _authHeaders(),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load clients: ${response.body}');
+    }
+
+    final data = jsonDecode(response.body);
+    if (data is! List) {
+      return [];
+    }
+
+    return data
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> login({
+    required String username,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': username,
+        'password': password,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(data['error'] ?? 'Login failed');
+    }
+
+    return Map<String, dynamic>.from(data);
+  }
+
+  Future<Map<String, dynamic>> signup({
+    required String username,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/signup'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': username,
+        'password': password,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(data['error'] ?? 'Signup failed');
+    }
+
+    return Map<String, dynamic>.from(data);
+  }
+
+  Future<Map<String, dynamic>> getAuthSettings() async {
+    final response = await http.get(
+      await _authorizedUri('/auth/settings'),
+      headers: await _authHeaders(),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load login settings: ${response.body}');
+    }
+
+    return Map<String, dynamic>.from(jsonDecode(response.body));
+  }
+
+  Future<Map<String, dynamic>> updateAuthSettings({
+    required String currentUsername,
+    required String currentPassword,
+    required String newUsername,
+    required String newPassword,
+  }) async {
+    final response = await http.put(
+      await _authorizedUri('/auth/settings'),
+      headers: await _authHeaders(
+        extra: {'Content-Type': 'application/json'},
+      ),
+      body: jsonEncode({
+        'current_username': currentUsername,
+        'current_password': currentPassword,
+        'new_username': newUsername,
+        'new_password': newPassword,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(
+        (data is Map && data['error'] != null)
+            ? data['error'].toString()
+            : 'Failed to update login settings',
+      );
+    }
+
+    return Map<String, dynamic>.from(data);
+  }
+
   /// Retrieve the fields for a specific saved reference.
   Future<List<dynamic>> getReferenceFields(
     String documentId, {
     String? language,
   }) async {
-    final uri = Uri.parse('$baseUrl/get_reference/$documentId').replace(
+    final uri = await _authorizedUri(
+      '/get_reference/$documentId',
       queryParameters: {
         'language': language ?? _fieldLanguage,
       },
     );
-    final response = await http.get(uri);
+    final response = await http.get(uri, headers: await _authHeaders());
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -309,7 +448,8 @@ class ApiService {
 
   /// Get the URL to preview a saved reference document.
   /// This can be used to open the document in a new browser tab.
-  String getReferencePreviewUrl(String documentId) {
-    return '$baseUrl/references/$documentId/view';
+  Future<String> getReferencePreviewUrl(String documentId) async {
+    final username = await SessionService.getLoggedInUsername();
+    return '$baseUrl/references/$documentId/view?username=$username';
   }
 }

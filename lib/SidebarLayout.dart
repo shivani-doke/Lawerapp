@@ -4,6 +4,8 @@ import 'package:LegalAI/DashboardPage.dart';
 import 'package:LegalAI/DocumentPage.dart';
 import 'package:LegalAI/UploadsPage.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'services/api_service.dart';
 import 'LegalAiPage.dart';
 import 'GiftDeedPage.dart';
 import 'RentalAgreementPage.dart';
@@ -37,7 +39,10 @@ import 'CopyrightAgreementPage.dart';
 import 'PatentFilingDocumentsPage.dart';
 
 class MainLayout extends StatefulWidget {
-  const MainLayout({super.key});
+  const MainLayout({super.key, this.onLogout, this.loggedInUsername});
+
+  final Future<void> Function()? onLogout;
+  final String? loggedInUsername;
 
   @override
   State<MainLayout> createState() => _MainLayoutState();
@@ -45,12 +50,15 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int selectedIndex = 0;
+  bool _isUpdatingLogin = false;
+  late String? _currentUsername;
 
   late final List<Widget> pages;
 
   @override
   void initState() {
     super.initState();
+    _currentUsername = widget.loggedInUsername;
     pages = [
       DashboardPage(onNavigate: _changePage),
       const LegalAIPage(),
@@ -95,6 +103,176 @@ class _MainLayoutState extends State<MainLayout> {
     setState(() {
       selectedIndex = index;
     });
+  }
+
+  Future<void> _showChangeLoginDialog() async {
+    final formKey = GlobalKey<FormState>();
+    final currentUsernameController = TextEditingController(
+      text: _currentUsername ?? '',
+    );
+    final currentPasswordController = TextEditingController();
+    final newUsernameController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    bool obscureCurrent = true;
+    bool obscureNew = true;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Change Login Credentials'),
+              content: Form(
+                key: formKey,
+                child: SizedBox(
+                  width: 420,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: currentUsernameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Current Username',
+                        ),
+                        validator: (value) => (value ?? '').trim().isEmpty
+                            ? 'Enter current username'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: currentPasswordController,
+                        obscureText: obscureCurrent,
+                        decoration: InputDecoration(
+                          labelText: 'Current Password',
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setDialogState(() {
+                                obscureCurrent = !obscureCurrent;
+                              });
+                            },
+                            icon: Icon(
+                              obscureCurrent
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                          ),
+                        ),
+                        validator: (value) => (value ?? '').isEmpty
+                            ? 'Enter current password'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: newUsernameController,
+                        decoration: const InputDecoration(
+                          labelText: 'New Username',
+                        ),
+                        validator: (value) => (value ?? '').trim().isEmpty
+                            ? 'Enter new username'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: newPasswordController,
+                        obscureText: obscureNew,
+                        decoration: InputDecoration(
+                          labelText: 'New Password',
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setDialogState(() {
+                                obscureNew = !obscureNew;
+                              });
+                            },
+                            icon: Icon(
+                              obscureNew
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                          ),
+                        ),
+                        validator: (value) {
+                          if ((value ?? '').isEmpty) {
+                            return 'Enter new password';
+                          }
+                          if ((value ?? '').length < 4) {
+                            return 'Use at least 4 characters';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: _isUpdatingLogin
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: _isUpdatingLogin
+                      ? null
+                      : () async {
+                          if (!formKey.currentState!.validate()) {
+                            return;
+                          }
+                          setState(() => _isUpdatingLogin = true);
+                          try {
+                            await ApiService().updateAuthSettings(
+                              currentUsername: currentUsernameController.text.trim(),
+                              currentPassword: currentPasswordController.text,
+                              newUsername: newUsernameController.text.trim(),
+                              newPassword: newPasswordController.text,
+                            );
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setString(
+                              'logged_in_username',
+                              newUsernameController.text.trim(),
+                            );
+                            if (!mounted) return;
+                            setState(() {
+                              _currentUsername = newUsernameController.text.trim();
+                            });
+                            Navigator.of(dialogContext).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Login credentials updated. Use the new username and password next time you sign in.',
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  e.toString().replaceFirst('Exception: ', ''),
+                                ),
+                              ),
+                            );
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isUpdatingLogin = false);
+                            }
+                          }
+                        },
+                  child: _isUpdatingLogin
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Update'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -142,6 +320,62 @@ class _MainLayoutState extends State<MainLayout> {
                 _navItem(Icons.people_outline, "Clients", 3),
                 _navItem(Icons.fact_check_outlined, "Case Status", 35),
                 _navItem(Icons.upload_file_outlined, "Uploads", 34),
+                const Spacer(),
+                if ((_currentUsername ?? '').trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Signed in as $_currentUsername',
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                      child: OutlinedButton.icon(
+                      onPressed: _isUpdatingLogin ? null : _showChangeLoginDialog,
+                      icon: const Icon(Icons.manage_accounts_outlined),
+                      label: const Text('Change Login'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white24),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (widget.onLogout != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: widget.onLogout == null
+                            ? null
+                            : () async => widget.onLogout!(),
+                        icon: const Icon(Icons.logout_rounded),
+                        label: const Text('Logout'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          side: const BorderSide(color: Colors.white24),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

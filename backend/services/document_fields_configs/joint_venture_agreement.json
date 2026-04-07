@@ -219,17 +219,28 @@
     "required": true
   },
   {
-    "name": "witness1_name",
-    "label": "Witness 1 Name",
-    "type": "text",
-    "hint": "Enter witness name",
-    "required": false
-  },
-  {
-    "name": "witness2_name",
-    "label": "Witness 2 Name",
-    "type": "text",
-    "hint": "Enter witness name",
-    "required": false
+    "name": "witness_details",
+    "label": "Witness Details",
+    "type": "group",
+    "repeatable": true,
+    "min": 2,
+    "max": 2,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Witness Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full name of witness"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter address of witness"
+      }
+    ]
   }
 ]

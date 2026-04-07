@@ -97,6 +97,10 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
   String? _selectedReferenceId;
   bool _isLoadingReferences = false;
   bool _isUploading = false;
+  List<Map<String, dynamic>> _clients = [];
+  bool _isLoadingClients = false;
+  String? _linkedApplicantClientName;
+  String? _linkedApplicantClientId;
 
   // UI state
   bool _isGenerating = false;
@@ -151,6 +155,7 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
         UploadNavigationContext.consumeReferenceOnlyMode('bail_application');
     _fields = []; // No default fields
     _loadSavedReferences(autoSelectFirst: !_openedFromUploads);
+    _loadClients();
     if (!_openedFromUploads) {
       _loadDefaultFields();
     }
@@ -178,6 +183,162 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
     _groupDropdownValues.clear();
     _groupBoolValues.clear();
     _groupMultiselectValues.clear();
+  }
+
+  Future<void> _loadClients() async {
+    setState(() => _isLoadingClients = true);
+    try {
+      final clients = await ApiService().getClients();
+      if (!mounted) return;
+      setState(() {
+        _clients = clients;
+        _isLoadingClients = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingClients = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load clients: $e')),
+      );
+    }
+  }
+
+  void _setFieldText(String fieldName, String value) {
+    final controller = _fieldControllers.putIfAbsent(
+      fieldName,
+      () => TextEditingController(),
+    );
+    controller.text = value;
+  }
+
+  void _applyClientToApplicant(Map<String, dynamic> client) {
+    final name = (client['name'] ?? '').toString();
+    final age = (client['age'] ?? '').toString();
+    final occupation = (client['occupation'] ?? '').toString();
+    final address = (client['address'] ?? '').toString();
+
+    setState(() {
+      _setFieldText('applicant_name', name);
+      _setFieldText('applicant_age', age);
+      _setFieldText('applicant_occupation', occupation);
+      _setFieldText('applicant_address', address);
+      _linkedApplicantClientName = name;
+      _linkedApplicantClientId = (client['id'] ?? '').toString();
+    });
+  }
+
+  Future<void> _showClientAutofillDialog() async {
+    if (_isLoadingClients) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Clients are still loading. Please wait.')),
+      );
+      return;
+    }
+    if (_clients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No clients available for autofill yet.')),
+      );
+      return;
+    }
+
+    final selectedClient = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dialogContext) {
+        final searchController = TextEditingController();
+        var filteredClients = List<Map<String, dynamic>>.from(_clients);
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            void applySearch(String query) {
+              final normalized = query.trim().toLowerCase();
+              setModalState(() {
+                filteredClients = _clients.where((client) {
+                  final name = (client['name'] ?? '').toString().toLowerCase();
+                  final phone = (client['phone'] ?? '').toString().toLowerCase();
+                  final pan = (client['pan_number'] ?? '').toString().toLowerCase();
+                  final aadhar =
+                      (client['aadhar_number'] ?? '').toString().toLowerCase();
+                  return normalized.isEmpty ||
+                      name.contains(normalized) ||
+                      phone.contains(normalized) ||
+                      pan.contains(normalized) ||
+                      aadhar.contains(normalized);
+                }).toList();
+              });
+            }
+
+            return AlertDialog(
+              title: const Text('Autofill Applicant Details'),
+              content: SizedBox(
+                width: 520,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      onChanged: applySearch,
+                      decoration: const InputDecoration(
+                        hintText: 'Search by name, phone, PAN, or Aadhar',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: filteredClients.isEmpty
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Text(
+                                  'No matching clients found.',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: filteredClients.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final client = filteredClients[index];
+                                final clientName =
+                                    (client['name'] ?? 'Unnamed Client').toString();
+                                final phone =
+                                    (client['phone'] ?? '').toString().trim();
+                                final occupation =
+                                    (client['occupation'] ?? '').toString().trim();
+                                final subtitleParts = [
+                                  if (phone.isNotEmpty) phone,
+                                  if (occupation.isNotEmpty) occupation,
+                                ];
+                                return ListTile(
+                                  title: Text(clientName),
+                                  subtitle: subtitleParts.isEmpty
+                                      ? null
+                                      : Text(subtitleParts.join(' • ')),
+                                  trailing: const Icon(Icons.chevron_right),
+                                  onTap: () => Navigator.of(dialogContext).pop(client),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selectedClient == null) return;
+    _applyClientToApplicant(selectedClient);
   }
 
   void _disposeCustomMultiSelectControllers() {
@@ -1348,6 +1509,7 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
 
     final isRequired = field.required;
     final label = isRequired ? '${field.label} *' : field.label;
+    final supportsClientAutofill = field.name == 'applicant_name';
 
     Widget input;
     switch (field.type) {
@@ -1524,9 +1686,40 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    if (supportsClientAutofill &&
+                        _linkedApplicantClientName != null &&
+                        _linkedApplicantClientName!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Linked client: $_linkedApplicantClientName',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (supportsClientAutofill)
+                TextButton.icon(
+                  onPressed: _showClientAutofillDialog,
+                  icon: const Icon(Icons.person_search, size: 18),
+                  label: const Text('Autofill from Client'),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           input,

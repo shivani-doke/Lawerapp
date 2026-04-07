@@ -293,10 +293,12 @@
   },
 
   {
-    "name": "witnesses",
+    "name": "witness_details",
     "label": "Witness Details",
     "type": "group",
     "repeatable": true,
+    "min": 2,
+    "max": 2,
     "required": true,
     "fields": [
       {
@@ -304,14 +306,14 @@
         "label": "Witness Name",
         "type": "text",
         "required": true,
-        "hint": "Enter full name"
+        "hint": "Enter full name of witness"
       },
       {
         "name": "address",
         "label": "Address",
         "type": "textarea",
-        "required": false,
-        "hint": "Enter address"
+        "required": true,
+        "hint": "Enter address of witness"
       }
     ]
   },

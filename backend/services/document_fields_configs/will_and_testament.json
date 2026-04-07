@@ -317,31 +317,28 @@
     "required": false
   },
   {
-    "name": "witness1_name",
-    "label": "Witness 1 Name",
-    "type": "text",
+    "name": "witness_details",
+    "label": "Witness Details",
+    "type": "group",
+    "repeatable": true,
+    "min": 2,
+    "max": 2,
     "required": true,
-    "hint": "Enter witness 1 name"
-  },
-  {
-    "name": "witness1_address",
-    "label": "Witness 1 Address",
-    "type": "textarea",
-    "required": true,
-    "hint": "Enter witness 1 address"
-  },
-  {
-    "name": "witness2_name",
-    "label": "Witness 2 Name",
-    "type": "text",
-    "required": true,
-    "hint": "Enter witness 2 name"
-  },
-  {
-    "name": "witness2_address",
-    "label": "Witness 2 Address",
-    "type": "textarea",
-    "required": true,
-    "hint": "Enter witness 2 address"
+    "fields": [
+      {
+        "name": "name",
+        "label": "Witness Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full name of witness"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter address of witness"
+      }
+    ]
   }
 ]

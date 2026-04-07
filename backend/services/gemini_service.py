@@ -304,6 +304,12 @@ REPLACEMENT RULES:
 - Do NOT invent missing data.
 - Do NOT add commentary or explanation.
 - Write the final document in {language}.
+- The final document must read like it was drafted by a human legal professional, not by an AI system.
+- Use natural, conventional, human legal drafting language for {language}.
+- Avoid robotic, generic, overly repetitive, or AI-sounding phrasing.
+- Do NOT include AI-style helper language such as "hereinafter", "this document serves as", "please note",
+  "it is important to note", "the following details are provided", or any self-referential explanation unless
+  the same wording is already present in the reference document.
 - If the reference document is in a different language, translate it fully into {language}
   while preserving the same legal meaning, structure, numbering, and layout order.
 - Treat the provided field values as already localized for the target language.
@@ -392,6 +398,9 @@ RULES:
 - Keep the tone formal and legally styled.
 - Write the entire document in {language}.
 - Use natural legal drafting conventions for {language}.
+- The document must read like it was drafted by a human legal professional, not by an AI system.
+- Use clear, natural, human legal language and avoid robotic or overly generic wording.
+- Do NOT use AI-sounding filler, explanatory narration, or self-referential phrases.
 - Treat the provided field values as already localized for the target language.
 - Do NOT include commentary, explanations, checklists, or notes to the user.
 - Output only the final document text.

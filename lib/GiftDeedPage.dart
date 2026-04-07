@@ -4,76 +4,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import '../services/api_service.dart';
-import 'widgets/voice_dictation_button.dart';
 import 'upload_context.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'widgets/dynamic_document_form.dart';
 import 'web_preview_iframe_stub.dart'
     if (dart.library.html) 'web_preview_iframe_web.dart' as web_preview;
-
-// Simple model for a dynamic document field
-class DocumentField {
-  final String name;
-  final String label;
-  final String type;
-  final String? hint;
-  final bool required;
-  final List<String> options;
-  final bool repeatable;
-  final List<DocumentField> fields;
-  final String? validation;
-  final dynamic defaultValue;
-  final String? showIf;
-  final int? minItems;
-  final int? maxItems;
-
-  DocumentField({
-    required this.name,
-    required this.label,
-    this.type = 'text',
-    this.hint,
-    this.required = true,
-    this.options = const [],
-    this.repeatable = false,
-    this.fields = const [],
-    this.validation,
-    this.defaultValue,
-    this.showIf,
-    this.minItems,
-    this.maxItems,
-  });
-
-  factory DocumentField.fromJson(Map<String, dynamic> json) {
-    final rawOptions = json['options'];
-    final rawFields = json['fields'];
-    final parsedName = (json['name'] ?? '').toString().trim();
-    final parsedLabel = (json['label'] ?? parsedName).toString().trim();
-    final parsedType = (json['type'] ?? 'text').toString().trim();
-
-    return DocumentField(
-      name: parsedName,
-      label: parsedLabel.isEmpty ? parsedName : parsedLabel,
-      type: parsedType.isEmpty ? 'text' : parsedType,
-      hint: json['hint']?.toString(),
-      required: json['required'] == true,
-      options: rawOptions is List
-          ? rawOptions.map((e) => e.toString()).toList()
-          : const [],
-      repeatable: json['repeatable'] == true,
-      validation: json['validation']?.toString(),
-      defaultValue: json['default'],
-      showIf: json['show_if']?.toString(),
-      minItems: json['min'] is num ? (json['min'] as num).toInt() : null,
-      maxItems: json['max'] is num ? (json['max'] as num).toInt() : null,
-      fields: rawFields is List
-          ? rawFields
-              .whereType<Map>()
-              .map((e) => DocumentField.fromJson(Map<String, dynamic>.from(e)))
-              .toList()
-          : const [],
-    );
-  }
-}
 
 class GiftDeedPage extends StatefulWidget {
   const GiftDeedPage({super.key});
@@ -107,6 +43,10 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
   String? _selectedReferenceId;
   bool _isLoadingReferences = false;
   bool _isUploading = false;
+  List<Map<String, dynamic>> _clients = [];
+  bool _isLoadingClients = false;
+  final Map<String, List<String?>> _linkedClientNamesByGroup = {};
+  final Map<String, List<String?>> _linkedClientIdsByGroup = {};
 
   // UI state
   bool _isGenerating = false;
@@ -149,6 +89,7 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
         UploadNavigationContext.consumeReferenceOnlyMode('gift_deed');
     _fields = []; // No default fields
     _loadSavedReferences(autoSelectFirst: !_openedFromUploads);
+    _loadClients();
     if (!_openedFromUploads) {
       _loadDefaultFields();
     }
@@ -175,6 +116,111 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
     _groupDropdownValues.clear();
     _groupBoolValues.clear();
     _groupMultiselectValues.clear();
+    _linkedClientNamesByGroup.clear();
+    _linkedClientIdsByGroup.clear();
+  }
+
+  Future<void> _loadClients() async {
+    setState(() => _isLoadingClients = true);
+    try {
+      final clients = await ApiService().getClients();
+      if (!mounted) return;
+      setState(() {
+        _clients = clients;
+        _isLoadingClients = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingClients = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load clients: $e')),
+      );
+    }
+  }
+
+  DocumentField? _findFieldByName(String fieldName) {
+    for (final field in _fields) {
+      if (field.name == fieldName) {
+        return field;
+      }
+    }
+    return null;
+  }
+
+  void _applyClientToGiftParty({
+    required String groupName,
+    required Map<String, dynamic> client,
+    required int rowIndex,
+  }) {
+    final groupField = _findFieldByName(groupName);
+    final rows = _groupFieldControllers[groupName];
+
+    if (groupField == null ||
+        groupField.type != 'group' ||
+        rows == null ||
+        rows.length <= rowIndex) {
+      return;
+    }
+
+    final controllerRow = rows[rowIndex];
+    final mappedValues = <String, String>{
+      'name': (client['name'] ?? '').toString(),
+      'age': (client['age'] ?? '').toString(),
+      'occupation': (client['occupation'] ?? '').toString(),
+      'address': (client['address'] ?? '').toString(),
+      'pan': (client['pan_number'] ?? '').toString(),
+      'aadhaar': (client['aadhar_number'] ?? '').toString(),
+    };
+
+    setState(() {
+      _linkedClientNamesByGroup.putIfAbsent(groupName, () => <String?>[]);
+      _linkedClientIdsByGroup.putIfAbsent(groupName, () => <String?>[]);
+      while (_linkedClientNamesByGroup[groupName]!.length <= rowIndex) {
+        _linkedClientNamesByGroup[groupName]!.add(null);
+      }
+      while (_linkedClientIdsByGroup[groupName]!.length <= rowIndex) {
+        _linkedClientIdsByGroup[groupName]!.add(null);
+      }
+      _linkedClientNamesByGroup[groupName]![rowIndex] =
+          (client['name'] ?? '').toString();
+      _linkedClientIdsByGroup[groupName]![rowIndex] =
+          (client['id'] ?? '').toString();
+
+      mappedValues.forEach((fieldName, value) {
+        final controller = controllerRow[fieldName];
+        if (controller != null && value.isNotEmpty) {
+          controller.text = value;
+          _validationErrors.remove(_groupValidationKey(
+            groupField,
+            rowIndex,
+            groupField.fields.firstWhere((subField) => subField.name == fieldName),
+          ));
+        }
+      });
+    });
+  }
+
+  String? _giftClientAssignmentLabel({
+    required String clientId,
+    required String currentGroupName,
+    required int currentRowIndex,
+  }) {
+    for (final entry in _linkedClientIdsByGroup.entries) {
+      final groupName = entry.key;
+      final linkedIds = entry.value;
+      for (var rowIndex = 0; rowIndex < linkedIds.length; rowIndex++) {
+        final linkedId = linkedIds[rowIndex];
+        if (linkedId == null || linkedId.isEmpty || linkedId != clientId) {
+          continue;
+        }
+        if (groupName == currentGroupName && rowIndex == currentRowIndex) {
+          continue;
+        }
+        final partyLabel = groupName == 'donor_details' ? 'Donor' : 'Donee';
+        return '$partyLabel ${rowIndex + 1}';
+      }
+    }
+    return null;
   }
 
   String _groupValidationKey(
@@ -249,6 +295,8 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
     _groupDropdownValues[field.name] = [_createGroupDropdownRow(field)];
     _groupBoolValues[field.name] = [_createGroupBoolRow(field)];
     _groupMultiselectValues[field.name] = [_createGroupMultiselectRow(field)];
+    _linkedClientNamesByGroup[field.name] = [null];
+    _linkedClientIdsByGroup[field.name] = [null];
   }
 
   void _addGroupRow(DocumentField field) {
@@ -278,6 +326,10 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
       _groupBoolValues[field.name]!.add(_createGroupBoolRow(field));
       _groupMultiselectValues[field.name]!
           .add(_createGroupMultiselectRow(field));
+      _linkedClientNamesByGroup.putIfAbsent(field.name, () => <String?>[]);
+      _linkedClientNamesByGroup[field.name]!.add(null);
+      _linkedClientIdsByGroup.putIfAbsent(field.name, () => <String?>[]);
+      _linkedClientIdsByGroup[field.name]!.add(null);
     });
   }
 
@@ -315,6 +367,14 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
       dropdownRows.removeAt(index);
       boolRows.removeAt(index);
       multiselectRows.removeAt(index);
+      if (_linkedClientNamesByGroup[field.name] != null &&
+          _linkedClientNamesByGroup[field.name]!.length > index) {
+        _linkedClientNamesByGroup[field.name]!.removeAt(index);
+      }
+      if (_linkedClientIdsByGroup[field.name] != null &&
+          _linkedClientIdsByGroup[field.name]!.length > index) {
+        _linkedClientIdsByGroup[field.name]!.removeAt(index);
+      }
       final keyPrefix = '${field.name}.$index.';
       _validationErrors.removeWhere((key, value) => key.startsWith(keyPrefix));
     });
@@ -749,7 +809,7 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
       final fieldsJson = await ApiService().getFieldsByDocumentType(
         documentType: 'gift_deed',
       );
-      final fields = _parseDocumentFields(fieldsJson);
+      final fields = parseDocumentFields(fieldsJson);
 
       if (!mounted) return;
       setState(() {
@@ -771,7 +831,7 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
     });
     try {
       final fieldsJson = await ApiService().getReferenceFields(id);
-      final fields = _parseDocumentFields(fieldsJson);
+      final fields = parseDocumentFields(fieldsJson);
       setState(() {
         _fields = fields;
         _isExtracting = false;
@@ -835,7 +895,7 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
           documentType: 'gift_deed',
         );
 
-        final fields = _parseDocumentFields(extractedFields);
+        final fields = parseDocumentFields(extractedFields);
 
         // 2. Upload the file to server and get new ID
         setState(() => _isUploading = true);
@@ -976,34 +1036,6 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
     }
   }
 
-  List<DocumentField> _parseDocumentFields(dynamic raw) {
-    if (raw is! List) return [];
-    final parsed = <DocumentField>[];
-
-    for (final item in raw) {
-      if (item is! Map) continue;
-      final map = Map<String, dynamic>.from(item);
-
-      // Flat field format: {name, label, type, ...}
-      if (map.containsKey('name') && map.containsKey('label')) {
-        final field = DocumentField.fromJson(map);
-        if (field.name.isNotEmpty && field.label.isNotEmpty) {
-          parsed.add(field);
-        }
-        continue;
-      }
-
-      // Sectioned format: {section: "...", fields: [{...}, ...]}
-      final nested = map['fields'];
-      if (nested is List) {
-        parsed.addAll(_parseDocumentFields(nested));
-      }
-    }
-
-    return parsed;
-  }
-
-
   Widget _buildDocumentLanguageSettings() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -1040,6 +1072,168 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showClientAutofillDialog({
+    required DocumentField field,
+    required int rowIndex,
+  }) async {
+    if (_isLoadingClients) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Clients are still loading. Please wait.')),
+      );
+      return;
+    }
+
+    if (_clients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No clients available for autofill yet.')),
+      );
+      return;
+    }
+
+    final selectedClient = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dialogContext) {
+        final searchController = TextEditingController();
+        var filteredClients = List<Map<String, dynamic>>.from(_clients);
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            void applySearch(String query) {
+              final normalized = query.trim().toLowerCase();
+              setModalState(() {
+                filteredClients = _clients.where((client) {
+                  final name = (client['name'] ?? '').toString().toLowerCase();
+                  final phone = (client['phone'] ?? '').toString().toLowerCase();
+                  final pan = (client['pan_number'] ?? '').toString().toLowerCase();
+                  final aadhar =
+                      (client['aadhar_number'] ?? '').toString().toLowerCase();
+                  return normalized.isEmpty ||
+                      name.contains(normalized) ||
+                      phone.contains(normalized) ||
+                      pan.contains(normalized) ||
+                      aadhar.contains(normalized);
+                }).toList();
+              });
+            }
+
+            return AlertDialog(
+              title: Text('Autofill ${field.label}'),
+              content: SizedBox(
+                width: 520,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      onChanged: applySearch,
+                      decoration: const InputDecoration(
+                        hintText: 'Search by name, phone, PAN, or Aadhar',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: filteredClients.isEmpty
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Text(
+                                  'No matching clients found.',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: filteredClients.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final client = filteredClients[index];
+                                final clientId =
+                                    (client['id'] ?? '').toString();
+                                final assignmentLabel = clientId.isEmpty
+                                    ? null
+                                    : _giftClientAssignmentLabel(
+                                        clientId: clientId,
+                                        currentGroupName: field.name,
+                                        currentRowIndex: rowIndex,
+                                      );
+                                final isAssignedElsewhere =
+                                    assignmentLabel != null;
+                                final clientName =
+                                    (client['name'] ?? 'Unnamed Client').toString();
+                                final phone =
+                                    (client['phone'] ?? '').toString().trim();
+                                final occupation =
+                                    (client['occupation'] ?? '').toString().trim();
+                                final subtitleParts = [
+                                  if (phone.isNotEmpty) phone,
+                                  if (occupation.isNotEmpty) occupation,
+                                  if (assignmentLabel != null)
+                                    'Already linked to $assignmentLabel',
+                                ];
+                                return ListTile(
+                                  title: Text(clientName),
+                                  subtitle: subtitleParts.isEmpty
+                                      ? null
+                                      : Text(subtitleParts.join(' • ')),
+                                  trailing: isAssignedElsewhere
+                                      ? const Icon(Icons.block, color: Colors.grey)
+                                      : const Icon(Icons.chevron_right),
+                                  enabled: !isAssignedElsewhere,
+                                  onTap: isAssignedElsewhere
+                                      ? null
+                                      : () => Navigator.of(dialogContext).pop(client),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selectedClient == null) {
+      return;
+    }
+
+    final selectedClientId = (selectedClient['id'] ?? '').toString();
+    final assignmentLabel = selectedClientId.isEmpty
+        ? null
+        : _giftClientAssignmentLabel(
+            clientId: selectedClientId,
+            currentGroupName: field.name,
+            currentRowIndex: rowIndex,
+          );
+    if (assignmentLabel != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'This client is already linked to $assignmentLabel. Please choose a different client.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    _applyClientToGiftParty(
+      groupName: field.name,
+      client: selectedClient,
+      rowIndex: rowIndex,
     );
   }
 
@@ -1155,6 +1349,49 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
           "${picked.month.toString().padLeft(2, '0')}-"
           "${picked.year}";
     }
+  }
+
+  Widget? _buildGiftGroupRowHeader(
+    BuildContext context,
+    DocumentField field,
+    int rowIndex,
+  ) {
+    final supportsClientAutofill =
+        field.name == 'donor_details' || field.name == 'donee_details';
+
+    if (!supportsClientAutofill) {
+      return null;
+    }
+
+    final linkedClients = _linkedClientNamesByGroup[field.name];
+    final linkedClientName =
+        linkedClients != null && linkedClients.length > rowIndex
+            ? linkedClients[rowIndex]
+            : null;
+
+    return Row(
+      children: [
+        Expanded(
+          child: linkedClientName == null || linkedClientName.isEmpty
+              ? const SizedBox.shrink()
+              : Text(
+                  'Linked client: $linkedClientName',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                  ),
+                ),
+        ),
+        TextButton.icon(
+          onPressed: () => _showClientAutofillDialog(
+            field: field,
+            rowIndex: rowIndex,
+          ),
+          icon: const Icon(Icons.person_search, size: 18),
+          label: const Text('Autofill from Client'),
+        ),
+      ],
+    );
   }
 
   @override
@@ -1288,7 +1525,119 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
                       )
                     else if (_fields.isNotEmpty) ...[
                       _buildDocumentLanguageSettings(),
-                      ..._fields.map((field) => _buildField(field)),
+                      DynamicDocumentForm(
+                        fields: _fields,
+                        accentColor: accentColor,
+                        selectedLanguage: _selectedLanguage,
+                        fieldControllers: _fieldControllers,
+                        dropdownValues: _dropdownValues,
+                        boolValues: _boolValues,
+                        multiselectValues: _multiselectValues,
+                        groupFieldControllers: _groupFieldControllers,
+                        groupDropdownValues: _groupDropdownValues,
+                        groupBoolValues: _groupBoolValues,
+                        groupMultiselectValues: _groupMultiselectValues,
+                        validationErrors: _validationErrors,
+                        isFieldVisible: _isFieldVisible,
+                        groupValidationKey: _groupValidationKey,
+                        onSelectDate: _selectDate,
+                        onTopLevelChoiceChanged: (field, selected) {
+                          setState(() {
+                            _dropdownValues[field.name] = selected;
+                            _validationErrors.remove(field.name);
+                          });
+                        },
+                        onTopLevelBoolChanged: (field, selected) {
+                          setState(() {
+                            _boolValues[field.name] = selected;
+                            _validationErrors.remove(field.name);
+                          });
+                        },
+                        onTopLevelMultiselectChanged:
+                            (field, option, selected) {
+                          setState(() {
+                            final values = _multiselectValues.putIfAbsent(
+                              field.name,
+                              () => <String>{},
+                            );
+                            if (selected) {
+                              values.add(option);
+                            } else {
+                              values.remove(option);
+                            }
+                            _validationErrors.remove(field.name);
+                          });
+                        },
+                        onTopLevelTextChanged: (field, value) {
+                          setState(() => _validationErrors.remove(field.name));
+                        },
+                        onGroupChoiceChanged:
+                            (groupField, rowIndex, subField, selected) {
+                          setState(() {
+                            _groupDropdownValues[groupField.name]![rowIndex]
+                                [subField.name] = selected;
+                            _validationErrors.remove(
+                              _groupValidationKey(
+                                groupField,
+                                rowIndex,
+                                subField,
+                              ),
+                            );
+                          });
+                        },
+                        onGroupBoolChanged:
+                            (groupField, rowIndex, subField, selected) {
+                          setState(() {
+                            _groupBoolValues[groupField.name]![rowIndex]
+                                [subField.name] = selected;
+                            _validationErrors.remove(
+                              _groupValidationKey(
+                                groupField,
+                                rowIndex,
+                                subField,
+                              ),
+                            );
+                          });
+                        },
+                        onGroupMultiselectChanged:
+                            (groupField, rowIndex, subField, option, selected) {
+                          setState(() {
+                            final rowValues = _groupMultiselectValues[
+                                groupField.name]![rowIndex];
+                            final values = rowValues.putIfAbsent(
+                              subField.name,
+                              () => <String>{},
+                            );
+                            if (selected) {
+                              values.add(option);
+                            } else {
+                              values.remove(option);
+                            }
+                            _validationErrors.remove(
+                              _groupValidationKey(
+                                groupField,
+                                rowIndex,
+                                subField,
+                              ),
+                            );
+                          });
+                        },
+                        onGroupTextChanged:
+                            (groupField, rowIndex, subField, value) {
+                          setState(() {
+                            _validationErrors.remove(
+                              _groupValidationKey(
+                                groupField,
+                                rowIndex,
+                                subField,
+                              ),
+                            );
+                          });
+                        },
+                        onAddGroupRow: _addGroupRow,
+                        onRemoveGroupRow: _removeGroupRow,
+                        buildGroupRowHeader: _buildGiftGroupRowHeader,
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Row(
@@ -1448,599 +1797,6 @@ class _GiftDeedPageState extends State<GiftDeedPage> {
   }
 
   // Placeholder before any document is generated
-
-
-  Widget _buildField(DocumentField field) {
-    if (!_isFieldVisible(field)) {
-      return const SizedBox.shrink();
-    }
-    if (field.type == 'group' && field.fields.isNotEmpty) {
-      return _buildGroupField(field);
-    }
-
-    final isRequired = field.required;
-    final label = isRequired ? '${field.label} *' : field.label;
-    final errorText = _validationErrors[field.name];
-
-    Widget input;
-    switch (field.type) {
-      case 'dropdown':
-        final items = field.options
-            .map((option) => DropdownMenuItem<String>(
-                  value: option,
-                  child: Text(option),
-                ))
-            .toList();
-        final currentValue = _dropdownValues[field.name];
-        final value = items.any((item) => item.value == currentValue)
-            ? currentValue
-            : (items.isNotEmpty ? items.first.value : null);
-        input = DropdownButtonFormField<String>(
-          value: value,
-          items: items,
-          onChanged: (selected) {
-            if (selected == null) return;
-            setState(() {
-              _dropdownValues[field.name] = selected;
-              _validationErrors.remove(field.name);
-            });
-          },
-          decoration: InputDecoration(
-            hintText: field.hint,
-            errorText: errorText,
-            filled: true,
-            fillColor: const Color(0xfff9fafb),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        break;
-      case 'radio':
-        final currentValue = _dropdownValues[field.name];
-        input = Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xfff9fafb),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: Column(
-            children: field.options.map((option) {
-              return RadioListTile<String>(
-                value: option,
-                groupValue: currentValue,
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: Text(option),
-                onChanged: (selected) {
-                  if (selected == null) return;
-                  setState(() {
-                    _dropdownValues[field.name] = selected;
-                    _validationErrors.remove(field.name);
-                  });
-                },
-              );
-            }).toList(),
-          ),
-        );
-        break;
-      case 'boolean':
-        input = Container(
-          decoration: BoxDecoration(
-            color: const Color(0xfff9fafb),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: CheckboxListTile(
-            value: _boolValues[field.name] ?? false,
-            onChanged: (selected) {
-              setState(() => _boolValues[field.name] = selected ?? false);
-            },
-            controlAffinity: ListTileControlAffinity.leading,
-            title: Text(field.hint ?? 'Yes'),
-            dense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-          ),
-        );
-        break;
-      case 'multiselect':
-        final selectedValues = _multiselectValues.putIfAbsent(field.name, () => <String>{});
-        input = Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xfff9fafb),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: field.options.map((option) {
-              final isSelected = selectedValues.contains(option);
-              return FilterChip(
-                label: Text(option),
-                selected: isSelected,
-                selectedColor: accentColor.withValues(alpha: 0.18),
-                onSelected: (selected) {
-                  setState(() {
-                    if (selected) {
-                      selectedValues.add(option);
-                    } else {
-                      selectedValues.remove(option);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-        );
-        break;
-      case 'date':
-        final controller = _fieldControllers.putIfAbsent(
-          field.name,
-          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
-        );
-        input = TextFormField(
-          controller: controller,
-          readOnly: true,
-          onTap: () => _selectDate(controller),
-          decoration: InputDecoration(
-            hintText: field.hint ?? 'DD-MM-YYYY',
-            errorText: errorText,
-            suffixIcon: const Icon(Icons.calendar_today),
-            filled: true,
-            fillColor: const Color(0xfff9fafb),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        break;
-      case 'textarea':
-        final controller = _fieldControllers.putIfAbsent(
-          field.name,
-          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
-        );
-        input = TextFormField(
-          controller: controller,
-          maxLines: 4,
-          onChanged: (_) {
-            setState(() => _validationErrors.remove(field.name));
-          },
-          decoration: InputDecoration(
-            hintText: field.hint,
-            errorText: errorText,
-            suffixIcon: VoiceFieldMicIcon(
-              language: _selectedLanguage,
-              controller: controller,
-            ),
-            filled: true,
-            fillColor: const Color(0xfff9fafb),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        break;
-      case 'number':
-      case 'percentage':
-      case 'currency':
-        final controller = _fieldControllers.putIfAbsent(
-          field.name,
-          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
-        );
-        input = TextFormField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          onChanged: (_) {
-            setState(() => _validationErrors.remove(field.name));
-          },
-          decoration: InputDecoration(
-            hintText: field.hint,
-            prefixText: field.type == 'currency' ? 'Rs. ' : null,
-            suffixText: field.type == 'percentage' ? '%' : null,
-            errorText: errorText,
-            suffixIcon: VoiceFieldMicIcon(
-              language: _selectedLanguage,
-              controller: controller,
-            ),
-            filled: true,
-            fillColor: const Color(0xfff9fafb),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        break;
-      default:
-        final controller = _fieldControllers.putIfAbsent(
-          field.name,
-          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
-        );
-        input = TextFormField(
-          controller: controller,
-          maxLines: field.type == 'long_text' ? 4 : 1,
-          onChanged: (_) {
-            setState(() => _validationErrors.remove(field.name));
-          },
-          decoration: InputDecoration(
-            hintText: field.hint,
-            errorText: errorText,
-            suffixIcon: VoiceFieldMicIcon(
-              language: _selectedLanguage,
-              controller: controller,
-            ),
-            filled: true,
-            fillColor: const Color(0xfff9fafb),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        break;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          input,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGroupField(DocumentField field) {
-    if (!_isFieldVisible(field)) {
-      return const SizedBox.shrink();
-    }
-    final controllerRows = _groupFieldControllers[field.name] ?? const [];
-    final dropdownRows = _groupDropdownValues[field.name] ?? const [];
-    final boolRows = _groupBoolValues[field.name] ?? const [];
-    final multiselectRows = _groupMultiselectValues[field.name] ?? const [];
-
-    Widget buildSubField(DocumentField subField, int rowIndex) {
-      if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
-        return const SizedBox.shrink();
-      }
-      final label = subField.required ? '${subField.label} *' : subField.label;
-      final errorText =
-          _validationErrors[_groupValidationKey(field, rowIndex, subField)];
-      Widget input;
-
-      switch (subField.type) {
-        case 'dropdown':
-          final row = rowIndex < dropdownRows.length ? dropdownRows[rowIndex] : <String, String>{};
-          final items = subField.options
-              .map((option) => DropdownMenuItem<String>(
-                    value: option,
-                    child: Text(option),
-                  ))
-              .toList();
-          final currentValue = row[subField.name];
-          final value = items.any((item) => item.value == currentValue)
-              ? currentValue
-              : (items.isNotEmpty ? items.first.value : null);
-          input = DropdownButtonFormField<String>(
-            value: value,
-            items: items,
-            onChanged: (selected) {
-              if (selected == null) return;
-              setState(() {
-                _groupDropdownValues[field.name]![rowIndex][subField.name] = selected;
-                _validationErrors.remove(
-                  _groupValidationKey(field, rowIndex, subField),
-                );
-              });
-            },
-            decoration: InputDecoration(
-              hintText: subField.hint,
-              errorText: errorText,
-              filled: true,
-              fillColor: const Color(0xfff9fafb),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-          break;
-        case 'radio':
-          final row = rowIndex < dropdownRows.length ? dropdownRows[rowIndex] : <String, String>{};
-          final currentValue = row[subField.name];
-          input = Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xfff9fafb),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: Column(
-              children: subField.options.map((option) {
-                return RadioListTile<String>(
-                  value: option,
-                  groupValue: currentValue,
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(option),
-                  onChanged: (selected) {
-                    if (selected == null) return;
-                    setState(() {
-                      _groupDropdownValues[field.name]![rowIndex][subField.name] =
-                          selected;
-                      _validationErrors.remove(
-                        _groupValidationKey(field, rowIndex, subField),
-                      );
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          );
-          break;
-        case 'boolean':
-          final row = rowIndex < boolRows.length ? boolRows[rowIndex] : <String, bool>{};
-          input = Container(
-            decoration: BoxDecoration(
-              color: const Color(0xfff9fafb),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: CheckboxListTile(
-              value: row[subField.name] ?? false,
-              onChanged: (selected) {
-                setState(() {
-                  _groupBoolValues[field.name]![rowIndex][subField.name] = selected ?? false;
-                });
-              },
-              controlAffinity: ListTileControlAffinity.leading,
-              title: Text(subField.hint ?? 'Yes'),
-              dense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            ),
-          );
-          break;
-        case 'multiselect':
-          final row = rowIndex < multiselectRows.length
-              ? multiselectRows[rowIndex]
-              : <String, Set<String>>{};
-          final selectedValues = row.putIfAbsent(subField.name, () => <String>{});
-          input = Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xfff9fafb),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: subField.options.map((option) {
-                final isSelected = selectedValues.contains(option);
-                return FilterChip(
-                  label: Text(option),
-                  selected: isSelected,
-                  selectedColor: accentColor.withValues(alpha: 0.18),
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        selectedValues.add(option);
-                      } else {
-                        selectedValues.remove(option);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          );
-          break;
-        case 'date':
-          final controller = _groupFieldControllers[field.name]![rowIndex][subField.name]!;
-          input = TextFormField(
-            controller: controller,
-            readOnly: true,
-            onTap: () => _selectDate(controller),
-            decoration: InputDecoration(
-              hintText: subField.hint ?? 'DD-MM-YYYY',
-              errorText: errorText,
-              suffixIcon: const Icon(Icons.calendar_today),
-              filled: true,
-              fillColor: const Color(0xfff9fafb),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-          break;
-        case 'textarea':
-          final controller =
-              _groupFieldControllers[field.name]![rowIndex][subField.name]!;
-          input = TextFormField(
-            controller: controller,
-            maxLines: 4,
-            onChanged: (_) {
-              setState(() {
-                _validationErrors.remove(
-                  _groupValidationKey(field, rowIndex, subField),
-                );
-              });
-            },
-            decoration: InputDecoration(
-              hintText: subField.hint,
-              errorText: errorText,
-              suffixIcon: VoiceFieldMicIcon(
-                language: _selectedLanguage,
-                controller: controller,
-              ),
-              filled: true,
-              fillColor: const Color(0xfff9fafb),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-          break;
-        case 'number':
-        case 'percentage':
-        case 'currency':
-          final controller =
-              _groupFieldControllers[field.name]![rowIndex][subField.name]!;
-          input = TextFormField(
-            controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (_) {
-              setState(() {
-                _validationErrors.remove(
-                  _groupValidationKey(field, rowIndex, subField),
-                );
-              });
-            },
-            decoration: InputDecoration(
-              hintText: subField.hint,
-              prefixText: subField.type == 'currency' ? 'Rs. ' : null,
-              suffixText: subField.type == 'percentage' ? '%' : null,
-              errorText: errorText,
-              suffixIcon: VoiceFieldMicIcon(
-                language: _selectedLanguage,
-                controller: controller,
-              ),
-              filled: true,
-              fillColor: const Color(0xfff9fafb),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-          break;
-        default:
-          final controller =
-              _groupFieldControllers[field.name]![rowIndex][subField.name]!;
-          input = TextFormField(
-            controller: controller,
-            onChanged: (_) {
-              setState(() {
-                _validationErrors.remove(
-                  _groupValidationKey(field, rowIndex, subField),
-                );
-              });
-            },
-            decoration: InputDecoration(
-              hintText: subField.hint,
-              errorText: errorText,
-              suffixIcon: VoiceFieldMicIcon(
-                language: _selectedLanguage,
-                controller: controller,
-              ),
-              filled: true,
-              fillColor: const Color(0xfff9fafb),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-          break;
-      }
-
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            input,
-          ],
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xfffcfcfd),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    field.required ? '${field.label} *' : field.label,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                if (field.repeatable)
-                  TextButton.icon(
-                    onPressed: field.maxItems != null &&
-                            controllerRows.length >= field.maxItems!
-                        ? null
-                        : () => _addGroupRow(field),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add'),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...List.generate(controllerRows.length, (rowIndex) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (field.repeatable || controllerRows.length > 1)
-                      Row(
-                        children: [
-                          Text(
-                            '${field.label} ${rowIndex + 1}',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          const Spacer(),
-                          if (controllerRows.length > 1)
-                            IconButton(
-                              onPressed: () => _removeGroupRow(field, rowIndex),
-                              icon: const Icon(Icons.delete_outline),
-                              tooltip: 'Remove',
-                            ),
-                        ],
-                      ),
-                    ...field.fields.map((subField) => buildSubField(subField, rowIndex)),
-                  ],
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildFallbackButton(String url) {
     return ElevatedButton.icon(
       onPressed: () {

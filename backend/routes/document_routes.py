@@ -28,6 +28,7 @@ from services.document_service import (
     convert_docx_to_pdf,
 )
 from services.document_fields import get_fields_for_document_type, get_subtypes_for_document_type
+from services.auth_context import get_request_username
 
 SUPPORTED_FONT_FAMILIES = (
     "Times New Roman",
@@ -55,6 +56,7 @@ os.makedirs(TEMPLATES_FOLDER, exist_ok=True)
 UPLOADS_FOLDER = "uploads"
 os.makedirs(UPLOADS_FOLDER, exist_ok=True)
 METADATA_FILE = os.path.join(UPLOADS_FOLDER, "metadata.json")
+GENERATED_METADATA_FILE = os.path.join(GENERATED_FOLDER, "generated_metadata.json")
 
 document_bp = Blueprint("document_bp", __name__)
 
@@ -70,6 +72,45 @@ def load_metadata():
 def save_metadata(metadata):
     with open(METADATA_FILE, 'w') as f:
         json.dump(metadata, f, indent=2)
+
+
+def load_generated_metadata():
+    if os.path.exists(GENERATED_METADATA_FILE):
+        with open(GENERATED_METADATA_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+
+def save_generated_metadata(metadata):
+    with open(GENERATED_METADATA_FILE, "w") as f:
+        json.dump(metadata, f, indent=2)
+
+
+def ensure_generated_metadata_defaults():
+    metadata = load_generated_metadata()
+    changed = False
+
+    for folder in (GENERATED_FOLDER, GENERATED_DOCS_FOLDER):
+        if not os.path.exists(folder):
+            continue
+        for filename in os.listdir(folder):
+            full_path = os.path.join(folder, filename)
+            if not os.path.isfile(full_path):
+                continue
+            if filename not in metadata:
+                metadata[filename] = {
+                    "owner_username": "admin",
+                    "timestamp": datetime.fromtimestamp(
+                        os.path.getctime(full_path)
+                    ).isoformat(),
+                }
+                changed = True
+            elif not metadata[filename].get("owner_username"):
+                metadata[filename]["owner_username"] = "admin"
+                changed = True
+
+    if changed:
+        save_generated_metadata(metadata)
 
 def normalize_document_type(document_type):
     return (document_type or "").strip().lower()
@@ -364,6 +405,7 @@ def upload_reference():
     doc_type = normalize_document_type(request.form.get("document_type", "power_of_attorney"))
     subtype = (request.form.get("subtype") or "").strip()
     language = normalize_generation_language(request.form.get("language", "English"))
+    username = get_request_username()
     ext = os.path.splitext(file.filename)[1].lower()
 
     # Generate unique ID and save file
@@ -383,6 +425,7 @@ def upload_reference():
         "filename": filename,
         "document_type": doc_type,
         "subtype": subtype,
+        "owner_username": username,
         "timestamp": datetime.now().isoformat()
     }
     save_metadata(metadata)
@@ -396,9 +439,12 @@ def upload_reference():
 def list_references():
     """Return list of saved reference documents, optionally filtered by document_type."""
     doc_type_filter = normalize_document_type(request.args.get("document_type"))
+    username = get_request_username()
     metadata = load_metadata()
     result = []
     for doc_id, info in metadata.items():
+        if (info.get("owner_username") or "admin") != username:
+            continue
         info_doc_type = normalize_document_type(info.get("document_type"))
         if doc_type_filter and info_doc_type != doc_type_filter:
             continue
@@ -417,9 +463,12 @@ def list_references():
 @document_bp.route("/get_reference/<doc_id>", methods=["GET"])
 def get_reference(doc_id):
     """Return current backend-defined fields for the reference document type."""
+    username = get_request_username()
     metadata = load_metadata()
     info = metadata.get(doc_id)
     if not info:
+        return jsonify({"error": "Document not found"}), 404
+    if (info.get("owner_username") or "admin") != username:
         return jsonify({"error": "Document not found"}), 404
     doc_type = normalize_document_type(info.get("document_type", "power_of_attorney"))
     subtype = (info.get("subtype") or "").strip()
@@ -434,9 +483,12 @@ def get_reference(doc_id):
 from flask import make_response
 @document_bp.route("/references/<doc_id>/view", methods=["GET"])
 def view_reference(doc_id):
+    username = get_request_username(default=None)
     metadata = load_metadata()
     info = metadata.get(doc_id)
     if not info:
+        abort(404, description="Document not found")
+    if username and (info.get("owner_username") or "admin") != username:
         abort(404, description="Document not found")
 
     filename = info["filename"]
@@ -514,6 +566,7 @@ def generate_document():
     # Read format parameter (default to 'table' for backward compatibility)
     format_type = request.form.get("format", "table")  # 'table' or 'blank'
     language = normalize_generation_language(request.form.get("language", "English"))
+    username = get_request_username()
     font_family = normalize_font_family(request.form.get("font_family", SUPPORTED_FONT_FAMILIES[0]))
     font_size = normalize_font_size(request.form.get("font_size", DEFAULT_FONT_SIZE))
 
@@ -542,6 +595,8 @@ def generate_document():
         metadata = load_metadata()
         info = metadata.get(reference_id)
         if not info:
+            return jsonify({"error": "Reference document not found"}), 400
+        if (info.get("owner_username") or "admin") != username:
             return jsonify({"error": "Reference document not found"}), 400
         filepath = os.path.join(UPLOADS_FOLDER, info["filename"])
         ext = os.path.splitext(info["filename"])[1].lower()
@@ -703,6 +758,17 @@ def generate_document():
         doc.save(output_path)
         pdf_path = convert_docx_to_pdf(output_path, GENERATED_FOLDER)
         pdf_filename = os.path.basename(pdf_path)
+        generated_metadata = load_generated_metadata()
+        timestamp_iso = datetime.now().isoformat()
+        generated_metadata[output_filename] = {
+            "owner_username": username,
+            "timestamp": timestamp_iso,
+        }
+        generated_metadata[pdf_filename] = {
+            "owner_username": username,
+            "timestamp": timestamp_iso,
+        }
+        save_generated_metadata(generated_metadata)
     except Exception as e:
         return jsonify({"error": f"Failed to create DOCX: {str(e)}"}), 500
 
@@ -717,6 +783,14 @@ def generate_document():
 @document_bp.route("/download/<filename>", methods=["GET"])
 def download_file(filename):
     try:
+        username = get_request_username(default=None)
+        ensure_generated_metadata_defaults()
+        metadata = load_generated_metadata()
+        info = metadata.get(filename)
+        if not info:
+            return jsonify({"error": "File not found"}), 404
+        if username and (info.get("owner_username") or "admin") != username:
+            return jsonify({"error": "File not found"}), 404
         as_attachment = request.args.get('download', 'true').lower() != 'false'
         directory = get_generated_file_directory(filename)
         return send_from_directory(
@@ -731,6 +805,14 @@ def download_file(filename):
 @document_bp.route("/view/<filename>", methods=["GET"])
 def view_pdf(filename):
     try:
+        username = get_request_username(default=None)
+        ensure_generated_metadata_defaults()
+        metadata = load_generated_metadata()
+        info = metadata.get(filename)
+        if not info:
+            return jsonify({"error": "File not found"}), 404
+        if username and (info.get("owner_username") or "admin") != username:
+            return jsonify({"error": "File not found"}), 404
         response = send_from_directory(
             GENERATED_FOLDER,
             filename,

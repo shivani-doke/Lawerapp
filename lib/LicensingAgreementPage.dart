@@ -91,6 +91,12 @@ class _LicensingAgreementPageState extends State<LicensingAgreementPage> {
   String? _selectedReferenceId;
   bool _isLoadingReferences = false;
   bool _isUploading = false;
+  List<Map<String, dynamic>> _clients = [];
+  bool _isLoadingClients = false;
+  String? _linkedLicensorClientName;
+  String? _linkedLicenseeClientName;
+  String? _linkedLicensorClientId;
+  String? _linkedLicenseeClientId;
 
   // UI state
   bool _isGenerating = false;
@@ -133,6 +139,7 @@ class _LicensingAgreementPageState extends State<LicensingAgreementPage> {
         UploadNavigationContext.consumeReferenceOnlyMode('licensing_agreement');
     _fields = []; // No default fields
     _loadSavedReferences(autoSelectFirst: !_openedFromUploads);
+    _loadClients();
     if (!_openedFromUploads) {
       _loadDefaultFields();
     }
@@ -159,6 +166,217 @@ class _LicensingAgreementPageState extends State<LicensingAgreementPage> {
     _groupDropdownValues.clear();
     _groupBoolValues.clear();
     _groupMultiselectValues.clear();
+  }
+
+  Future<void> _loadClients() async {
+    setState(() => _isLoadingClients = true);
+    try {
+      final clients = await ApiService().getClients();
+      if (!mounted) return;
+      setState(() {
+        _clients = clients;
+        _isLoadingClients = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingClients = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load clients: $e')),
+      );
+    }
+  }
+
+  void _setFieldText(String fieldName, String value) {
+    final controller = _fieldControllers.putIfAbsent(
+      fieldName,
+      () => TextEditingController(),
+    );
+    controller.text = value;
+  }
+
+  void _applyClientToLicensingParty({
+    required String party,
+    required Map<String, dynamic> client,
+  }) {
+    final name = (client['name'] ?? '').toString();
+    final address = (client['address'] ?? '').toString();
+
+    setState(() {
+      if (party == 'licensor') {
+        _setFieldText('licensor_name', name);
+        _setFieldText('licensor_address', address);
+        _linkedLicensorClientName = name;
+        _linkedLicensorClientId = (client['id'] ?? '').toString();
+      } else if (party == 'licensee') {
+        _setFieldText('licensee_name', name);
+        _setFieldText('licensee_address', address);
+        _linkedLicenseeClientName = name;
+        _linkedLicenseeClientId = (client['id'] ?? '').toString();
+      }
+    });
+  }
+
+  String? _licensingClientAssignmentLabel({
+    required String clientId,
+    required String currentParty,
+  }) {
+    if (clientId.isEmpty) return null;
+    if (currentParty != 'licensor' && _linkedLicensorClientId == clientId) {
+      return 'Licensor';
+    }
+    if (currentParty != 'licensee' && _linkedLicenseeClientId == clientId) {
+      return 'Licensee';
+    }
+    return null;
+  }
+
+  Future<void> _showClientAutofillDialog({
+    required String party,
+    required String title,
+  }) async {
+    if (_isLoadingClients) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Clients are still loading. Please wait.')),
+      );
+      return;
+    }
+    if (_clients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No clients available for autofill yet.')),
+      );
+      return;
+    }
+
+    final selectedClient = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dialogContext) {
+        final searchController = TextEditingController();
+        var filteredClients = List<Map<String, dynamic>>.from(_clients);
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            void applySearch(String query) {
+              final normalized = query.trim().toLowerCase();
+              setModalState(() {
+                filteredClients = _clients.where((client) {
+                  final name = (client['name'] ?? '').toString().toLowerCase();
+                  final phone = (client['phone'] ?? '').toString().toLowerCase();
+                  final pan = (client['pan_number'] ?? '').toString().toLowerCase();
+                  final aadhar =
+                      (client['aadhar_number'] ?? '').toString().toLowerCase();
+                  return normalized.isEmpty ||
+                      name.contains(normalized) ||
+                      phone.contains(normalized) ||
+                      pan.contains(normalized) ||
+                      aadhar.contains(normalized);
+                }).toList();
+              });
+            }
+
+            return AlertDialog(
+              title: Text(title),
+              content: SizedBox(
+                width: 520,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      onChanged: applySearch,
+                      decoration: const InputDecoration(
+                        hintText: 'Search by name, phone, PAN, or Aadhar',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: filteredClients.isEmpty
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Text(
+                                  'No matching clients found.',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: filteredClients.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final client = filteredClients[index];
+                                final clientId =
+                                    (client['id'] ?? '').toString();
+                                final assignmentLabel =
+                                    _licensingClientAssignmentLabel(
+                                  clientId: clientId,
+                                  currentParty: party,
+                                );
+                                final isAssignedElsewhere =
+                                    assignmentLabel != null;
+                                final clientName =
+                                    (client['name'] ?? 'Unnamed Client').toString();
+                                final phone =
+                                    (client['phone'] ?? '').toString().trim();
+                                final occupation =
+                                    (client['occupation'] ?? '').toString().trim();
+                                final subtitleParts = [
+                                  if (phone.isNotEmpty) phone,
+                                  if (occupation.isNotEmpty) occupation,
+                                  if (assignmentLabel != null)
+                                    'Already linked to $assignmentLabel',
+                                ];
+                                return ListTile(
+                                  title: Text(clientName),
+                                  subtitle: subtitleParts.isEmpty
+                                      ? null
+                                      : Text(subtitleParts.join(' • ')),
+                                  trailing: isAssignedElsewhere
+                                      ? const Icon(Icons.block, color: Colors.grey)
+                                      : const Icon(Icons.chevron_right),
+                                  enabled: !isAssignedElsewhere,
+                                  onTap: isAssignedElsewhere
+                                      ? null
+                                      : () => Navigator.of(dialogContext).pop(client),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selectedClient == null) return;
+    final selectedClientId = (selectedClient['id'] ?? '').toString();
+    final assignmentLabel = _licensingClientAssignmentLabel(
+      clientId: selectedClientId,
+      currentParty: party,
+    );
+    if (assignmentLabel != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'This client is already linked to $assignmentLabel. Please choose a different client.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    _applyClientToLicensingParty(party: party, client: selectedClient);
   }
 
   Map<String, TextEditingController> _createGroupControllerRow(
@@ -1217,6 +1435,13 @@ class _LicensingAgreementPageState extends State<LicensingAgreementPage> {
 
     final isRequired = field.required;
     final label = isRequired ? '${field.label} *' : field.label;
+    final supportsClientAutofill =
+        field.name == 'licensor_name' || field.name == 'licensee_name';
+    final linkedClientName = field.name == 'licensor_name'
+        ? _linkedLicensorClientName
+        : field.name == 'licensee_name'
+            ? _linkedLicenseeClientName
+            : null;
 
     Widget input;
     switch (field.type) {
@@ -1393,9 +1618,46 @@ class _LicensingAgreementPageState extends State<LicensingAgreementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    if (supportsClientAutofill &&
+                        linkedClientName != null &&
+                        linkedClientName.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Linked client: $linkedClientName',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (supportsClientAutofill)
+                TextButton.icon(
+                  onPressed: () => _showClientAutofillDialog(
+                    party:
+                        field.name == 'licensor_name' ? 'licensor' : 'licensee',
+                    title: field.name == 'licensor_name'
+                        ? 'Autofill Licensor Details'
+                        : 'Autofill Licensee Details',
+                  ),
+                  icon: const Icon(Icons.person_search, size: 18),
+                  label: const Text('Autofill from Client'),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           input,

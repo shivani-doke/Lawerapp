@@ -91,6 +91,12 @@ class _MemorandumOfUnderstandingPageState extends State<MemorandumOfUnderstandin
   String? _selectedReferenceId;
   bool _isLoadingReferences = false;
   bool _isUploading = false;
+  List<Map<String, dynamic>> _clients = [];
+  bool _isLoadingClients = false;
+  String? _linkedPartyAClientName;
+  String? _linkedPartyBClientName;
+  String? _linkedPartyAClientId;
+  String? _linkedPartyBClientId;
 
   // UI state
   bool _isGenerating = false;
@@ -133,6 +139,7 @@ class _MemorandumOfUnderstandingPageState extends State<MemorandumOfUnderstandin
         UploadNavigationContext.consumeReferenceOnlyMode('memorandum_of_understanding');
     _fields = []; // No default fields
     _loadSavedReferences(autoSelectFirst: !_openedFromUploads);
+    _loadClients();
     if (!_openedFromUploads) {
       _loadDefaultFields();
     }
@@ -159,6 +166,215 @@ class _MemorandumOfUnderstandingPageState extends State<MemorandumOfUnderstandin
     _groupDropdownValues.clear();
     _groupBoolValues.clear();
     _groupMultiselectValues.clear();
+  }
+
+  Future<void> _loadClients() async {
+    setState(() => _isLoadingClients = true);
+    try {
+      final clients = await ApiService().getClients();
+      if (!mounted) return;
+      setState(() {
+        _clients = clients;
+        _isLoadingClients = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingClients = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load clients: $e')),
+      );
+    }
+  }
+
+  void _setFieldText(String fieldName, String value) {
+    final controller = _fieldControllers.putIfAbsent(
+      fieldName,
+      () => TextEditingController(),
+    );
+    controller.text = value;
+  }
+
+  void _applyClientToMouParty({
+    required String party,
+    required Map<String, dynamic> client,
+  }) {
+    final name = (client['name'] ?? '').toString();
+    final address = (client['address'] ?? '').toString();
+
+    setState(() {
+      if (party == 'party_a') {
+        _setFieldText('party_a_name', name);
+        _setFieldText('party_a_address', address);
+        _linkedPartyAClientName = name;
+        _linkedPartyAClientId = (client['id'] ?? '').toString();
+      } else if (party == 'party_b') {
+        _setFieldText('party_b_name', name);
+        _setFieldText('party_b_address', address);
+        _linkedPartyBClientName = name;
+        _linkedPartyBClientId = (client['id'] ?? '').toString();
+      }
+    });
+  }
+
+  String? _mouClientAssignmentLabel({
+    required String clientId,
+    required String currentParty,
+  }) {
+    if (clientId.isEmpty) return null;
+    if (currentParty != 'party_a' && _linkedPartyAClientId == clientId) {
+      return 'Party A';
+    }
+    if (currentParty != 'party_b' && _linkedPartyBClientId == clientId) {
+      return 'Party B';
+    }
+    return null;
+  }
+
+  Future<void> _showClientAutofillDialog({
+    required String party,
+    required String title,
+  }) async {
+    if (_isLoadingClients) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Clients are still loading. Please wait.')),
+      );
+      return;
+    }
+    if (_clients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No clients available for autofill yet.')),
+      );
+      return;
+    }
+
+    final selectedClient = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dialogContext) {
+        final searchController = TextEditingController();
+        var filteredClients = List<Map<String, dynamic>>.from(_clients);
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            void applySearch(String query) {
+              final normalized = query.trim().toLowerCase();
+              setModalState(() {
+                filteredClients = _clients.where((client) {
+                  final name = (client['name'] ?? '').toString().toLowerCase();
+                  final phone = (client['phone'] ?? '').toString().toLowerCase();
+                  final pan = (client['pan_number'] ?? '').toString().toLowerCase();
+                  final aadhar =
+                      (client['aadhar_number'] ?? '').toString().toLowerCase();
+                  return normalized.isEmpty ||
+                      name.contains(normalized) ||
+                      phone.contains(normalized) ||
+                      pan.contains(normalized) ||
+                      aadhar.contains(normalized);
+                }).toList();
+              });
+            }
+
+            return AlertDialog(
+              title: Text(title),
+              content: SizedBox(
+                width: 520,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      onChanged: applySearch,
+                      decoration: const InputDecoration(
+                        hintText: 'Search by name, phone, PAN, or Aadhar',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: filteredClients.isEmpty
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Text(
+                                  'No matching clients found.',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: filteredClients.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final client = filteredClients[index];
+                                final clientId =
+                                    (client['id'] ?? '').toString();
+                                final assignmentLabel = _mouClientAssignmentLabel(
+                                  clientId: clientId,
+                                  currentParty: party,
+                                );
+                                final isAssignedElsewhere =
+                                    assignmentLabel != null;
+                                final clientName =
+                                    (client['name'] ?? 'Unnamed Client').toString();
+                                final phone =
+                                    (client['phone'] ?? '').toString().trim();
+                                final occupation =
+                                    (client['occupation'] ?? '').toString().trim();
+                                final subtitleParts = [
+                                  if (phone.isNotEmpty) phone,
+                                  if (occupation.isNotEmpty) occupation,
+                                  if (assignmentLabel != null)
+                                    'Already linked to $assignmentLabel',
+                                ];
+                                return ListTile(
+                                  title: Text(clientName),
+                                  subtitle: subtitleParts.isEmpty
+                                      ? null
+                                      : Text(subtitleParts.join(' • ')),
+                                  trailing: isAssignedElsewhere
+                                      ? const Icon(Icons.block, color: Colors.grey)
+                                      : const Icon(Icons.chevron_right),
+                                  enabled: !isAssignedElsewhere,
+                                  onTap: isAssignedElsewhere
+                                      ? null
+                                      : () => Navigator.of(dialogContext).pop(client),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selectedClient == null) return;
+    final selectedClientId = (selectedClient['id'] ?? '').toString();
+    final assignmentLabel = _mouClientAssignmentLabel(
+      clientId: selectedClientId,
+      currentParty: party,
+    );
+    if (assignmentLabel != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'This client is already linked to $assignmentLabel. Please choose a different client.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    _applyClientToMouParty(party: party, client: selectedClient);
   }
 
   Map<String, TextEditingController> _createGroupControllerRow(
@@ -1217,6 +1433,13 @@ class _MemorandumOfUnderstandingPageState extends State<MemorandumOfUnderstandin
 
     final isRequired = field.required;
     final label = isRequired ? '${field.label} *' : field.label;
+    final supportsClientAutofill =
+        field.name == 'party_a_name' || field.name == 'party_b_name';
+    final linkedClientName = field.name == 'party_a_name'
+        ? _linkedPartyAClientName
+        : field.name == 'party_b_name'
+            ? _linkedPartyBClientName
+            : null;
 
     Widget input;
     switch (field.type) {
@@ -1393,9 +1616,45 @@ class _MemorandumOfUnderstandingPageState extends State<MemorandumOfUnderstandin
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    if (supportsClientAutofill &&
+                        linkedClientName != null &&
+                        linkedClientName.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Linked client: $linkedClientName',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (supportsClientAutofill)
+                TextButton.icon(
+                  onPressed: () => _showClientAutofillDialog(
+                    party: field.name == 'party_a_name' ? 'party_a' : 'party_b',
+                    title: field.name == 'party_a_name'
+                        ? 'Autofill Party A Details'
+                        : 'Autofill Party B Details',
+                  ),
+                  icon: const Icon(Icons.person_search, size: 18),
+                  label: const Text('Autofill from Client'),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           input,

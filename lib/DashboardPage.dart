@@ -4,6 +4,7 @@ import 'Clientside.dart';
 import 'DocumentPage.dart';
 import 'config/app_config.dart';
 import 'services/dashboard_service.dart';
+import 'services/session_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -18,6 +19,16 @@ class _DashboardPageState extends State<DashboardPage> {
   Map<String, dynamic>? data;
   bool isLoading = true;
   bool showAllDocuments = false;
+
+  String _formatCurrency(dynamic value) {
+    final amount = value is num
+        ? value.toDouble()
+        : double.tryParse(value?.toString() ?? "0") ?? 0;
+    if (amount == amount.roundToDouble()) {
+      return "Rs ${amount.toStringAsFixed(0)}";
+    }
+    return "Rs ${amount.toStringAsFixed(2)}";
+  }
 
   @override
   void initState() {
@@ -172,6 +183,12 @@ class _DashboardPageState extends State<DashboardPage> {
                     "Cases Active",
                     data?["stats"]["active_cases"].toString() ?? "0",
                     Icons.trending_up),
+                _StatCard(
+                  "Finance",
+                  _formatCurrency(data?["stats"]["total_received"] ?? 0),
+                  Icons.account_balance_wallet_outlined,
+                  onTap: _showFinanceReportDialog,
+                ),
               ],
             ),
 
@@ -246,8 +263,10 @@ class _DashboardPageState extends State<DashboardPage> {
                               } else if (value == "delete") {
                                 _confirmDelete(filename);
                               } else if (value == "download") {
+                                final username =
+                                    await SessionService.getLoggedInUsername();
                                 final url =
-                                    "${AppConfig.backendBaseUrl}/dashboard/download/$filename";
+                                    "${AppConfig.backendBaseUrl}/dashboard/download/$filename?username=$username";
 
                                 final uri = Uri.parse(url);
 
@@ -282,8 +301,10 @@ class _DashboardPageState extends State<DashboardPage> {
                         final filename = doc["filename"];
                         if (filename == null) return;
 
+                        final username =
+                            await SessionService.getLoggedInUsername();
                         final url =
-                            "${AppConfig.backendBaseUrl}/view/$filename";
+                            "${AppConfig.backendBaseUrl}/view/$filename?username=$username";
                         final uri = Uri.parse(url);
 
                         if (await canLaunchUrl(uri)) {
@@ -376,6 +397,272 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Future<void> _showFinanceReportDialog() async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          child: Container(
+            width: 980,
+            padding: const EdgeInsets.all(24),
+            child: FutureBuilder<Map<String, dynamic>>(
+              future: DashboardService.fetchFinanceReport(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 420,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  return SizedBox(
+                    height: 220,
+                    child: Center(
+                      child: Text("Unable to load finance report: ${snapshot.error}"),
+                    ),
+                  );
+                }
+
+                final report = snapshot.data ?? {};
+                final summary = Map<String, dynamic>.from(
+                  report["summary"] ?? {},
+                );
+                final clientReports =
+                    (report["client_reports"] as List? ?? []).cast<dynamic>();
+                final recentPayments =
+                    (report["recent_payments"] as List? ?? []).cast<dynamic>();
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              "Finance Report",
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "Client-wise payment summary and recent receipts.",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _FinanceSummaryCard(
+                          title: "Total Fee",
+                          value: _formatCurrency(summary["total_fee"] ?? 0),
+                        ),
+                        _FinanceSummaryCard(
+                          title: "Received",
+                          value:
+                              _formatCurrency(summary["total_received"] ?? 0),
+                        ),
+                        _FinanceSummaryCard(
+                          title: "Pending",
+                          value:
+                              _formatCurrency(summary["pending_amount"] ?? 0),
+                        ),
+                        _FinanceSummaryCard(
+                          title: "Due Clients",
+                          value:
+                              (summary["clients_with_pending"] ?? 0).toString(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xffEEEEEE)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Client Payments",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  height: 320,
+                                  child: clientReports.isEmpty
+                                      ? const Center(
+                                          child: Text(
+                                            "No payment data yet.",
+                                            style:
+                                                TextStyle(color: Colors.grey),
+                                          ),
+                                        )
+                                      : ListView.separated(
+                                          itemCount: clientReports.length,
+                                          separatorBuilder: (_, __) =>
+                                              const Divider(height: 1),
+                                          itemBuilder: (context, index) {
+                                            final item = Map<String, dynamic>.from(
+                                              clientReports[index]
+                                                  as Map<dynamic, dynamic>,
+                                            );
+                                            return ListTile(
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 0,
+                                                vertical: 4,
+                                              ),
+                                              title: Text(
+                                                item["client_name"] ?? "",
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              subtitle: Text(
+                                                "${item["case_type"] ?? ""} • ${item["status"] ?? ""}",
+                                              ),
+                                              trailing: SizedBox(
+                                                width: 260,
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      "Received ${_formatCurrency(item["total_received"])}",
+                                                    ),
+                                                    Text(
+                                                      "Pending ${_formatCurrency(item["pending_amount"])}",
+                                                      style: TextStyle(
+                                                        color: _asDouble(item[
+                                                                    "pending_amount"]) >
+                                                                0
+                                                            ? Colors.redAccent
+                                                            : Colors.green,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xffEEEEEE)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Recent Payments",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  height: 320,
+                                  child: recentPayments.isEmpty
+                                      ? const Center(
+                                          child: Text(
+                                            "No recent payments yet.",
+                                            style:
+                                                TextStyle(color: Colors.grey),
+                                          ),
+                                        )
+                                      : ListView.separated(
+                                          itemCount: recentPayments.length,
+                                          separatorBuilder: (_, __) =>
+                                              const Divider(height: 1),
+                                          itemBuilder: (context, index) {
+                                            final payment =
+                                                Map<String, dynamic>.from(
+                                              recentPayments[index]
+                                                  as Map<dynamic, dynamic>,
+                                            );
+                                            return ListTile(
+                                              contentPadding: EdgeInsets.zero,
+                                              title: Text(
+                                                _formatCurrency(payment["amount"]),
+                                              ),
+                                              subtitle: Text(
+                                                [
+                                                  payment["payment_date"] ?? "",
+                                                  payment["payment_mode"] ?? "",
+                                                ]
+                                                    .where((value) => value
+                                                        .toString()
+                                                        .trim()
+                                                        .isNotEmpty)
+                                                    .join(" • "),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  double _asDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? "0") ?? 0;
+  }
+
   static Widget _actionButton(String text, IconData icon, Color bgColor,
       Color textColor, VoidCallback onTap) {
     return InkWell(
@@ -412,30 +699,70 @@ class _StatCard extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
+  final VoidCallback? onTap;
 
-  const _StatCard(this.title, this.value, this.icon);
+  const _StatCard(this.title, this.value, this.icon, {this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 250,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 5),
+              Text(
+                value,
+                style:
+                    const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+              ),
+            ]),
+            Icon(icon, size: 28, color: Colors.amber),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FinanceSummaryCard extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _FinanceSummaryCard({
+    required this.title,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 250,
-      padding: const EdgeInsets.all(20),
+      width: 210,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xffEEEEEE)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(color: Colors.grey)),
-            const SizedBox(height: 5),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-            ),
-          ]),
-          Icon(icon, size: 28, color: Colors.amber),
+          Text(title, style: const TextStyle(color: Colors.grey)),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );

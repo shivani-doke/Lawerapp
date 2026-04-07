@@ -135,6 +135,20 @@
         "type": "text",
         "hint": "Enter guardian name if donee is minor",
         "show_if": "age < 18"
+      },
+      {
+        "name": "guardian_relationship",
+        "label": "Guardian Relationship",
+        "type": "text",
+        "hint": "Enter guardian's relationship to the minor donee",
+        "show_if": "age < 18"
+      },
+      {
+        "name": "guardian_acceptance",
+        "label": "Guardian Accepts on Behalf of Minor",
+        "type": "boolean",
+        "hint": "Confirm guardian accepts the gift on behalf of the minor donee",
+        "show_if": "age < 18"
       }
     ]
   },
@@ -180,6 +194,43 @@
     "required": true
   },
   {
+    "name": "revocation_waiver",
+    "label": "Donor Waives Right to Revoke Gift",
+    "type": "boolean",
+    "hint": "Confirm donor declares the gift is irrevocable except as permitted by law",
+    "required": true
+  },
+  {
+    "name": "encumbrance_status",
+    "label": "Encumbrance Status",
+    "type": "radio",
+    "options": ["Free from Encumbrances", "Existing Encumbrances Disclosed"],
+    "hint": "State whether the property is free from liens, charges, mortgages, or disputes",
+    "required": true
+  },
+  {
+    "name": "encumbrance_details",
+    "label": "Encumbrance Details",
+    "type": "textarea",
+    "hint": "Provide details of any mortgage, charge, lien, litigation, or other encumbrance",
+    "show_if": "encumbrance_status == 'Existing Encumbrances Disclosed'"
+  },
+  {
+    "name": "stamp_duty_borne_by",
+    "label": "Stamp Duty and Registration Expenses Borne By",
+    "type": "dropdown",
+    "options": ["Donee", "Donor", "Shared", "Other"],
+    "hint": "Specify who will bear stamp duty and registration charges",
+    "required": true
+  },
+  {
+    "name": "stamp_duty_borne_by_other",
+    "label": "Other Expense Arrangement",
+    "type": "text",
+    "hint": "Describe the arrangement if expenses are borne by someone else",
+    "show_if": "stamp_duty_borne_by == 'Other'"
+  },
+  {
     "name": "market_value",
     "label": "Market Value",
     "type": "currency",
@@ -223,6 +274,18 @@
     "required": true
   },
   {
+    "name": "cts_number",
+    "label": "CTS Number / City Survey Number",
+    "type": "text",
+    "hint": "Enter CTS or city survey number for urban properties"
+  },
+  {
+    "name": "gat_number",
+    "label": "Gat Number",
+    "type": "text",
+    "hint": "Enter Gat number if applicable"
+  },
+  {
     "name": "location",
     "label": "Location",
     "type": "text",
@@ -235,6 +298,18 @@
     "type": "text",
     "hint": "Enter district name",
     "required": true
+  },
+  {
+    "name": "taluka",
+    "label": "Taluka",
+    "type": "text",
+    "hint": "Enter taluka name"
+  },
+  {
+    "name": "village",
+    "label": "Village",
+    "type": "text",
+    "hint": "Enter village name"
   },
   {
     "name": "flat_area",
@@ -264,6 +339,21 @@
     "required": true
   },
   {
+    "name": "mode_of_acquisition",
+    "label": "Mode of Acquisition",
+    "type": "dropdown",
+    "options": ["Sale Deed", "Inheritance", "Gift Deed", "Partition", "Court Order", "Other"],
+    "hint": "Specify how the donor acquired title to the property",
+    "required": true
+  },
+  {
+    "name": "mode_of_acquisition_other",
+    "label": "Other Mode of Acquisition",
+    "type": "text",
+    "hint": "Describe the mode of acquisition if not listed",
+    "show_if": "mode_of_acquisition == 'Other'"
+  },
+  {
     "name": "acquisition_date",
     "label": "Acquisition Date",
     "type": "date",
@@ -282,6 +372,13 @@
     "label": "Sub-Registrar Office",
     "type": "text",
     "hint": "Enter sub-registrar office name",
+    "required": true
+  },
+  {
+    "name": "schedule_of_property",
+    "label": "Schedule of Property",
+    "type": "textarea",
+    "hint": "Summarize the full property schedule including locality, village, taluka, district, and identifying numbers",
     "required": true
   },
 
@@ -308,6 +405,78 @@
     "label": "Boundary South",
     "type": "text",
     "hint": "Enter southern boundary"
+  },
+  {
+    "name": "donee_tax_acknowledgement",
+    "label": "Donee Acknowledges Tax Implications",
+    "type": "boolean",
+    "hint": "Confirm donee understands possible tax consequences where the gift is not exempt under the Income Tax Act",
+    "show_if": "relationship == 'Other'"
+  },
+  {
+    "name": "poa_involved",
+    "label": "Power of Attorney Involved",
+    "type": "boolean",
+    "hint": "Indicate whether any party is represented through a power of attorney",
+    "required": true
+  },
+  {
+    "name": "poa_details",
+    "label": "Power of Attorney Details",
+    "type": "group",
+    "repeatable": true,
+    "hint": "Enter details of each attorney holder acting for donor or donee",
+    "show_if": "poa_involved == true",
+    "fields": [
+      {
+        "name": "party_role",
+        "label": "Representing",
+        "type": "dropdown",
+        "options": ["Donor", "Donee"],
+        "required": true,
+        "hint": "Select the party represented by the attorney holder"
+      },
+      {
+        "name": "holder_name",
+        "label": "PoA Holder Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full legal name of the power of attorney holder"
+      },
+      {
+        "name": "holder_address",
+        "label": "PoA Holder Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter complete address of the power of attorney holder"
+      },
+      {
+        "name": "poa_registration_number",
+        "label": "PoA Registration Number",
+        "type": "text",
+        "required": true,
+        "hint": "Enter registration or document number of the power of attorney"
+      },
+      {
+        "name": "poa_registration_date",
+        "label": "PoA Registration Date",
+        "type": "date",
+        "hint": "Enter date of registration of the power of attorney"
+      },
+      {
+        "name": "poa_sub_registrar",
+        "label": "PoA Sub-Registrar Office",
+        "type": "text",
+        "hint": "Enter the registering office of the power of attorney"
+      }
+    ]
+  },
+  {
+    "name": "original_documents_handed_over",
+    "label": "Original Title Documents Handed Over",
+    "type": "boolean",
+    "hint": "Confirm the donor has handed over the original title deeds and related documents to the donee",
+    "required": true
   },
 
   {
