@@ -4,11 +4,15 @@ import os
 import json
 import tempfile
 import uuid
+import re
+from html import unescape
+from html.parser import HTMLParser
 from datetime import datetime
 from flask import Blueprint, request, jsonify, send_from_directory, abort
 from werkzeug.utils import secure_filename
 
 from docx import Document as DocxDocument
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.shared import Inches, Mm, Pt
 import PyPDF2
@@ -35,18 +39,35 @@ SUPPORTED_FONT_FAMILIES = (
     "Arial",
     "Calibri",
     "Cambria",
+    "Book Antiqua",
+    "Bookman Old Style",
+    "Candara",
+    "Century Gothic",
+    "Comic Sans MS",
+    "Consolas",
+    "Constantia",
+    "Corbel",
+    "Courier New",
     "Georgia",
     "Garamond",
+    "Lucida Console",
+    "Lucida Sans Unicode",
+    "Palatino Linotype",
+    "Segoe UI",
+    "Sylfaen",
+    "Trebuchet MS",
     "Verdana",
     "Tahoma",
-    "Trebuchet MS",
     "Nirmala UI",
     "Mangal",
+    "Aparajita",
+    "Kokila",
+    "Utsaah",
 )
 
 DEFAULT_FONT_SIZE = 14
 MIN_FONT_SIZE = 8
-MAX_FONT_SIZE = 28
+MAX_FONT_SIZE = 72
 
 # Folder where template DOCX files are stored
 TEMPLATES_FOLDER = "templates"
@@ -233,7 +254,7 @@ def apply_font_to_run(run, font_family, font_size):
     run_properties.rFonts.set(qn("w:cs"), font_family)
 
 
-def apply_font_settings(doc, font_family, font_size):
+def apply_default_font_style(doc, font_family, font_size):
     normal_style = doc.styles["Normal"]
     normal_style.font.name = font_family
     normal_style.font.size = Pt(font_size)
@@ -242,6 +263,10 @@ def apply_font_settings(doc, font_family, font_size):
     style_properties.rFonts.set(qn("w:hAnsi"), font_family)
     style_properties.rFonts.set(qn("w:eastAsia"), font_family)
     style_properties.rFonts.set(qn("w:cs"), font_family)
+
+
+def apply_font_settings(doc, font_family, font_size):
+    apply_default_font_style(doc, font_family, font_size)
 
     for paragraph in doc.paragraphs:
         for run in paragraph.runs:
@@ -369,6 +394,395 @@ def extract_text_from_file(filepath, ext):
     except Exception as e:
         print(f"Text extraction error: {e}")
         return None
+
+
+def clear_document_body(doc):
+    body = doc.element.body
+    for child in list(body):
+        if child.tag.endswith("sectPr"):
+            continue
+        body.remove(child)
+
+
+def get_generated_html_filepath(filename):
+    stem, _ = os.path.splitext(filename)
+    return os.path.join(GENERATED_DOCS_FOLDER, f"{stem}.editor.html")
+
+
+def save_generated_html_content(filename, html_content):
+    html_path = get_generated_html_filepath(filename)
+    with open(html_path, "w", encoding="utf-8") as html_file:
+        html_file.write(html_content or "")
+
+
+def load_generated_html_content(filename):
+    html_path = get_generated_html_filepath(filename)
+    if not os.path.exists(html_path):
+        return None
+    with open(html_path, "r", encoding="utf-8") as html_file:
+        return html_file.read()
+
+
+def html_to_plain_text(html_content):
+    html_content = str(html_content or "")
+    if not html_content.strip():
+        return ""
+    text = re.sub(r"(?i)<br\s*/?>", "\n", html_content)
+    text = re.sub(r"(?i)</(p|div|h1|h2|h3|li|ul|ol|blockquote)>", "\n", text)
+    text = re.sub(r"(?i)<hr[^>]*>", "\n----------------------------------------\n", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = text.replace("&nbsp;", " ")
+    text = text.replace("&amp;", "&")
+    text = text.replace("&lt;", "<")
+    text = text.replace("&gt;", ">")
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def parse_editor_font_size(value, default_size):
+    size_map = {
+        "1": 8,
+        "2": 10,
+        "3": 12,
+        "4": 14,
+        "5": 18,
+        "6": 24,
+        "7": 32,
+    }
+    parsed = str(value or "").strip()
+    return size_map.get(parsed, default_size)
+
+
+def parse_inline_style(style_value):
+    style_map = {}
+    for declaration in str(style_value or "").split(";"):
+        if ":" not in declaration:
+            continue
+        key, value = declaration.split(":", 1)
+        style_map[key.strip().lower()] = value.strip()
+    return style_map
+
+
+class EditorHtmlParser(HTMLParser):
+    def __init__(self, default_font_family, default_font_size):
+        super().__init__(convert_charrefs=False)
+        self.default_font_family = default_font_family
+        self.default_font_size = default_font_size
+        self.blocks = []
+        self.current_block = None
+        self.style_stack = [self._base_style()]
+        self.list_stack = []
+        self.indent_stack = [0.0]
+
+    def _base_style(self):
+        return {
+            "bold": False,
+            "italic": False,
+            "underline": False,
+            "strike": False,
+            "font_family": self.default_font_family,
+            "font_size": self.default_font_size,
+        }
+
+    def _current_style(self):
+        return dict(self.style_stack[-1])
+
+    def _extract_alignment(self, attrs):
+        style_map = parse_inline_style(attrs.get("style"))
+        alignment = (style_map.get("text-align") or "").strip().lower()
+        if alignment in {"center", "right", "left", "justify"}:
+            return alignment
+        return None
+
+    def _extract_indent_points(self, attrs):
+        style_map = parse_inline_style(attrs.get("style"))
+        margin_left = (style_map.get("margin-left") or "").strip().lower()
+        if not margin_left:
+            return 0.0
+
+        match = re.search(r"(\d+(?:\.\d+)?)", margin_left)
+        if not match:
+            return 0.0
+
+        numeric = float(match.group(1))
+        if margin_left.endswith("px"):
+            return numeric * 0.75
+        if margin_left.endswith("pt"):
+            return numeric
+        if margin_left.endswith("in"):
+            return numeric * 72.0
+        if margin_left.endswith("cm"):
+            return numeric * 28.3465
+        if margin_left.endswith("mm"):
+            return numeric * 2.83465
+        return numeric
+
+    def _current_indent(self):
+        return float(self.indent_stack[-1])
+
+    def _start_block(self, tag, attrs):
+        if self.current_block is not None:
+            self._finalize_block()
+        self.current_block = {
+            "tag": tag,
+            "align": self._extract_alignment(attrs),
+            "indent": self._current_indent() + self._extract_indent_points(attrs),
+            "segments": [],
+        }
+
+    def _append_text(self, text):
+        if text is None:
+            return
+        if self.current_block is None:
+            self._start_block("p", {})
+        normalized = unescape(text)
+        if not normalized:
+            return
+        self.current_block["segments"].append((normalized, self._current_style()))
+
+    def _finalize_block(self):
+        if self.current_block is None:
+            return
+        self.blocks.append(self.current_block)
+        self.current_block = None
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        tag = tag.lower()
+
+        if tag in {"p", "div", "h1", "h2", "h3"}:
+            self._start_block(tag, attrs)
+            return
+
+        if tag == "blockquote":
+            extra_indent = self._extract_indent_points(attrs) or 36.0
+            self.indent_stack.append(self._current_indent() + extra_indent)
+            return
+
+        if tag in {"ul", "ol"}:
+            self.list_stack.append({"ordered": tag == "ol", "index": 0})
+            return
+
+        if tag == "li":
+            self._start_block("li", attrs)
+            if self.list_stack:
+                current_list = self.list_stack[-1]
+                if current_list["ordered"]:
+                    current_list["index"] += 1
+                    self._append_text(f"{current_list['index']}. ")
+                else:
+                    self._append_text("• ")
+            return
+
+        if tag == "br":
+            self._append_text("\n")
+            return
+
+        if tag == "hr":
+            self._finalize_block()
+            self.blocks.append({"tag": "hr", "align": None, "segments": []})
+            return
+
+        style = self._current_style()
+        pushed = False
+
+        if tag in {"b", "strong"}:
+            style["bold"] = True
+            pushed = True
+        elif tag in {"i", "em"}:
+            style["italic"] = True
+            pushed = True
+        elif tag == "u":
+            style["underline"] = True
+            pushed = True
+        elif tag in {"s", "strike"}:
+            style["strike"] = True
+            pushed = True
+        elif tag == "font":
+            if attrs.get("face"):
+                style["font_family"] = attrs.get("face")
+            if attrs.get("size"):
+                style["font_size"] = parse_editor_font_size(
+                    attrs.get("size"),
+                    self.default_font_size,
+                )
+            pushed = True
+        elif tag == "span":
+            style_map = parse_inline_style(attrs.get("style"))
+            font_family = style_map.get("font-family")
+            if font_family:
+                style["font_family"] = font_family.split(",")[0].strip().strip('"').strip("'")
+            font_size = style_map.get("font-size")
+            if font_size:
+                match = re.search(r"(\d+(?:\.\d+)?)", font_size)
+                if match:
+                    style["font_size"] = int(float(match.group(1)))
+            font_weight = style_map.get("font-weight", "").lower()
+            if font_weight in {"bold", "600", "700", "800", "900"}:
+                style["bold"] = True
+            font_style = style_map.get("font-style", "").lower()
+            if font_style == "italic":
+                style["italic"] = True
+            text_decoration = style_map.get("text-decoration", "").lower()
+            if "underline" in text_decoration:
+                style["underline"] = True
+            if "line-through" in text_decoration:
+                style["strike"] = True
+            pushed = True
+
+        if pushed:
+            self.style_stack.append(style)
+
+    def handle_endtag(self, tag):
+        tag = tag.lower()
+
+        if tag in {"p", "div", "h1", "h2", "h3", "li"}:
+            self._finalize_block()
+            return
+
+        if tag == "blockquote":
+            if len(self.indent_stack) > 1:
+                self.indent_stack.pop()
+            return
+
+        if tag in {"ul", "ol"}:
+            if self.list_stack:
+                self.list_stack.pop()
+            return
+
+        if tag in {"b", "strong", "i", "em", "u", "s", "strike", "font", "span"}:
+            if len(self.style_stack) > 1:
+                self.style_stack.pop()
+
+    def handle_data(self, data):
+        self._append_text(data)
+
+    def handle_entityref(self, name):
+        self._append_text(f"&{name};")
+
+    def handle_charref(self, name):
+        self._append_text(f"&#{name};")
+
+
+def paragraph_alignment_for(value):
+    value = str(value or "").strip().lower()
+    if value == "center":
+        return WD_ALIGN_PARAGRAPH.CENTER
+    if value == "right":
+        return WD_ALIGN_PARAGRAPH.RIGHT
+    if value == "justify":
+        return WD_ALIGN_PARAGRAPH.JUSTIFY
+    return WD_ALIGN_PARAGRAPH.LEFT
+
+
+def add_text_to_paragraph(paragraph, text, style, font_family, font_size):
+    segments = str(text or "").split("\n")
+    for index, segment in enumerate(segments):
+        run = paragraph.add_run(segment)
+        apply_font_to_run(
+            run,
+            style.get("font_family") or font_family,
+            style.get("font_size") or font_size,
+        )
+        run.bold = bool(style.get("bold"))
+        run.italic = bool(style.get("italic"))
+        run.underline = bool(style.get("underline"))
+        run.font.strike = bool(style.get("strike"))
+        if index < len(segments) - 1:
+            run.add_break()
+
+
+def render_html_document_content(doc, html_content, font_family, font_size, line_spacing):
+    parser = EditorHtmlParser(font_family, font_size)
+    parser.feed(str(html_content or ""))
+    parser.close()
+    parser._finalize_block()
+
+    written = False
+    for block in parser.blocks:
+        if block.get("tag") == "hr":
+            paragraph = doc.add_paragraph("----------------------------------------")
+            paragraph.paragraph_format.line_spacing = line_spacing
+            if paragraph.runs:
+                apply_font_to_run(paragraph.runs[0], font_family, font_size)
+            written = True
+            continue
+
+        paragraph = doc.add_paragraph()
+        paragraph.paragraph_format.line_spacing = line_spacing
+        paragraph.alignment = paragraph_alignment_for(block.get("align"))
+        indent_points = float(block.get("indent") or 0.0)
+        if indent_points > 0:
+            paragraph.paragraph_format.left_indent = Pt(indent_points)
+
+        tag = block.get("tag")
+        if tag == "h1":
+            paragraph.alignment = paragraph_alignment_for(block.get("align") or "left")
+        elif tag == "h2":
+            paragraph.alignment = paragraph_alignment_for(block.get("align") or "left")
+
+        segments = block.get("segments") or []
+        if not segments:
+            paragraph.add_run("")
+
+        for text, style in segments:
+            segment_style = dict(style)
+            if tag == "h1":
+                segment_style["bold"] = True
+                segment_style["font_size"] = max(font_size + 8, 22)
+            elif tag == "h2":
+                segment_style["bold"] = True
+                segment_style["font_size"] = max(font_size + 4, 18)
+            elif tag == "h3":
+                segment_style["bold"] = True
+                segment_style["font_size"] = max(font_size + 2, 16)
+            add_text_to_paragraph(
+                paragraph,
+                text,
+                segment_style,
+                font_family,
+                font_size,
+            )
+        written = True
+
+    return written
+
+
+def replace_document_content(filepath, content, font_family, font_size, paper_size, line_spacing, margin_size, html_content=None):
+    doc = DocxDocument(filepath)
+    clear_document_body(doc)
+
+    written = False
+    if str(html_content or "").strip():
+        written = render_html_document_content(
+            doc,
+            html_content,
+            font_family,
+            font_size,
+            line_spacing,
+        )
+
+    if not written:
+        paragraphs = [part.strip() for part in str(content or "").replace("\r\n", "\n").split("\n\n")]
+        for paragraph_text in paragraphs:
+            if not paragraph_text:
+                continue
+            paragraph = doc.add_paragraph(paragraph_text)
+            paragraph.paragraph_format.line_spacing = line_spacing
+            if paragraph.runs:
+                apply_font_to_run(paragraph.runs[0], font_family, font_size)
+            written = True
+
+    if not written:
+        paragraph = doc.add_paragraph("")
+        paragraph.paragraph_format.line_spacing = line_spacing
+
+    if str(html_content or "").strip():
+        apply_default_font_style(doc, font_family, font_size)
+    else:
+        apply_font_settings(doc, font_family, font_size)
+    apply_document_layout_settings(doc, paper_size, line_spacing, margin_size)
+    doc.save(filepath)
 
 # -------------------------------------------------------------------
 # Existing endpoint: extract_fields
@@ -825,6 +1239,116 @@ def view_pdf(filename):
         return response
     except Exception as e:
         return jsonify({"error": str(e)}), 404
+
+
+@document_bp.route("/generated-document-content/<filename>", methods=["GET"])
+def get_generated_document_content(filename):
+    try:
+        username = get_request_username(default=None)
+        ensure_generated_metadata_defaults()
+        metadata = load_generated_metadata()
+        info = metadata.get(filename)
+        if not info:
+            return jsonify({"error": "File not found"}), 404
+        if username and (info.get("owner_username") or "admin") != username:
+            return jsonify({"error": "File not found"}), 404
+
+        directory = get_generated_file_directory(filename)
+        ext = os.path.splitext(filename)[1].lower()
+        if ext not in (".docx", ".txt", ".pdf"):
+            return jsonify({"error": "Unsupported file type"}), 400
+
+        filepath = os.path.join(directory, filename)
+        if not os.path.exists(filepath):
+            return jsonify({"error": "File not found"}), 404
+
+        html_content = None
+        if ext == ".docx":
+            html_content = load_generated_html_content(filename)
+
+        content = extract_text_from_file(filepath, ext)
+        if content is None:
+            return jsonify({"error": "Failed to extract content"}), 500
+
+        return jsonify({"content": content, "html": html_content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@document_bp.route("/generated-document-content/<filename>", methods=["POST"])
+def update_generated_document_content(filename):
+    try:
+        username = get_request_username(default=None)
+        ensure_generated_metadata_defaults()
+        metadata = load_generated_metadata()
+        info = metadata.get(filename)
+        if not info:
+            return jsonify({"error": "File not found"}), 404
+        if username and (info.get("owner_username") or "admin") != username:
+            return jsonify({"error": "File not found"}), 404
+
+        ext = os.path.splitext(filename)[1].lower()
+        if ext != ".docx":
+            return jsonify({"error": "Only DOCX documents can be edited"}), 400
+
+        payload = request.get_json(silent=True) or {}
+        content = str(payload.get("content", "")).strip()
+        html_content = str(payload.get("html", "")).strip()
+        font_family = normalize_font_family(
+            payload.get("font_family", SUPPORTED_FONT_FAMILIES[0])
+        )
+        font_size = normalize_font_size(
+            payload.get("font_size", DEFAULT_FONT_SIZE)
+        )
+        line_spacing = normalize_line_spacing(
+            payload.get("line_spacing", 1.0)
+        )
+        if html_content and not content:
+            content = html_to_plain_text(html_content)
+        if not content:
+            return jsonify({"error": "Content is required"}), 400
+
+        docx_path = os.path.join(GENERATED_DOCS_FOLDER, filename)
+        if not os.path.exists(docx_path):
+            return jsonify({"error": "File not found"}), 404
+
+        replace_document_content(
+            docx_path,
+            content,
+            font_family=font_family,
+            font_size=font_size,
+            paper_size="A4",
+            line_spacing=line_spacing,
+            margin_size="Normal",
+            html_content=html_content,
+        )
+
+        if html_content:
+            save_generated_html_content(filename, html_content)
+
+        pdf_filename = filename.replace(".docx", ".pdf")
+        pdf_path = convert_docx_to_pdf(docx_path, GENERATED_FOLDER)
+
+        timestamp_iso = datetime.now().isoformat()
+        metadata[filename] = {
+            **metadata.get(filename, {}),
+            "owner_username": username or metadata.get(filename, {}).get("owner_username") or "admin",
+            "timestamp": timestamp_iso,
+        }
+        metadata[pdf_filename] = {
+            **metadata.get(pdf_filename, {}),
+            "owner_username": username or metadata.get(pdf_filename, {}).get("owner_username") or "admin",
+            "timestamp": timestamp_iso,
+        }
+        save_generated_metadata(metadata)
+
+        return jsonify({
+            "message": "Document updated successfully",
+            "docx_file": filename,
+            "pdf_file": os.path.basename(pdf_path),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 

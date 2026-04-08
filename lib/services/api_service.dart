@@ -205,27 +205,39 @@ class ApiService {
     }
   }
 
-  /// Retrieve the content of a document (for editing).
-  Future<String> getDocumentContent(String filename) async {
-    final url = await _authorizedUri('/document-content/$filename');
+  /// Retrieve the content of a generated document (for editing).
+  Future<Map<String, dynamic>> getDocumentContent(String filename) async {
+    final url = await _authorizedUri('/generated-document-content/$filename');
     final response = await http.get(url, headers: await _authHeaders());
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data['content'];
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
       throw Exception('Failed to load document content');
     }
   }
 
-  /// Update a document after editing.
-  Future<void> updateDocument(String filename, String content) async {
-    final url = await _authorizedUri('/update-document/$filename');
+  /// Update a generated document after editing.
+  Future<void> updateDocument(
+    String filename,
+    String content, {
+    String? html,
+    String? fontFamily,
+    int? fontSize,
+    String? lineSpacing,
+  }) async {
+    final url = await _authorizedUri('/generated-document-content/$filename');
     final response = await http.post(
       url,
       headers: await _authHeaders(
         extra: {'Content-Type': 'application/json'},
       ),
-      body: jsonEncode({'content': content}),
+      body: jsonEncode({
+        'content': content,
+        if (html != null) 'html': html,
+        if (fontFamily != null) 'font_family': fontFamily,
+        if (fontSize != null) 'font_size': fontSize,
+        if (lineSpacing != null) 'line_spacing': lineSpacing,
+      }),
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to update document');

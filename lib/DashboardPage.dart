@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'GeneratedDocumentEditorPage.dart';
 import 'LegalAiPage.dart';
 import 'Clientside.dart';
 import 'DocumentPage.dart';
@@ -19,6 +20,41 @@ class _DashboardPageState extends State<DashboardPage> {
   Map<String, dynamic>? data;
   bool isLoading = true;
   bool showAllDocuments = false;
+
+  String? _editableFilenameFor(String? filename) {
+    if (filename == null || filename.isEmpty) {
+      return null;
+    }
+
+    final lower = filename.toLowerCase();
+    if (lower.endsWith('.docx')) {
+      return filename;
+    }
+    if (lower.endsWith('.pdf')) {
+      return '${filename.substring(0, filename.length - 4)}.docx';
+    }
+    return null;
+  }
+
+  Future<void> _openDocumentEditor(Map<String, dynamic> doc) async {
+    final editableFilename = _editableFilenameFor(doc["filename"]?.toString());
+    if (editableFilename == null || !mounted) {
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GeneratedDocumentEditorPage(
+          filename: editableFilename,
+          documentTitle: doc["title"]?.toString(),
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+    loadData(all: showAllDocuments);
+  }
 
   String _formatCurrency(dynamic value) {
     final amount = value is num
@@ -244,6 +280,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   ? const AlwaysScrollableScrollPhysics()
                   : const NeverScrollableScrollPhysics(),
               children: docs.map<Widget>((doc) {
+                final editableFilename =
+                    _editableFilenameFor(doc["filename"]?.toString());
+
                 return Column(
                   children: [
                     ListTile(
@@ -262,6 +301,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                 _showRenameDialog(filename);
                               } else if (value == "delete") {
                                 _confirmDelete(filename);
+                              } else if (value == "edit") {
+                                await _openDocumentEditor(doc);
                               } else if (value == "download") {
                                 final username =
                                     await SessionService.getLoggedInUsername();
@@ -281,6 +322,11 @@ class _DashboardPageState extends State<DashboardPage> {
                               }
                             },
                             itemBuilder: (context) => [
+                              if (editableFilename != null)
+                                const PopupMenuItem(
+                                  value: "edit",
+                                  child: Text("Edit"),
+                                ),
                               const PopupMenuItem(
                                 value: "rename",
                                 child: Text("Rename"),

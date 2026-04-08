@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import '../services/api_service.dart';
+import 'package:LegalAI/GeneratedDocumentEditorPage.dart';
 import 'widgets/voice_dictation_button.dart';
 import 'upload_context.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -365,7 +366,7 @@ class _PartnershipDeedPageState extends State<PartnershipDeedPage> {
                                           ]
                                             .where(
                                                 (value) => value.trim().isNotEmpty)
-                                            .join(' • '),
+                                            .join(' â€¢ '),
                                   ),
                                   onTap: isAssignedElsewhere
                                       ? null
@@ -2011,6 +2012,43 @@ class _PartnershipDeedPageState extends State<PartnershipDeedPage> {
                   await ApiService().downloadGeneratedDocument(_generatedDocx!);
                 },
               ),
+            if (_generatedDocx != null)
+              IconButton(
+                tooltip: 'Edit document',
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () async {
+                  final wasUpdated = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(
+                      builder: (_) => GeneratedDocumentEditorPage(
+                        filename: _generatedDocx!,
+                        documentTitle: 'Edit Generated Document',
+                      ),
+                    ),
+                  );
+                  if (wasUpdated == true && mounted) {
+                    setState(() {
+                      _generatedPdfViewUrl = _generatedPdf == null
+                          ? null
+                          : "${ApiService.baseUrl}/view/${_generatedPdf!}?t=${DateTime.now().millisecondsSinceEpoch}";
+                      _generatedPdfViewType = _generatedPdf == null
+                          ? null
+                          : 'generated-preview-${DateTime.now().microsecondsSinceEpoch}';
+                      _pdfLoadFailed = false;
+                    });
+                    if (kIsWeb && _generatedPdfViewUrl != null && _generatedPdfViewType != null) {
+                      web_preview.registerPreviewIframe(
+                        _generatedPdfViewType!,
+                        _generatedPdfViewUrl!,
+                      );
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Document updated successfully.'),
+                      ),
+                    );
+                  }
+                },
+              ),
             IconButton(
               tooltip: 'Open large preview',
               icon: const Icon(Icons.open_in_full),
@@ -2292,6 +2330,28 @@ class _GeneratedPreviewDialogState extends State<_GeneratedPreviewDialog> {
                         .downloadGeneratedDocument(widget.generatedDocx!);
                   },
                 ),
+              if (widget.generatedDocx != null)
+                IconButton(
+                  tooltip: 'Edit document',
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () async {
+                    final wasUpdated = await Navigator.of(context).push<bool>(
+                      MaterialPageRoute(
+                        builder: (_) => GeneratedDocumentEditorPage(
+                          filename: widget.generatedDocx!,
+                          documentTitle: 'Edit Generated Document',
+                        ),
+                      ),
+                    );
+                    if (wasUpdated == true && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Document updated successfully.'),
+                        ),
+                      );
+                    }
+                  },
+                ),
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.close),
@@ -2367,6 +2427,9 @@ class _GeneratedPreviewDialogState extends State<_GeneratedPreviewDialog> {
     );
   }
 }
+
+
+
 
 
 
