@@ -21,6 +21,13 @@
     "hint": "Enter partnership firm name"
   },
   {
+    "name": "definitions_clause",
+    "label": "Definitions / Interpretation Clause",
+    "type": "textarea",
+    "required": false,
+    "hint": "Clarify whether 'Partners' includes heirs, executors, administrators, and other standard definitions"
+  },
+  {
     "name": "business_type",
     "label": "Nature of Business",
     "type": "text",
@@ -72,7 +79,7 @@
         "name": "partner_pan",
         "label": "PAN Number",
         "type": "text",
-        "hint": "Enter pan number",
+        "hint": "Enter PAN number",
         "required": false
       },
       {
@@ -95,6 +102,13 @@
         "type": "number",
         "required": true,
         "hint": "Enter profit sharing (%)"
+      },
+      {
+        "name": "interest_on_drawings",
+        "label": "Interest on Drawings (%)",
+        "type": "number",
+        "required": false,
+        "hint": "Enter interest on drawings, if any"
       }
     ],
     "hint": "Add partner details",
@@ -105,6 +119,20 @@
     "label": "Total Capital of Firm",
     "type": "number",
     "hint": "Enter total capital of firm",
+    "required": false
+  },
+  {
+    "name": "accounting_year",
+    "label": "Financial Year",
+    "type": "text",
+    "hint": "Enter accounting year, e.g. 1 April to 31 March",
+    "required": false
+  },
+  {
+    "name": "drawings_limit",
+    "label": "Drawings Limit",
+    "type": "text",
+    "hint": "Enter monthly or quarterly drawings limit for partners",
     "required": false
   },
   {
@@ -134,6 +162,29 @@
     "required": false
   },
   {
+    "name": "borrowing_allowed",
+    "label": "Borrowing / Mortgage Powers",
+    "type": "boolean",
+    "hint": "Enable if the firm may take loans or create mortgages in the firm's name",
+    "required": false
+  },
+  {
+    "name": "borrowing_powers",
+    "label": "Borrowing Powers Details",
+    "type": "textarea",
+    "hint": "Describe whether loans, overdrafts, guarantees, or mortgages are permitted",
+    "required": true,
+    "show_if": "borrowing_allowed == true"
+  },
+  {
+    "name": "borrowing_authorized_signatories",
+    "label": "Authorized Signatories for Borrowing",
+    "type": "text",
+    "hint": "Enter the partner(s) authorized to sign loan or mortgage documents",
+    "required": true,
+    "show_if": "borrowing_allowed == true"
+  },
+  {
     "name": "partnership_start_date",
     "label": "Partnership Start Date",
     "type": "date",
@@ -152,11 +203,20 @@
     "required": false
   },
   {
+    "name": "notice_period_days",
+    "label": "Notice Period for Withdrawal (Days)",
+    "type": "number",
+    "hint": "Enter notice period required for a partner to retire or withdraw",
+    "required": true,
+    "show_if": "partnership_type == 'At Will'"
+  },
+  {
     "name": "partnership_end_date",
-    "label": "End Date (if fixed)",
+    "label": "End Date",
     "type": "date",
-    "hint": "Select end date (if fixed)",
-    "required": false
+    "hint": "Select partnership end date",
+    "required": true,
+    "show_if": "partnership_type == 'Fixed Period'"
   },
   {
     "name": "managing_partner",
@@ -215,6 +275,34 @@
     "required": false
   },
   {
+    "name": "goodwill_valuation_method",
+    "label": "Goodwill Valuation Method",
+    "type": "textarea",
+    "hint": "Describe how goodwill will be valued on retirement, death, or dissolution",
+    "required": false
+  },
+  {
+    "name": "death_of_partner",
+    "label": "Effect of Death of a Partner",
+    "type": "dropdown",
+    "options": [
+      "Firm Dissolves",
+      "Continuing Partners Settle Share and Continue",
+      "Legal Heirs Join Subject to Consent",
+      "As Mutually Agreed"
+    ],
+    "hint": "Select what happens on the death of a partner",
+    "required": false
+  },
+  {
+    "name": "succession_terms",
+    "label": "Succession / Heir Terms",
+    "type": "textarea",
+    "hint": "Enter terms for admission of legal heirs or settlement of the deceased partner's share",
+    "required": false,
+    "show_if": "death_of_partner != 'Firm Dissolves'"
+  },
+  {
     "name": "dissolution_clause",
     "label": "Dissolution Terms",
     "type": "textarea",
@@ -234,6 +322,22 @@
     "required": false
   },
   {
+    "name": "number_of_arbitrators",
+    "label": "Number of Arbitrators",
+    "type": "number",
+    "hint": "Enter number of arbitrators",
+    "required": true,
+    "show_if": "dispute_resolution == 'Arbitration'"
+  },
+  {
+    "name": "language_of_arbitration",
+    "label": "Language of Arbitration",
+    "type": "text",
+    "hint": "Enter language of arbitration proceedings",
+    "required": true,
+    "show_if": "dispute_resolution == 'Arbitration'"
+  },
+  {
     "name": "jurisdiction_city",
     "label": "Jurisdiction City",
     "type": "text",
@@ -246,6 +350,14 @@
     "type": "boolean",
     "hint": "Select yes or no for firm registration",
     "required": false
+  },
+  {
+    "name": "registrar_office_name",
+    "label": "Registrar Office Name",
+    "type": "text",
+    "hint": "Enter State or District Registrar office name",
+    "required": true,
+    "show_if": "registration_required == true"
   },
   {
     "name": "witness_details",

@@ -41,11 +41,11 @@
   },
   "Client_power_of_attorney_20260320_170642_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-03-20T17:06:45.154741"
+    "timestamp": "2026-04-09T17:36:02.564052"
   },
   "Client_power_of_attorney_20260326_161951_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-03-26T16:20:02.718223"
+    "timestamp": "2026-04-09T17:37:47.199385"
   },
   "Client_rental_agreement_20260327_114329_generated.pdf": {
     "owner_username": "admin",
@@ -93,11 +93,11 @@
   },
   "Client_power_of_attorney_20260320_170642_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-03-20T17:06:43.027191"
+    "timestamp": "2026-04-09T17:36:02.564052"
   },
   "Client_power_of_attorney_20260326_161951_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-03-26T16:19:51.313412"
+    "timestamp": "2026-04-09T17:37:47.199385"
   },
   "Client_rental_agreement_20260327_114329_generated.docx": {
     "owner_username": "admin",
@@ -115,14 +115,6 @@
     "owner_username": "admin",
     "timestamp": "2026-04-08T15:34:29.134580"
   },
-  "Client_offer_letter_20260408_115016_generated.docx": {
-    "owner_username": "admin",
-    "timestamp": "2026-04-08T15:50:08.957550"
-  },
-  "Client_offer_letter_20260408_115016_generated.pdf": {
-    "owner_username": "admin",
-    "timestamp": "2026-04-08T15:50:08.957550"
-  },
   "Client_offer_letter_20260408_115016_generated.editor.html": {
     "owner_username": "admin",
     "timestamp": "2026-04-08T13:57:11.803712"
@@ -131,16 +123,16 @@
     "owner_username": "admin",
     "timestamp": "2026-04-08T13:58:28.530752"
   },
-  "Client_patent_filing_documents_20260408_155556_generated.docx": {
-    "owner_username": "admin",
-    "timestamp": "2026-04-08T17:20:39.889047"
-  },
-  "Client_patent_filing_documents_20260408_155556_generated.pdf": {
-    "owner_username": "admin",
-    "timestamp": "2026-04-08T17:20:39.889047"
-  },
   "Client_patent_filing_documents_20260408_155556_generated.editor.html": {
     "owner_username": "admin",
     "timestamp": "2026-04-08T15:56:39.636071"
+  },
+  "Client_power_of_attorney_20260320_170642_generated.editor.html": {
+    "owner_username": "admin",
+    "timestamp": "2026-04-09T17:35:41.674718"
+  },
+  "Client_power_of_attorney_20260326_161951_generated.editor.html": {
+    "owner_username": "admin",
+    "timestamp": "2026-04-09T17:37:42.243689"
   }
 }

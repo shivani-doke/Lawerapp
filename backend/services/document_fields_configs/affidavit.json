@@ -45,10 +45,8 @@
     "label": "Other Affidavit Type",
     "type": "text",
     "hint": "Enter other affidavit type if selected",
-    "required": false,
-    "visible_when": {
-      "affidavit_type": "Other"
-    }
+    "required": true,
+    "show_if": "affidavit_type == 'Other'"
   },
   {
     "name": "deponent_name",
@@ -58,10 +56,26 @@
     "hint": "Enter full legal name as per ID proof"
   },
   {
-    "name": "deponent_father_name",
-    "label": "Father’s / Spouse Name",
+    "name": "relationship_type",
+    "label": "Relationship Type",
+    "type": "dropdown",
+    "options": ["S/o", "D/o", "W/o", "C/o", "Other"],
+    "hint": "Select relationship type",
+    "required": false
+  },
+  {
+    "name": "relationship_type_other",
+    "label": "Other Relationship Type",
     "type": "text",
-    "hint": "Enter father’s or spouse’s name",
+    "hint": "Enter other relationship type",
+    "required": true,
+    "show_if": "relationship_type == 'Other'"
+  },
+  {
+    "name": "deponent_father_name",
+    "label": "Father's / Spouse Name",
+    "type": "text",
+    "hint": "Enter father's or spouse's name",
     "required": false
   },
   {
@@ -87,6 +101,20 @@
     "required": false
   },
   {
+    "name": "deponent_religion",
+    "label": "Religion",
+    "type": "text",
+    "hint": "Enter religion of the deponent",
+    "required": false
+  },
+  {
+    "name": "deponent_nationality",
+    "label": "Nationality",
+    "type": "text",
+    "hint": "Enter nationality, e.g. Indian",
+    "required": false
+  },
+  {
     "name": "deponent_address",
     "label": "Residential Address",
     "type": "textarea",
@@ -106,13 +134,15 @@
     "label": "ID Proof Number",
     "type": "text",
     "hint": "Enter ID proof number",
-    "required": false
+    "required": true,
+    "show_if": "deponent_id_type != ''"
   },
   {
     "name": "declaration_points",
     "label": "Affidavit Statements",
     "type": "group",
     "repeatable": true,
+    "min": 1,
     "fields": [
       {
         "name": "point",
@@ -127,24 +157,115 @@
   },
   {
     "name": "old_name",
-    "label": "Old Name (for Name Change)",
+    "label": "Old Name",
     "type": "text",
     "hint": "Enter previous name",
-    "required": false
+    "required": true,
+    "show_if": "affidavit_type == 'Name Change'"
   },
   {
     "name": "new_name",
     "label": "New Name",
     "type": "text",
     "hint": "Enter new name",
-    "required": false
+    "required": true,
+    "show_if": "affidavit_type == 'Name Change'"
+  },
+  {
+    "name": "name_change_reason",
+    "label": "Reason for Name Change",
+    "type": "textarea",
+    "hint": "Enter reason for name change, e.g. marriage, spelling correction, personal preference",
+    "required": true,
+    "show_if": "affidavit_type == 'Name Change'"
+  },
+  {
+    "name": "newspaper_publication_details",
+    "label": "Newspaper Publication Details",
+    "type": "textarea",
+    "hint": "Enter newspaper publication details, if applicable",
+    "required": false,
+    "show_if": "affidavit_type == 'Name Change'"
   },
   {
     "name": "date_of_birth",
     "label": "Date of Birth",
     "type": "date",
     "hint": "Select date of birth",
-    "required": false
+    "required": false,
+    "show_if": "affidavit_type == 'Birth Date'"
+  },
+  {
+    "name": "duration_of_stay",
+    "label": "Duration of Stay",
+    "type": "text",
+    "hint": "Enter how long the deponent has lived at the stated address",
+    "required": true,
+    "show_if": "affidavit_type == 'Address Proof'"
+  },
+  {
+    "name": "financial_year",
+    "label": "Financial Year",
+    "type": "text",
+    "hint": "Enter financial year, e.g. 2025-26",
+    "required": true,
+    "show_if": "affidavit_type == 'Income'"
+  },
+  {
+    "name": "annual_income_amount",
+    "label": "Total Annual Income (Figures)",
+    "type": "number",
+    "hint": "Enter total annual income in figures",
+    "required": true,
+    "show_if": "affidavit_type == 'Income'"
+  },
+  {
+    "name": "annual_income_words",
+    "label": "Total Annual Income (Words)",
+    "type": "text",
+    "hint": "Enter total annual income in words",
+    "required": true,
+    "show_if": "affidavit_type == 'Income'"
+  },
+  {
+    "name": "lost_document_name",
+    "label": "Lost Document Name",
+    "type": "text",
+    "hint": "Enter name of lost document",
+    "required": true,
+    "show_if": "affidavit_type == 'Lost Document'"
+  },
+  {
+    "name": "lost_document_number",
+    "label": "Lost Document Number",
+    "type": "text",
+    "hint": "Enter document number, if available",
+    "required": false,
+    "show_if": "affidavit_type == 'Lost Document'"
+  },
+  {
+    "name": "date_of_loss",
+    "label": "Date of Loss",
+    "type": "date",
+    "hint": "Select date when document was lost",
+    "required": true,
+    "show_if": "affidavit_type == 'Lost Document'"
+  },
+  {
+    "name": "police_fir_ncr_number",
+    "label": "Police FIR / NCR Number",
+    "type": "text",
+    "hint": "Enter FIR or NCR number",
+    "required": false,
+    "show_if": "affidavit_type == 'Lost Document'"
+  },
+  {
+    "name": "police_fir_ncr_date",
+    "label": "Police FIR / NCR Date",
+    "type": "date",
+    "hint": "Select FIR or NCR date",
+    "required": false,
+    "show_if": "affidavit_type == 'Lost Document'"
   },
   {
     "name": "purpose",
@@ -152,6 +273,36 @@
     "type": "textarea",
     "hint": "Explain why this affidavit is being made",
     "required": true
+  },
+  {
+    "name": "criminal_record_clause",
+    "label": "No Pending Criminal Cases Declaration",
+    "type": "boolean",
+    "hint": "Tick if the deponent declares that there are no pending criminal cases",
+    "required": false
+  },
+  {
+    "name": "identified_by_advocate",
+    "label": "Identified by Practicing Advocate",
+    "type": "boolean",
+    "hint": "Tick if the deponent is identified by a practicing advocate",
+    "required": false
+  },
+  {
+    "name": "identifying_advocate_name",
+    "label": "Identifying Advocate Name",
+    "type": "text",
+    "hint": "Enter advocate's full name",
+    "required": true,
+    "show_if": "identified_by_advocate == true"
+  },
+  {
+    "name": "identifying_advocate_enrollment_number",
+    "label": "Advocate Enrollment Number",
+    "type": "text",
+    "hint": "Enter advocate enrollment number",
+    "required": true,
+    "show_if": "identified_by_advocate == true"
   },
   {
     "name": "place_of_affirmation",
@@ -186,21 +337,24 @@
     "label": "Notary Name",
     "type": "text",
     "hint": "Enter notary public name",
-    "required": false
+    "required": true,
+    "show_if": "notary_required == true"
   },
   {
     "name": "notary_registration_number",
     "label": "Notary Registration Number",
     "type": "text",
     "hint": "Enter notary registration/license number",
-    "required": false
+    "required": true,
+    "show_if": "notary_required == true"
   },
   {
     "name": "notary_seal_details",
     "label": "Notary Seal Details",
     "type": "textarea",
     "hint": "Enter seal or stamp details (if applicable)",
-    "required": false
+    "required": false,
+    "show_if": "notary_required == true"
   },
   {
     "name": "witness_details",

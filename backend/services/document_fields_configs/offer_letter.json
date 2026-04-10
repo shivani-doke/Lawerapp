@@ -1,5 +1,12 @@
 [
   {
+    "name": "reference_number",
+    "label": "Reference Number",
+    "type": "text",
+    "hint": "Enter offer letter reference number, e.g. OFFER/2024/001",
+    "required": false
+  },
+  {
     "name": "issue_date",
     "label": "Issue Date",
     "type": "date",
@@ -45,7 +52,7 @@
     "name": "designation",
     "label": "Designation",
     "type": "text",
-    "hint": "Enter offered role/designation",
+    "hint": "Enter offered role or designation",
     "required": true
   },
   {
@@ -59,8 +66,9 @@
     "name": "reporting_manager",
     "label": "Reporting Manager",
     "type": "text",
-    "hint": "Enter reporting manager name/designation",
-    "required": false
+    "hint": "Enter reporting manager name or designation",
+    "required": false,
+    "show_if": "department != ''"
   },
   {
     "name": "work_location",
@@ -68,6 +76,26 @@
     "type": "text",
     "hint": "Enter job location",
     "required": true
+  },
+  {
+    "name": "work_mode",
+    "label": "Work Mode",
+    "type": "dropdown",
+    "options": [
+      "On-site",
+      "Remote",
+      "Hybrid"
+    ],
+    "hint": "Select work mode",
+    "required": false
+  },
+  {
+    "name": "required_days_in_office",
+    "label": "Required Days in Office",
+    "type": "text",
+    "hint": "Enter required in-office schedule, e.g. 3 days per week",
+    "required": true,
+    "show_if": "work_mode == 'Hybrid'"
   },
   {
     "name": "employment_type",
@@ -90,11 +118,41 @@
     "required": true
   },
   {
+    "name": "contract_end_date",
+    "label": "Contract End Date",
+    "type": "date",
+    "hint": "Select end date for contract or internship",
+    "required": true,
+    "show_if": "employment_type == 'Contract'"
+  },
+  {
+    "name": "internship_end_date",
+    "label": "Internship End Date",
+    "type": "date",
+    "hint": "Select internship end date",
+    "required": true,
+    "show_if": "employment_type == 'Internship'"
+  },
+  {
     "name": "probation_period_months",
     "label": "Probation Period (Months)",
     "type": "number",
     "hint": "Enter probation duration",
-    "required": false
+    "required": false,
+    "show_if": "employment_type == 'Full-time'"
+  },
+  {
+    "name": "currency",
+    "label": "Currency",
+    "type": "dropdown",
+    "options": [
+      "INR",
+      "USD",
+      "EUR",
+      "GBP"
+    ],
+    "hint": "Select offer currency",
+    "required": true
   },
   {
     "name": "annual_ctc",
@@ -104,17 +162,45 @@
     "required": true
   },
   {
+    "name": "salary_frequency",
+    "label": "Salary Frequency",
+    "type": "dropdown",
+    "options": [
+      "Monthly",
+      "Bi-weekly",
+      "Weekly"
+    ],
+    "hint": "Select salary frequency",
+    "required": true
+  },
+  {
     "name": "salary_breakup",
     "label": "Salary Breakup",
     "type": "textarea",
     "hint": "Basic, HRA, bonus, allowances etc.",
+    "required": false,
+    "show_if": "annual_ctc > 0"
+  },
+  {
+    "name": "has_variable_pay",
+    "label": "Variable Pay Included",
+    "type": "boolean",
+    "hint": "Tick if compensation includes performance-linked pay",
     "required": false
   },
   {
     "name": "bonus_details",
     "label": "Bonus / Incentives",
     "type": "textarea",
-    "hint": "Performance bonus or incentives",
+    "hint": "Describe performance bonus, incentive, or commission",
+    "required": true,
+    "show_if": "has_variable_pay == true"
+  },
+  {
+    "name": "stock_options_esops",
+    "label": "Stock Options / ESOPs",
+    "type": "textarea",
+    "hint": "Describe stock options, ESOP grant, vesting, or equity-linked compensation",
     "required": false
   },
   {
@@ -136,6 +222,28 @@
     "label": "Notice Period (Days)",
     "type": "number",
     "hint": "Enter notice period",
+    "required": false
+  },
+  {
+    "name": "relocation_assistance",
+    "label": "Relocation Assistance",
+    "type": "boolean",
+    "hint": "Tick if the company provides relocation support",
+    "required": false
+  },
+  {
+    "name": "relocation_assistance_details",
+    "label": "Relocation Assistance Details",
+    "type": "textarea",
+    "hint": "Describe moving allowance, travel, temporary stay, or reimbursement terms",
+    "required": true,
+    "show_if": "relocation_assistance == true"
+  },
+  {
+    "name": "equipment_provided",
+    "label": "Equipment Provided",
+    "type": "textarea",
+    "hint": "List laptop, monitor, phone, or home office stipend",
     "required": false
   },
   {
@@ -185,13 +293,14 @@
     "label": "Acceptance Deadline",
     "type": "date",
     "hint": "Enter last date to accept offer",
-    "required": false
+    "required": true,
+    "show_if": "acceptance_required == true"
   },
   {
     "name": "hr_name",
-    "label": "HR/Authorized Signatory Name",
+    "label": "HR / Authorized Signatory Name",
     "type": "text",
-    "hint": "Enter HR/signatory name",
+    "hint": "Enter HR or signatory name",
     "required": true
   },
   {
@@ -220,6 +329,7 @@
     "label": "Candidate Signature",
     "type": "text",
     "hint": "Enter candidate name as signature",
-    "required": false
+    "required": true,
+    "show_if": "candidate_acceptance == true"
   }
 ]

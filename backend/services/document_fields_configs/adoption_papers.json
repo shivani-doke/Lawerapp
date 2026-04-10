@@ -42,33 +42,52 @@
     "required": true
   },
   {
+    "name": "marital_status",
+    "label": "Marital Status of Adoptive Parents",
+    "type": "dropdown",
+    "options": ["Single", "Married", "Divorced", "Widowed"],
+    "hint": "Select marital status",
+    "required": true
+  },
+  {
     "name": "adoptive_parent2_name",
     "label": "Adoptive Parent 2 Name",
     "type": "text",
-    "hint": "Enter full legal name (if applicable)",
-    "required": false
+    "hint": "Enter full legal name",
+    "required": true,
+    "show_if": "marital_status == 'Married'"
   },
   {
     "name": "adoptive_parent2_age",
     "label": "Adoptive Parent 2 Age",
     "type": "number",
     "hint": "Enter age in years",
-    "required": false
+    "required": true,
+    "show_if": "marital_status == 'Married'"
   },
   {
     "name": "adoptive_parent2_address",
     "label": "Adoptive Parent 2 Address",
     "type": "textarea",
     "hint": "Enter full residential address",
+    "required": true,
+    "show_if": "marital_status == 'Married'"
+  },
+  {
+    "name": "relationship_to_child",
+    "label": "Relationship to Child",
+    "type": "dropdown",
+    "options": ["Step-parent", "Relative", "Non-relative", "Agency Placement", "Other"],
+    "hint": "Select the petitioner's relationship to the child",
     "required": false
   },
   {
-    "name": "marital_status",
-    "label": "Marital Status of Adoptive Parents",
-    "type": "select",
-    "options": ["Single", "Married", "Divorced", "Widowed"],
-    "hint": "Select marital status",
-    "required": true
+    "name": "relationship_to_child_other",
+    "label": "Other Relationship to Child",
+    "type": "text",
+    "hint": "Enter other relationship to the child",
+    "required": true,
+    "show_if": "relationship_to_child == 'Other'"
   },
   {
     "name": "child_name",
@@ -78,26 +97,36 @@
     "required": true
   },
   {
+    "name": "identified_child",
+    "label": "Identified Child",
+    "type": "boolean",
+    "hint": "Tick if the child is already born and specifically identified",
+    "required": false
+  },
+  {
     "name": "child_gender",
     "label": "Child Gender",
-    "type": "select",
+    "type": "dropdown",
     "options": ["Male", "Female", "Other"],
     "hint": "Select gender",
-    "required": false
+    "required": true,
+    "show_if": "identified_child == true"
   },
   {
     "name": "child_dob",
     "label": "Child Date of Birth",
     "type": "date",
     "hint": "Select date of birth",
-    "required": false
+    "required": true,
+    "show_if": "identified_child == true"
   },
   {
     "name": "child_place_of_birth",
     "label": "Place of Birth",
     "type": "text",
     "hint": "Enter place of birth",
-    "required": false
+    "required": true,
+    "show_if": "identified_child == true"
   },
   {
     "name": "agency_or_guardian_details",
@@ -107,11 +136,19 @@
     "required": true
   },
   {
+    "name": "known_lineage",
+    "label": "Known Biological Lineage",
+    "type": "boolean",
+    "hint": "Tick if the biological parent or relinquishing guardian is known",
+    "required": false
+  },
+  {
     "name": "biological_parent_details",
     "label": "Biological Parent Details",
     "type": "textarea",
-    "hint": "Enter details of biological parents (if known)",
-    "required": false
+    "hint": "Enter details of biological parents or relatives relinquishing rights",
+    "required": true,
+    "show_if": "known_lineage == true"
   },
   {
     "name": "consent_details",
@@ -131,8 +168,62 @@
     "name": "financial_status",
     "label": "Financial Status of Adoptive Parents",
     "type": "textarea",
-    "hint": "Briefly describe financial stability",
+    "hint": "Describe employment, income, and ability to support the child",
+    "required": true
+  },
+  {
+    "name": "home_study_completed",
+    "label": "Home Study Completed",
+    "type": "boolean",
+    "hint": "Tick if a home study or social worker assessment has been completed",
     "required": false
+  },
+  {
+    "name": "home_study_details",
+    "label": "Home Study Details",
+    "type": "textarea",
+    "hint": "Enter agency, date, and approval details of the home study",
+    "required": true,
+    "show_if": "home_study_completed == true"
+  },
+  {
+    "name": "has_other_children",
+    "label": "Other Children in Household",
+    "type": "boolean",
+    "hint": "Tick if there are existing children in the adoptive household",
+    "required": false
+  },
+  {
+    "name": "other_children_details",
+    "label": "Other Children Details",
+    "type": "group",
+    "repeatable": true,
+    "min": 1,
+    "required": true,
+    "show_if": "has_other_children == true",
+    "fields": [
+      {
+        "name": "name",
+        "label": "Child Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full name"
+      },
+      {
+        "name": "age",
+        "label": "Age",
+        "type": "number",
+        "required": false,
+        "hint": "Enter age"
+      },
+      {
+        "name": "relationship",
+        "label": "Relationship",
+        "type": "text",
+        "required": false,
+        "hint": "Enter relationship in household"
+      }
+    ]
   },
   {
     "name": "declaration",

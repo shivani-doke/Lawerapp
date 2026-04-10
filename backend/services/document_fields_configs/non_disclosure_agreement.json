@@ -1,5 +1,12 @@
 [
   {
+    "name": "execution_date",
+    "label": "Execution Date",
+    "type": "date",
+    "hint": "Select NDA execution date",
+    "required": true
+  },
+  {
     "name": "effective_date",
     "label": "Effective Date",
     "type": "date",
@@ -25,6 +32,21 @@
     "required": true
   },
   {
+    "name": "retrospective_clause",
+    "label": "Retrospective Coverage",
+    "type": "boolean",
+    "hint": "Tick if the NDA should cover disclosures made before execution",
+    "required": false
+  },
+  {
+    "name": "retrospective_start_date",
+    "label": "Retrospective Start Date",
+    "type": "date",
+    "hint": "Select date from which prior disclosures are covered",
+    "required": true,
+    "show_if": "retrospective_clause == true"
+  },
+  {
     "name": "disclosing_party_name",
     "label": "Disclosing Party Name",
     "type": "text",
@@ -42,9 +64,43 @@
     "name": "disclosing_party_type",
     "label": "Disclosing Party Type",
     "type": "dropdown",
-    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "options": [
+      "Individual",
+      "Company",
+      "LLP",
+      "Partnership"
+    ],
     "hint": "Select type",
     "required": true
+  },
+  {
+    "name": "disclosing_company_registration_number",
+    "label": "Disclosing Party CIN / LLPIN",
+    "type": "text",
+    "hint": "Enter company or LLP registration number",
+    "required": false,
+    "show_if": "disclosing_party_type != 'Individual'"
+  },
+  {
+    "name": "disclosing_tax_id",
+    "label": "Disclosing Party Tax ID",
+    "type": "text",
+    "hint": "Enter PAN, FEIN, or other tax identifier",
+    "required": false
+  },
+  {
+    "name": "disclosing_contact_person",
+    "label": "Disclosing Party Contact Person",
+    "type": "text",
+    "hint": "Enter contact person for notices",
+    "required": false
+  },
+  {
+    "name": "disclosing_notice_address",
+    "label": "Disclosing Party Notice Address",
+    "type": "textarea",
+    "hint": "Enter legal notice address",
+    "required": false
   },
   {
     "name": "receiving_party_name",
@@ -64,9 +120,51 @@
     "name": "receiving_party_type",
     "label": "Receiving Party Type",
     "type": "dropdown",
-    "options": ["Individual", "Company", "LLP", "Partnership"],
+    "options": [
+      "Individual",
+      "Company",
+      "LLP",
+      "Partnership"
+    ],
     "hint": "Select type",
     "required": true
+  },
+  {
+    "name": "receiving_company_registration_number",
+    "label": "Receiving Party CIN / LLPIN",
+    "type": "text",
+    "hint": "Enter company or LLP registration number",
+    "required": false,
+    "show_if": "receiving_party_type != 'Individual'"
+  },
+  {
+    "name": "receiving_tax_id",
+    "label": "Receiving Party Tax ID",
+    "type": "text",
+    "hint": "Enter PAN, FEIN, or other tax identifier",
+    "required": false
+  },
+  {
+    "name": "receiving_contact_person",
+    "label": "Receiving Party Contact Person",
+    "type": "text",
+    "hint": "Enter contact person for notices",
+    "required": false
+  },
+  {
+    "name": "receiving_notice_address",
+    "label": "Receiving Party Notice Address",
+    "type": "textarea",
+    "hint": "Enter legal notice address",
+    "required": false
+  },
+  {
+    "name": "permitted_employees_consultants",
+    "label": "Permitted Employees / Consultants",
+    "type": "textarea",
+    "hint": "Define which employees, consultants, or advisers may access the confidential information",
+    "required": false,
+    "show_if": "receiving_party_type != 'Individual'"
   },
   {
     "name": "purpose",
@@ -96,6 +194,14 @@
     "required": false
   },
   {
+    "name": "oral_disclosure_confirmation_period",
+    "label": "Oral Disclosure Confirmation Period (Days)",
+    "type": "number",
+    "hint": "Enter the number of days within which oral disclosures must be confirmed in writing",
+    "required": true,
+    "show_if": "mode_of_disclosure == 'Oral'"
+  },
+  {
     "name": "obligations_of_receiving_party",
     "label": "Obligations of Receiving Party",
     "type": "textarea",
@@ -120,19 +226,32 @@
     "name": "confidentiality_period_months",
     "label": "Confidentiality Period (Months)",
     "type": "number",
-    "hint": "Duration of confidentiality obligation",
+    "hint": "Duration of confidentiality obligation, up to 60 months",
     "required": true
   },
   {
     "name": "term_of_agreement",
     "label": "Term of Agreement",
-    "type": "text",
-    "hint": "Overall validity period of NDA",
+    "type": "dropdown",
+    "options": [
+      "Fixed Period",
+      "Until Termination of Project",
+      "Perpetual"
+    ],
+    "hint": "Select overall validity period of NDA",
     "required": false
   },
   {
+    "name": "fixed_term_months",
+    "label": "Fixed Term (Months)",
+    "type": "number",
+    "hint": "Enter fixed term duration in months",
+    "required": true,
+    "show_if": "term_of_agreement == 'Fixed Period'"
+  },
+  {
     "name": "return_or_destruction",
-    "label": "Return/Destruction of Information",
+    "label": "Return / Destruction of Information",
     "type": "textarea",
     "hint": "Conditions for returning or destroying confidential data",
     "required": true
@@ -159,6 +278,28 @@
     "required": false
   },
   {
+    "name": "non_solicitation_applicable",
+    "label": "Non-Solicitation Clause Included",
+    "type": "boolean",
+    "hint": "Tick if the parties want to restrict employee or customer solicitation",
+    "required": false
+  },
+  {
+    "name": "non_solicitation_period",
+    "label": "Non-Solicitation Period (Months)",
+    "type": "number",
+    "hint": "Enter non-solicitation period in months",
+    "required": true,
+    "show_if": "non_solicitation_applicable == true"
+  },
+  {
+    "name": "residual_knowledge_clause",
+    "label": "Residual Knowledge Clause",
+    "type": "boolean",
+    "hint": "Tick if residual knowledge is permitted",
+    "required": false
+  },
+  {
     "name": "breach_consequences",
     "label": "Consequences of Breach",
     "type": "textarea",
@@ -173,6 +314,39 @@
     "required": false
   },
   {
+    "name": "injunctive_relief_details",
+    "label": "Injunctive Relief Details",
+    "type": "textarea",
+    "hint": "Enter specific injunction-related language or relief details",
+    "required": false,
+    "show_if": "injunctive_relief == true"
+  },
+  {
+    "name": "assignment",
+    "label": "Assignment",
+    "type": "dropdown",
+    "options": [
+      "Allowed",
+      "Not Allowed"
+    ],
+    "hint": "Select whether rights under the NDA may be assigned to a third party",
+    "required": false
+  },
+  {
+    "name": "severability_clause",
+    "label": "Severability Clause",
+    "type": "boolean",
+    "hint": "Tick if the NDA includes a severability clause",
+    "required": false
+  },
+  {
+    "name": "waiver_clause",
+    "label": "Waiver Clause",
+    "type": "boolean",
+    "hint": "Tick if the NDA includes a waiver clause",
+    "required": false
+  },
+  {
     "name": "limitation_of_liability",
     "label": "Limitation of Liability",
     "type": "textarea",
@@ -182,9 +356,23 @@
   {
     "name": "governing_law",
     "label": "Governing Law",
-    "type": "text",
-    "hint": "Enter applicable law (e.g., Laws of India)",
+    "type": "dropdown",
+    "options": [
+      "India",
+      "United States",
+      "United Kingdom",
+      "Other"
+    ],
+    "hint": "Select governing law",
     "required": true
+  },
+  {
+    "name": "governing_law_other",
+    "label": "Other Governing Law",
+    "type": "text",
+    "hint": "Enter other applicable governing law",
+    "required": true,
+    "show_if": "governing_law == 'Other'"
   },
   {
     "name": "jurisdiction",
@@ -215,6 +403,7 @@
     "min": 2,
     "max": 2,
     "required": true,
+    "show_if": "governing_law == 'India'",
     "fields": [
       {
         "name": "name",

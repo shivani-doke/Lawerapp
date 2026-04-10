@@ -7,6 +7,13 @@
     "hint": "Select execution date"
   },
   {
+    "name": "effective_date",
+    "label": "Effective Date",
+    "type": "date",
+    "required": false,
+    "hint": "Select effective date of the loan agreement or disbursement"
+  },
+  {
     "name": "execution_city",
     "label": "Execution City",
     "type": "text",
@@ -43,8 +50,45 @@
     "name": "lender_id_proof",
     "label": "Lender ID Proof (PAN/Aadhaar)",
     "type": "text",
-    "hint": "Enter lender id proof (pan/aadhaar)",
+    "hint": "Enter lender ID proof",
     "required": false
+  },
+  {
+    "name": "lender_authorized_signatory_name",
+    "label": "Lender Authorized Signatory Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter authorized signatory name",
+    "show_if": "lender_type == 'Company'"
+  },
+  {
+    "name": "lender_authorized_signatory_title",
+    "label": "Lender Authorized Signatory Title",
+    "type": "text",
+    "required": true,
+    "hint": "Enter authorized signatory title, e.g. Director or CEO",
+    "show_if": "lender_type == 'Company'"
+  },
+  {
+    "name": "lender_bank_account_number",
+    "label": "Lender Bank Account Number",
+    "type": "text",
+    "required": false,
+    "hint": "Enter lender bank account number"
+  },
+  {
+    "name": "lender_notice_email",
+    "label": "Lender Notice Email",
+    "type": "text",
+    "required": false,
+    "hint": "Enter lender email for legal notices"
+  },
+  {
+    "name": "lender_notice_phone",
+    "label": "Lender Notice Phone",
+    "type": "text",
+    "required": false,
+    "hint": "Enter lender phone for legal notices"
   },
   {
     "name": "borrower_name",
@@ -75,8 +119,45 @@
     "name": "borrower_id_proof",
     "label": "Borrower ID Proof (PAN/Aadhaar)",
     "type": "text",
-    "hint": "Enter borrower id proof (pan/aadhaar)",
+    "hint": "Enter borrower ID proof",
     "required": false
+  },
+  {
+    "name": "borrower_authorized_signatory_name",
+    "label": "Borrower Authorized Signatory Name",
+    "type": "text",
+    "required": true,
+    "hint": "Enter authorized signatory name",
+    "show_if": "borrower_type == 'Company'"
+  },
+  {
+    "name": "borrower_authorized_signatory_title",
+    "label": "Borrower Authorized Signatory Title",
+    "type": "text",
+    "required": true,
+    "hint": "Enter authorized signatory title, e.g. Director or CEO",
+    "show_if": "borrower_type == 'Company'"
+  },
+  {
+    "name": "borrower_bank_account_number",
+    "label": "Borrower Bank Account Number",
+    "type": "text",
+    "required": false,
+    "hint": "Enter borrower bank account number"
+  },
+  {
+    "name": "borrower_notice_email",
+    "label": "Borrower Notice Email",
+    "type": "text",
+    "required": false,
+    "hint": "Enter borrower email for legal notices"
+  },
+  {
+    "name": "borrower_notice_phone",
+    "label": "Borrower Notice Phone",
+    "type": "text",
+    "required": false,
+    "hint": "Enter borrower phone for legal notices"
   },
   {
     "name": "loan_amount",
@@ -96,6 +177,28 @@
       "EUR"
     ],
     "hint": "Select currency"
+  },
+  {
+    "name": "mode_of_disbursement",
+    "label": "Mode of Disbursement",
+    "type": "dropdown",
+    "required": false,
+    "options": [
+      "Bank Transfer",
+      "Cheque",
+      "Cash",
+      "Demand Draft",
+      "Other"
+    ],
+    "hint": "Select mode of disbursement"
+  },
+  {
+    "name": "mode_of_disbursement_other",
+    "label": "Other Disbursement Mode",
+    "type": "text",
+    "required": true,
+    "hint": "Enter other mode of disbursement",
+    "show_if": "mode_of_disbursement == 'Other'"
   },
   {
     "name": "loan_purpose",
@@ -120,7 +223,7 @@
     "label": "Interest Rate (%)",
     "type": "number",
     "hint": "Enter interest rate (%)",
-    "required": false
+    "required": true
   },
   {
     "name": "interest_type",
@@ -131,7 +234,7 @@
       "Compound"
     ],
     "hint": "Select interest type",
-    "required": false
+    "required": true
   },
   {
     "name": "repayment_type",
@@ -149,29 +252,32 @@
     "name": "emi_amount",
     "label": "EMI Amount",
     "type": "number",
-    "hint": "Enter emi amount",
-    "required": false
+    "hint": "Enter EMI amount",
+    "required": true,
+    "show_if": "repayment_type == 'EMI'"
   },
   {
     "name": "number_of_installments",
     "label": "Number of Installments",
     "type": "number",
     "hint": "Enter number of installments",
-    "required": false
+    "required": true,
+    "show_if": "repayment_type == 'EMI'"
   },
   {
     "name": "repayment_start_date",
     "label": "Repayment Start Date",
     "type": "date",
     "hint": "Select repayment start date",
-    "required": false
+    "required": false,
+    "show_if": "repayment_type != 'Lump Sum'"
   },
   {
     "name": "repayment_end_date",
     "label": "Repayment End Date",
     "type": "date",
     "hint": "Select repayment end date",
-    "required": false
+    "required": true
   },
   {
     "name": "collateral_type",
@@ -184,27 +290,45 @@
       "Other"
     ],
     "hint": "Select collateral type",
-    "required": false
+    "required": true,
+    "show_if": "loan_type == 'Secured'"
+  },
+  {
+    "name": "collateral_type_other",
+    "label": "Other Collateral Type",
+    "type": "text",
+    "hint": "Enter other collateral type",
+    "required": true,
+    "show_if": "collateral_type == 'Other'"
   },
   {
     "name": "collateral_description",
     "label": "Collateral Description",
     "type": "textarea",
     "hint": "Enter collateral description",
-    "required": false
+    "required": true,
+    "show_if": "loan_type == 'Secured'"
   },
   {
     "name": "collateral_value",
     "label": "Collateral Value",
     "type": "number",
     "hint": "Enter collateral value",
-    "required": false
+    "required": true,
+    "show_if": "loan_type == 'Secured'"
   },
   {
     "name": "default_interest_rate",
     "label": "Default Interest Rate (%)",
     "type": "number",
     "hint": "Enter default interest rate (%)",
+    "required": false
+  },
+  {
+    "name": "late_payment_fee",
+    "label": "Late Payment Fee",
+    "type": "number",
+    "hint": "Enter fixed late payment fee",
     "required": false
   },
   {
@@ -226,6 +350,14 @@
     "label": "Prepayment Charges",
     "type": "number",
     "hint": "Enter prepayment charges",
+    "required": false,
+    "show_if": "prepayment_allowed == true"
+  },
+  {
+    "name": "has_guarantor",
+    "label": "Guarantor Involved",
+    "type": "boolean",
+    "hint": "Tick if a third-party guarantor backs the loan",
     "required": false
   },
   {
@@ -233,21 +365,31 @@
     "label": "Guarantor Name",
     "type": "text",
     "hint": "Enter guarantor name",
-    "required": false
+    "required": true,
+    "show_if": "has_guarantor == true"
   },
   {
     "name": "guarantor_address",
     "label": "Guarantor Address",
     "type": "textarea",
     "hint": "Enter guarantor address",
-    "required": false
+    "required": true,
+    "show_if": "has_guarantor == true"
   },
   {
     "name": "guarantor_id_proof",
     "label": "Guarantor ID Proof",
     "type": "text",
-    "hint": "Enter guarantor id proof",
-    "required": false
+    "hint": "Enter guarantor ID proof",
+    "required": false,
+    "show_if" : "has_guarantor == true"
+  },
+  {
+    "name": "governing_law",
+    "label": "Governing Law",
+    "type": "text",
+    "required": false,
+    "hint": "Enter governing law, e.g. laws of the State of Maharashtra"
   },
   {
     "name": "jurisdiction",
@@ -265,6 +407,20 @@
       "Court"
     ],
     "hint": "Select dispute resolution",
+    "required": false
+  },
+  {
+    "name": "waiver_of_jury_trial",
+    "label": "Waiver of Jury Trial",
+    "type": "boolean",
+    "hint": "Tick if the parties waive jury trial",
+    "required": false
+  },
+  {
+    "name": "waiver_of_class_action",
+    "label": "Waiver of Class Action",
+    "type": "boolean",
+    "hint": "Tick if the parties waive class action rights",
     "required": false
   },
   {

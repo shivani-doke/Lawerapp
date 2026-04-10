@@ -13,7 +13,6 @@
     "hint": "Enter city and state of execution",
     "required": true
   },
-
   {
     "name": "service_provider_details",
     "label": "Service Provider Details",
@@ -32,7 +31,12 @@
         "name": "entity_type",
         "label": "Entity Type",
         "type": "dropdown",
-        "options": ["Individual", "Company", "Partnership", "LLP"],
+        "options": [
+          "Individual",
+          "Company",
+          "Partnership",
+          "LLP"
+        ],
         "required": true,
         "hint": "Select entity type"
       },
@@ -48,11 +52,10 @@
         "label": "Contact Details",
         "type": "text",
         "required": false,
-        "hint": "Phone/email"
+        "hint": "Phone or email"
       }
     ]
   },
-
   {
     "name": "client_details",
     "label": "Client Details",
@@ -71,7 +74,12 @@
         "name": "entity_type",
         "label": "Entity Type",
         "type": "dropdown",
-        "options": ["Individual", "Company", "Partnership", "LLP"],
+        "options": [
+          "Individual",
+          "Company",
+          "Partnership",
+          "LLP"
+        ],
         "required": true,
         "hint": "Select entity type"
       },
@@ -87,11 +95,18 @@
         "label": "Contact Details",
         "type": "text",
         "required": false,
-        "hint": "Phone/email"
+        "hint": "Phone or email"
       }
     ]
   },
-
+  {
+    "name": "relationship_status",
+    "label": "Relationship Status",
+    "type": "text",
+    "hint": "State that the service provider is an independent contractor and not an employee",
+    "required": false,
+    "default": "The Service Provider acts as an independent contractor and not as an employee, agent, or partner of the Client."
+  },
   {
     "name": "services_scope",
     "label": "Scope of Services",
@@ -110,10 +125,23 @@
     "name": "service_level_agreement",
     "label": "Service Level Agreement (SLA)",
     "type": "textarea",
-    "hint": "Define timelines, performance metrics",
+    "hint": "Define timelines and performance metrics",
     "required": false
   },
-
+  {
+    "name": "business_hours_timezone",
+    "label": "Business Hours / Timezone",
+    "type": "text",
+    "hint": "e.g., 9 AM - 5 PM IST",
+    "required": false
+  },
+  {
+    "name": "change_order_process",
+    "label": "Change Order Process",
+    "type": "textarea",
+    "hint": "Define how scope, price, or timeline changes will be approved",
+    "required": false
+  },
   {
     "name": "service_term_start",
     "label": "Service Start Date",
@@ -135,7 +163,19 @@
     "hint": "Does contract auto-renew?",
     "required": false
   },
-
+  {
+    "name": "currency",
+    "label": "Currency",
+    "type": "dropdown",
+    "options": [
+      "INR",
+      "USD",
+      "EUR",
+      "GBP"
+    ],
+    "hint": "Select currency for service fee",
+    "required": true
+  },
   {
     "name": "service_fee",
     "label": "Total Service Fee",
@@ -144,11 +184,23 @@
     "required": true
   },
   {
+    "name": "tax_clause",
+    "label": "Tax Clause",
+    "type": "dropdown",
+    "options": [
+      "Inclusive of Taxes",
+      "Exclusive of Taxes"
+    ],
+    "hint": "Select whether service fee includes taxes",
+    "required": false
+  },
+  {
     "name": "payment_structure",
     "label": "Payment Structure",
     "type": "group",
     "repeatable": true,
     "required": true,
+    "min": 1,
     "fields": [
       {
         "name": "milestone",
@@ -177,9 +229,44 @@
     "name": "payment_mode",
     "label": "Payment Mode",
     "type": "dropdown",
-    "options": ["Bank Transfer", "Cheque", "UPI", "Cash"],
+    "options": [
+      "Bank Transfer",
+      "Cheque",
+      "UPI",
+      "Cash"
+    ],
     "hint": "Select payment mode",
     "required": true
+  },
+  {
+    "name": "reimbursable_expenses",
+    "label": "Reimbursable Expenses",
+    "type": "group",
+    "repeatable": true,
+    "required": false,
+    "fields": [
+      {
+        "name": "expense_type",
+        "label": "Expense Type",
+        "type": "text",
+        "required": true,
+        "hint": "e.g., Travel, Software, Accommodation"
+      },
+      {
+        "name": "expense_limit",
+        "label": "Expense Limit",
+        "type": "number",
+        "required": false,
+        "hint": "Enter reimbursable amount or cap"
+      },
+      {
+        "name": "expense_notes",
+        "label": "Expense Notes",
+        "type": "text",
+        "required": false,
+        "hint": "Enter reimbursement conditions"
+      }
+    ]
   },
   {
     "name": "late_payment_penalty",
@@ -188,7 +275,6 @@
     "hint": "Penalty terms for delayed payment",
     "required": false
   },
-
   {
     "name": "confidentiality_clause",
     "label": "Confidentiality Clause",
@@ -207,10 +293,23 @@
     "name": "intellectual_property_rights",
     "label": "Intellectual Property Rights",
     "type": "textarea",
-    "hint": "Ownership of work/product",
+    "hint": "Ownership of work or product",
     "required": true
   },
-
+  {
+    "name": "background_ip",
+    "label": "Background IP",
+    "type": "textarea",
+    "hint": "List proprietary tools, code, frameworks, or know-how the provider already owns",
+    "required": false
+  },
+  {
+    "name": "moral_rights_waiver",
+    "label": "Moral Rights Waiver",
+    "type": "boolean",
+    "hint": "Tick if the provider waives moral rights where legally permitted",
+    "required": false
+  },
   {
     "name": "liability_clause",
     "label": "Limitation of Liability",
@@ -225,13 +324,50 @@
     "hint": "Indemnification terms",
     "required": false
   },
-
+  {
+    "name": "non_solicitation_applicable",
+    "label": "Non-Solicitation Clause Included",
+    "type": "boolean",
+    "hint": "Tick if the client is restricted from hiring or soliciting the provider's employees or contractors",
+    "required": false
+  },
+  {
+    "name": "non_solicitation_period_months",
+    "label": "Non-Solicitation Period (Months)",
+    "type": "number",
+    "hint": "Enter non-solicitation period in months",
+    "required": true,
+    "show_if": "non_solicitation_applicable == true"
+  },
+  {
+    "name": "non_solicitation_details",
+    "label": "Non-Solicitation Details",
+    "type": "textarea",
+    "hint": "Describe the employees, consultants, or customers covered",
+    "required": true,
+    "show_if": "non_solicitation_applicable == true"
+  },
+  {
+    "name": "data_processing_required",
+    "label": "Separate Data Processing Agreement Required",
+    "type": "boolean",
+    "hint": "Tick if the provider handles personal or customer data and a DPA is needed",
+    "required": false
+  },
+  {
+    "name": "termination_for_convenience",
+    "label": "Termination for Convenience Allowed",
+    "type": "boolean",
+    "hint": "Tick if either party may terminate without breach, subject to notice",
+    "required": false
+  },
   {
     "name": "termination_notice_days",
     "label": "Termination Notice (Days)",
     "type": "number",
     "hint": "Enter notice period",
-    "required": false
+    "required": true,
+    "show_if": "termination_for_convenience == true"
   },
   {
     "name": "termination_conditions",
@@ -240,7 +376,13 @@
     "hint": "Conditions for termination",
     "required": false
   },
-
+  {
+    "name": "survival_clause",
+    "label": "Survival Clause",
+    "type": "textarea",
+    "hint": "List which clauses survive termination, such as confidentiality, indemnity, and intellectual property",
+    "required": false
+  },
   {
     "name": "force_majeure",
     "label": "Force Majeure Clause",
@@ -248,12 +390,11 @@
     "hint": "Events beyond control",
     "required": false
   },
-
   {
     "name": "dispute_resolution",
     "label": "Dispute Resolution",
     "type": "textarea",
-    "hint": "Arbitration/mediation details",
+    "hint": "Arbitration or mediation details",
     "required": false
   },
   {
@@ -270,13 +411,13 @@
     "hint": "Enter court jurisdiction",
     "required": true
   },
-
   {
     "name": "signatures",
     "label": "Signatures",
     "type": "group",
     "repeatable": true,
     "required": true,
+    "min": 2,
     "fields": [
       {
         "name": "party_name",
@@ -301,7 +442,6 @@
       }
     ]
   },
-
   {
     "name": "witness_details",
     "label": "Witness Details",

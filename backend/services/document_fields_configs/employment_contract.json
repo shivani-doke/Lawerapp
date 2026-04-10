@@ -31,9 +31,22 @@
     "name": "employer_type",
     "label": "Employer Type",
     "type": "dropdown",
-    "options": ["Company", "LLP", "Partnership", "Individual"],
+    "options": [
+      "Company",
+      "LLP",
+      "Partnership",
+      "Individual"
+    ],
     "hint": "Select employer type",
     "required": true
+  },
+  {
+    "name": "employer_registration_number",
+    "label": "Employer CIN / LLPIN / Registration Number",
+    "type": "text",
+    "hint": "Enter employer registration number",
+    "required": false,
+    "show_if": "employer_type != 'Individual'"
   },
   {
     "name": "employee_name",
@@ -58,7 +71,7 @@
   },
   {
     "name": "employee_id_proof",
-    "label": "ID Proof (Aadhaar/PAN)",
+    "label": "ID Proof (Aadhaar / PAN)",
     "type": "text",
     "hint": "Enter ID proof details",
     "required": false
@@ -75,7 +88,7 @@
     "label": "Department",
     "type": "text",
     "hint": "Enter department name",
-    "required": false
+    "required": true
   },
   {
     "name": "job_location",
@@ -98,6 +111,19 @@
     "required": true
   },
   {
+    "name": "seniority_level",
+    "label": "Seniority Level",
+    "type": "dropdown",
+    "options": [
+      "Junior",
+      "Mid-Level",
+      "Senior",
+      "Executive"
+    ],
+    "hint": "Select role seniority level",
+    "required": false
+  },
+  {
     "name": "joining_date",
     "label": "Joining Date",
     "type": "date",
@@ -109,14 +135,27 @@
     "label": "Probation Period (Months)",
     "type": "number",
     "hint": "Enter probation period duration",
-    "required": false
+    "required": true
   },
   {
     "name": "confirmation_terms",
     "label": "Confirmation Terms",
     "type": "textarea",
     "hint": "Conditions for confirmation after probation",
-    "required": false
+    "required": true
+  },
+  {
+    "name": "salary_currency",
+    "label": "Salary Currency",
+    "type": "dropdown",
+    "options": [
+      "INR",
+      "USD",
+      "EUR",
+      "GBP"
+    ],
+    "hint": "Select salary currency",
+    "required": true
   },
   {
     "name": "salary_ctc",
@@ -129,16 +168,57 @@
     "name": "salary_breakup",
     "label": "Salary Breakup",
     "type": "textarea",
-    "hint": "Enter breakdown (basic, HRA, allowances, etc.)",
-    "required": false
+    "hint": "Enter breakup of basic, HRA, allowances, etc.",
+    "required": true
   },
   {
     "name": "payment_frequency",
     "label": "Payment Frequency",
     "type": "dropdown",
-    "options": ["Monthly", "Bi-Weekly", "Weekly"],
+    "options": [
+      "Monthly",
+      "Bi-Weekly",
+      "Weekly"
+    ],
     "hint": "Select salary payment frequency",
     "required": true
+  },
+  {
+    "name": "variable_pay_applicable",
+    "label": "Variable Pay / Bonus Included",
+    "type": "boolean",
+    "hint": "Tick if part of compensation is performance-based",
+    "required": false
+  },
+  {
+    "name": "variable_pay_details",
+    "label": "Variable Pay / Bonus Details",
+    "type": "textarea",
+    "hint": "Describe bonus, incentive, commission, or target-linked pay",
+    "required": true,
+    "show_if": "variable_pay_applicable == true"
+  },
+  {
+    "name": "relocation_allowance_applicable",
+    "label": "Relocation Allowance Included",
+    "type": "boolean",
+    "hint": "Tick if the employee is receiving relocation support",
+    "required": false
+  },
+  {
+    "name": "relocation_allowance_details",
+    "label": "Relocation Allowance Details",
+    "type": "textarea",
+    "hint": "Describe flights, shipping, temporary stay, or reimbursement terms",
+    "required": true,
+    "show_if": "relocation_allowance_applicable == true"
+  },
+  {
+    "name": "notice_period_buyout",
+    "label": "Notice Period Buy-out",
+    "type": "textarea",
+    "hint": "Describe early release or buy-out arrangement from previous employer, if any",
+    "required": false
   },
   {
     "name": "working_hours",
@@ -151,8 +231,15 @@
     "name": "leave_policy",
     "label": "Leave Policy",
     "type": "textarea",
-    "hint": "Mention annual leave, sick leave, etc.",
-    "required": false
+    "hint": "Mention annual leave, sick leave, and public holiday policy",
+    "required": true
+  },
+  {
+    "name": "code_of_conduct",
+    "label": "Code of Conduct",
+    "type": "textarea",
+    "hint": "Company policies and behavior expectations",
+    "required": true
   },
   {
     "name": "notice_period_days",
@@ -173,27 +260,56 @@
     "label": "Confidentiality Clause",
     "type": "textarea",
     "hint": "Employee confidentiality obligations",
-    "required": false
+    "required": true
   },
   {
     "name": "non_compete_clause",
     "label": "Non-Compete Clause",
     "type": "textarea",
     "hint": "Restrictions on working with competitors",
-    "required": false
+    "required": true,
+    "show_if": "seniority_level == 'Executive'"
   },
   {
     "name": "intellectual_property_clause",
     "label": "Intellectual Property Clause",
     "type": "textarea",
     "hint": "Ownership of work created by employee",
+    "required": true
+  },
+  {
+    "name": "data_privacy_clause",
+    "label": "Data Privacy Clause",
+    "type": "textarea",
+    "hint": "Data privacy, DPDP, GDPR, or customer data handling obligations",
     "required": false
   },
   {
-    "name": "code_of_conduct",
-    "label": "Code of Conduct",
+    "name": "background_check_consent",
+    "label": "Background Check Consent",
+    "type": "boolean",
+    "hint": "Tick if the offer is contingent on verification and background checks",
+    "required": false
+  },
+  {
+    "name": "company_assets_clause",
+    "label": "Company Assets Clause",
     "type": "textarea",
-    "hint": "Company policies and behavior expectations",
+    "hint": "List laptop, phone, access card, vehicle, or other company assets and return obligations",
+    "required": false
+  },
+  {
+    "name": "conflict_of_interest_clause",
+    "label": "Conflict of Interest / Moonlighting Clause",
+    "type": "textarea",
+    "hint": "Restrictions on side business, secondary employment, or conflicts",
+    "required": false
+  },
+  {
+    "name": "retirement_age",
+    "label": "Retirement Age",
+    "type": "number",
+    "hint": "Enter retirement age, if applicable",
     "required": false
   },
   {
@@ -216,6 +332,13 @@
     "type": "text",
     "hint": "Authorized signatory name",
     "required": true
+  },
+  {
+    "name": "employer_signatory_title",
+    "label": "Employer Signatory Title",
+    "type": "text",
+    "hint": "Enter signatory designation",
+    "required": false
   },
   {
     "name": "employee_signature",

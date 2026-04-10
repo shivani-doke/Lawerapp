@@ -23,6 +23,10 @@ class DocumentField {
   final bool repeatable;
   final List<DocumentField> fields;
   final Map<String, List<String>> visibleWhen;
+  final dynamic defaultValue;
+  final String? showIf;
+  final int? minItems;
+  final int? maxItems;
 
   DocumentField({
     required this.name,
@@ -34,6 +38,10 @@ class DocumentField {
     this.repeatable = false,
     this.fields = const [],
     this.visibleWhen = const {},
+    this.defaultValue,
+    this.showIf,
+    this.minItems,
+    this.maxItems,
   });
 
   factory DocumentField.fromJson(Map<String, dynamic> json) {
@@ -74,6 +82,10 @@ class DocumentField {
           ? rawOptions.map((e) => e.toString()).toList()
           : const [],
       repeatable: json['repeatable'] == true,
+      defaultValue: json['default'],
+      showIf: json['show_if']?.toString(),
+      minItems: json['min'] is num ? (json['min'] as num).toInt() : null,
+      maxItems: json['max'] is num ? (json['max'] as num).toInt() : null,
       fields: rawFields is List
           ? rawFields
               .whereType<Map<String, dynamic>>()
@@ -221,8 +233,10 @@ class _AffidavitPageState extends State<AffidavitPage> {
   }
 
   void _setFieldText(String fieldName, String value) {
-    final controller =
-        _fieldControllers.putIfAbsent(fieldName, () => TextEditingController());
+    final controller = _fieldControllers.putIfAbsent(
+      fieldName,
+      () => TextEditingController(),
+    );
     controller.text = value;
   }
 
@@ -375,7 +389,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
           (nestedField.type == 'group' && nestedField.fields.isNotEmpty)) {
         continue;
       }
-      controllers[nestedField.name] = TextEditingController();
+      controllers[nestedField.name] = TextEditingController(
+        text: nestedField.defaultValue?.toString() ?? '',
+      );
     }
     return controllers;
   }
@@ -385,7 +401,12 @@ class _AffidavitPageState extends State<AffidavitPage> {
     for (final nestedField in groupField.fields) {
       if (nestedField.type == 'dropdown') {
         values[nestedField.name] =
-            nestedField.options.isNotEmpty ? nestedField.options.first : '';
+            nestedField.defaultValue != null &&
+                    nestedField.options.contains(nestedField.defaultValue)
+                ? nestedField.defaultValue.toString()
+                : (nestedField.options.isNotEmpty
+                    ? nestedField.options.first
+                    : '');
       }
     }
     return values;
@@ -416,14 +437,37 @@ class _AffidavitPageState extends State<AffidavitPage> {
       return;
     }
 
-    _groupFieldControllers[field.name] = [_createGroupControllerRow(field)];
-    _groupDropdownValues[field.name] = [_createGroupDropdownRow(field)];
-    _groupBoolValues[field.name] = [_createGroupBoolRow(field)];
-    _groupMultiselectValues[field.name] = [_createGroupMultiselectRow(field)];
+    final initialRowCount = field.minItems != null && field.minItems! > 0
+        ? field.minItems!
+        : 1;
+
+    _groupFieldControllers[field.name] = <Map<String, TextEditingController>>[];
+    _groupDropdownValues[field.name] = <Map<String, String>>[];
+    _groupBoolValues[field.name] = <Map<String, bool>>[];
+    _groupMultiselectValues[field.name] = <Map<String, Set<String>>>[];
+
+    for (var rowIndex = 0; rowIndex < initialRowCount; rowIndex++) {
+      _groupFieldControllers[field.name]!.add(_createGroupControllerRow(field));
+      _groupDropdownValues[field.name]!.add(_createGroupDropdownRow(field));
+      _groupBoolValues[field.name]!.add(_createGroupBoolRow(field));
+      _groupMultiselectValues[field.name]!
+          .add(_createGroupMultiselectRow(field));
+    }
   }
 
   void _addGroupRow(DocumentField field) {
     if (field.type != 'group' || field.fields.isEmpty) {
+      return;
+    }
+
+    final maxItems = field.maxItems;
+    final currentCount = _groupFieldControllers[field.name]?.length ?? 0;
+    if (maxItems != null && currentCount >= maxItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${field.label} allows a maximum of $maxItems entries.'),
+        ),
+      );
       return;
     }
 
@@ -457,6 +501,16 @@ class _AffidavitPageState extends State<AffidavitPage> {
       return;
     }
 
+    final minItems = field.minItems;
+    if (minItems != null && controllerRows.length <= minItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${field.label} requires at least $minItems entries.'),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       for (final controller in controllerRows[index].values) {
         controller.dispose();
@@ -468,7 +522,95 @@ class _AffidavitPageState extends State<AffidavitPage> {
     });
   }
 
-  bool _isFieldVisible(DocumentField field) {
+  dynamic _getTopLevelFieldValue(DocumentField field) {
+    if (_dropdownValues.containsKey(field.name)) {
+      return _dropdownValues[field.name] ?? '';
+    }
+    if (_boolValues.containsKey(field.name)) {
+      return _boolValues[field.name] ?? false;
+    }
+    if (_multiselectValues.containsKey(field.name)) {
+      return _multiselectValues[field.name] ?? <String>{};
+    }
+    return _fieldControllers[field.name]?.text ?? '';
+  }
+
+  dynamic _getGroupFieldValue(
+    DocumentField groupField,
+    DocumentField subField,
+    int rowIndex,
+  ) {
+    if (subField.type == 'dropdown') {
+      return _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
+          '';
+    }
+    if (subField.type == 'boolean') {
+      return _groupBoolValues[groupField.name]?[rowIndex][subField.name] ??
+          false;
+    }
+    if (subField.type == 'multiselect') {
+      return _groupMultiselectValues[groupField.name]?[rowIndex]
+              [subField.name] ??
+          <String>{};
+    }
+    return _groupFieldControllers[groupField.name]?[rowIndex][subField.name]
+            ?.text ??
+        '';
+  }
+
+  double? _parseNumericValue(dynamic rawValue) {
+    if (rawValue == null) return null;
+    final normalized = rawValue
+        .toString()
+        .replaceAll(',', '')
+        .replaceAll('%', '')
+        .replaceAll(RegExp(r'[^\d.\-]'), '')
+        .trim();
+    if (normalized.isEmpty) return null;
+    return double.tryParse(normalized);
+  }
+
+  bool _matchesShowIfCondition(
+    dynamic actualValue,
+    String operator,
+    String expectedToken,
+  ) {
+    final actualNumber = _parseNumericValue(actualValue);
+    final expectedNumber = double.tryParse(expectedToken);
+
+    if (actualNumber != null && expectedNumber != null) {
+      switch (operator) {
+        case '<':
+          return actualNumber < expectedNumber;
+        case '<=':
+          return actualNumber <= expectedNumber;
+        case '>':
+          return actualNumber > expectedNumber;
+        case '>=':
+          return actualNumber >= expectedNumber;
+        case '!=':
+          return actualNumber != expectedNumber;
+        case '=':
+        case '==':
+          return actualNumber == expectedNumber;
+      }
+    }
+
+    final normalizedActual = (actualValue ?? '').toString().trim().toLowerCase();
+    final normalizedExpected = expectedToken.trim().toLowerCase();
+
+    switch (operator) {
+      case '!=':
+        return normalizedActual != normalizedExpected;
+      case '=':
+      case '==':
+        return normalizedActual == normalizedExpected;
+      default:
+        return false;
+    }
+  }
+
+  bool _matchesVisibleWhen(DocumentField field) {
     if (field.visibleWhen.isEmpty) {
       return true;
     }
@@ -491,6 +633,53 @@ class _AffidavitPageState extends State<AffidavitPage> {
       return (_boolValues[fieldName] ?? false).toString();
     }
     return (_fieldControllers[fieldName]?.text ?? '').trim();
+  }
+
+  bool _isFieldVisible(
+    DocumentField field, {
+    DocumentField? groupField,
+    int? rowIndex,
+  }) {
+    if (!_matchesVisibleWhen(field)) {
+      return false;
+    }
+
+    final condition = field.showIf?.trim();
+    if (condition == null || condition.isEmpty) {
+      return true;
+    }
+
+    final match = RegExp(r'^\s*([a-zA-Z0-9_]+)\s*(<=|>=|==|!=|=|<|>)\s*(.+?)\s*$')
+        .firstMatch(condition);
+    if (match == null) {
+      return true;
+    }
+
+    final targetFieldName = match.group(1)!;
+    final operator = match.group(2)!;
+    var expectedToken = match.group(3)!.trim();
+    if ((expectedToken.startsWith('"') && expectedToken.endsWith('"')) ||
+        (expectedToken.startsWith("'") && expectedToken.endsWith("'"))) {
+      expectedToken = expectedToken.substring(1, expectedToken.length - 1);
+    }
+
+    dynamic actualValue;
+    if (groupField != null && rowIndex != null) {
+      final matches =
+          groupField.fields.where((nested) => nested.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getGroupFieldValue(groupField, matches.first, rowIndex);
+    } else {
+      final matches = _fields.where((candidate) => candidate.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getTopLevelFieldValue(matches.first);
+    }
+
+    return _matchesShowIfCondition(actualValue, operator, expectedToken);
   }
 
   bool _isTopLevelFieldMissing(DocumentField field) {
@@ -522,7 +711,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
     DocumentField subField,
     int rowIndex,
   ) {
-    if (!_isFieldVisible(subField)) {
+    if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
       return false;
     }
     if (!subField.required) {
@@ -553,7 +742,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
 
   bool _isGroupRowEmpty(DocumentField groupField, int rowIndex) {
     for (final subField in groupField.fields) {
-      if (!_isFieldVisible(subField)) {
+      if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
         continue;
       }
       if (subField.type == 'dropdown') {
@@ -662,7 +851,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
 
         final rowData = <String, dynamic>{};
         for (final subField in field.fields) {
-          if (!_isFieldVisible(subField)) {
+          if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
             continue;
           }
           if (subField.type == 'dropdown') {
@@ -729,13 +918,17 @@ class _AffidavitPageState extends State<AffidavitPage> {
         _initializeGroupField(field);
       } else if (field.type == 'dropdown') {
         _dropdownValues[field.name] =
-            field.options.isNotEmpty ? field.options.first : '';
+            field.defaultValue != null && field.options.contains(field.defaultValue)
+                ? field.defaultValue.toString()
+                : (field.options.isNotEmpty ? field.options.first : '');
       } else if (field.type == 'boolean') {
-        _boolValues[field.name] = false;
+        _boolValues[field.name] = field.defaultValue == true;
       } else if (field.type == 'multiselect') {
         _multiselectValues[field.name] = <String>{};
       } else {
-        _fieldControllers[field.name] = TextEditingController();
+        _fieldControllers[field.name] = TextEditingController(
+          text: field.defaultValue?.toString() ?? '',
+        );
       }
     }
     setState(() {});
@@ -1440,6 +1633,9 @@ class _AffidavitPageState extends State<AffidavitPage> {
 
 
   Widget _buildField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     if (field.type == 'group' && field.fields.isNotEmpty) {
       return _buildGroupField(field);
     }
@@ -1533,7 +1729,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
       case 'date':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1553,7 +1749,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
       case 'textarea':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1575,7 +1771,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
       case 'number':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1597,7 +1793,7 @@ class _AffidavitPageState extends State<AffidavitPage> {
       default:
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1666,12 +1862,18 @@ class _AffidavitPageState extends State<AffidavitPage> {
   }
 
   Widget _buildGroupField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     final controllerRows = _groupFieldControllers[field.name] ?? const [];
     final dropdownRows = _groupDropdownValues[field.name] ?? const [];
     final boolRows = _groupBoolValues[field.name] ?? const [];
     final multiselectRows = _groupMultiselectValues[field.name] ?? const [];
 
     Widget buildSubField(DocumentField subField, int rowIndex) {
+      if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
+        return const SizedBox.shrink();
+      }
       final label = subField.required ? '${subField.label} *' : subField.label;
       Widget input;
 
@@ -1885,7 +2087,10 @@ class _AffidavitPageState extends State<AffidavitPage> {
                 ),
                 if (field.repeatable)
                   TextButton.icon(
-                    onPressed: () => _addGroupRow(field),
+                    onPressed: field.maxItems != null &&
+                            controllerRows.length >= field.maxItems!
+                        ? null
+                        : () => _addGroupRow(field),
                     icon: const Icon(Icons.add),
                     label: const Text('Add'),
                   ),

@@ -22,6 +22,10 @@ class DocumentField {
   final List<String> options;
   final bool repeatable;
   final List<DocumentField> fields;
+  final dynamic defaultValue;
+  final String? showIf;
+  final int? minItems;
+  final int? maxItems;
 
   DocumentField({
     required this.name,
@@ -32,6 +36,10 @@ class DocumentField {
     this.options = const [],
     this.repeatable = false,
     this.fields = const [],
+    this.defaultValue,
+    this.showIf,
+    this.minItems,
+    this.maxItems,
   });
 
   factory DocumentField.fromJson(Map<String, dynamic> json) {
@@ -51,6 +59,10 @@ class DocumentField {
           ? rawOptions.map((e) => e.toString()).toList()
           : const [],
       repeatable: json['repeatable'] == true,
+      defaultValue: json['default'],
+      showIf: json['show_if']?.toString(),
+      minItems: json['min'] is num ? (json['min'] as num).toInt() : null,
+      maxItems: json['max'] is num ? (json['max'] as num).toInt() : null,
       fields: rawFields is List
           ? rawFields
               .whereType<Map>()
@@ -395,7 +407,9 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
           (nestedField.type == 'group' && nestedField.fields.isNotEmpty)) {
         continue;
       }
-      controllers[nestedField.name] = TextEditingController();
+      controllers[nestedField.name] = TextEditingController(
+        text: nestedField.defaultValue?.toString() ?? '',
+      );
     }
     return controllers;
   }
@@ -405,7 +419,12 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
     for (final nestedField in groupField.fields) {
       if (nestedField.type == 'dropdown') {
         values[nestedField.name] =
-            nestedField.options.isNotEmpty ? nestedField.options.first : '';
+            nestedField.defaultValue != null &&
+                    nestedField.options.contains(nestedField.defaultValue)
+                ? nestedField.defaultValue.toString()
+                : (nestedField.options.isNotEmpty
+                    ? nestedField.options.first
+                    : '');
       }
     }
     return values;
@@ -415,7 +434,7 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
     final values = <String, bool>{};
     for (final nestedField in groupField.fields) {
       if (nestedField.type == 'boolean') {
-        values[nestedField.name] = false;
+        values[nestedField.name] = nestedField.defaultValue == true;
       }
     }
     return values;
@@ -436,16 +455,40 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
       return;
     }
 
-    _groupFieldControllers[field.name] = [_createGroupControllerRow(field)];
-    _groupDropdownValues[field.name] = [_createGroupDropdownRow(field)];
-    _groupBoolValues[field.name] = [_createGroupBoolRow(field)];
-    _groupMultiselectValues[field.name] = [_createGroupMultiselectRow(field)];
-    _linkedClientNamesByGroup[field.name] = [null];
-    _linkedClientIdsByGroup[field.name] = [null];
+    final initialRowCount = field.minItems != null && field.minItems! > 0
+        ? field.minItems!
+        : 1;
+
+    _groupFieldControllers[field.name] = <Map<String, TextEditingController>>[];
+    _groupDropdownValues[field.name] = <Map<String, String>>[];
+    _groupBoolValues[field.name] = <Map<String, bool>>[];
+    _groupMultiselectValues[field.name] = <Map<String, Set<String>>>[];
+    for (var rowIndex = 0; rowIndex < initialRowCount; rowIndex++) {
+      _groupFieldControllers[field.name]!.add(_createGroupControllerRow(field));
+      _groupDropdownValues[field.name]!.add(_createGroupDropdownRow(field));
+      _groupBoolValues[field.name]!.add(_createGroupBoolRow(field));
+      _groupMultiselectValues[field.name]!
+          .add(_createGroupMultiselectRow(field));
+    }
+    _linkedClientNamesByGroup[field.name] =
+        List<String?>.filled(initialRowCount, null);
+    _linkedClientIdsByGroup[field.name] =
+        List<String?>.filled(initialRowCount, null);
   }
 
   void _addGroupRow(DocumentField field) {
     if (field.type != 'group' || field.fields.isEmpty) {
+      return;
+    }
+
+    final maxItems = field.maxItems;
+    final currentCount = _groupFieldControllers[field.name]?.length ?? 0;
+    if (maxItems != null && currentCount >= maxItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${field.label} allows a maximum of $maxItems entries.'),
+        ),
+      );
       return;
     }
 
@@ -483,6 +526,16 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
       return;
     }
 
+    final minItems = field.minItems;
+    if (minItems != null && controllerRows.length <= minItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${field.label} requires at least $minItems entries.'),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       for (final controller in controllerRows[index].values) {
         controller.dispose();
@@ -502,7 +555,154 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
     });
   }
 
+  dynamic _getTopLevelFieldValue(DocumentField field) {
+    if (_dropdownValues.containsKey(field.name)) {
+      return _dropdownValues[field.name] ?? '';
+    }
+    if (_boolValues.containsKey(field.name)) {
+      return _boolValues[field.name] ?? false;
+    }
+    if (_multiselectValues.containsKey(field.name)) {
+      return _multiselectValues[field.name] ?? <String>{};
+    }
+    return _fieldControllers[field.name]?.text ?? '';
+  }
+
+  dynamic _getGroupFieldValue(
+    DocumentField groupField,
+    DocumentField subField,
+    int rowIndex,
+  ) {
+    if (subField.type == 'dropdown') {
+      return _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
+          '';
+    }
+    if (subField.type == 'boolean') {
+      return _groupBoolValues[groupField.name]?[rowIndex][subField.name] ??
+          false;
+    }
+    if (subField.type == 'multiselect') {
+      return _groupMultiselectValues[groupField.name]?[rowIndex]
+              [subField.name] ??
+          <String>{};
+    }
+    return _groupFieldControllers[groupField.name]?[rowIndex][subField.name]
+            ?.text ??
+        '';
+  }
+
+  double? _parseNumericValue(dynamic rawValue) {
+    if (rawValue == null) return null;
+    final normalized = rawValue
+        .toString()
+        .replaceAll(',', '')
+        .replaceAll('%', '')
+        .replaceAll(RegExp(r'[^\d.\-]'), '')
+        .trim();
+    if (normalized.isEmpty) return null;
+    return double.tryParse(normalized);
+  }
+
+  bool _matchesShowIfCondition(
+    dynamic actualValue,
+    String operator,
+    String expectedToken,
+  ) {
+    final actualNumber = _parseNumericValue(actualValue);
+    final expectedNumber = double.tryParse(expectedToken);
+
+    if (actualNumber != null && expectedNumber != null) {
+      switch (operator) {
+        case '<':
+          return actualNumber < expectedNumber;
+        case '<=':
+          return actualNumber <= expectedNumber;
+        case '>':
+          return actualNumber > expectedNumber;
+        case '>=':
+          return actualNumber >= expectedNumber;
+        case '!=':
+          return actualNumber != expectedNumber;
+        case '=':
+        case '==':
+          return actualNumber == expectedNumber;
+      }
+    }
+
+    final normalizedActual = (actualValue ?? '').toString().trim().toLowerCase();
+    final normalizedExpected = expectedToken.trim().toLowerCase();
+
+    switch (operator) {
+      case '!=':
+        return normalizedActual != normalizedExpected;
+      case '=':
+      case '==':
+        return normalizedActual == normalizedExpected;
+      default:
+        return false;
+    }
+  }
+
+  bool _isFieldVisible(
+    DocumentField field, {
+    DocumentField? groupField,
+    int? rowIndex,
+  }) {
+    if (field.name == 'guardian_details' && groupField == null) {
+      final coOwnerRows = _groupFieldControllers['co_owners'] ?? const [];
+      for (var index = 0; index < coOwnerRows.length; index++) {
+        final isMinor = _groupBoolValues['co_owners']?[index]['is_minor'] ?? false;
+        if (isMinor) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    final condition = field.showIf?.trim();
+    if (condition == null || condition.isEmpty) {
+      return true;
+    }
+
+    final match = RegExp(
+      r'^\s*([a-zA-Z0-9_]+)\s*(<=|>=|==|!=|=|<|>)\s*(.+?)\s*$',
+    ).firstMatch(condition);
+    if (match == null) {
+      return true;
+    }
+
+    final targetFieldName = match.group(1)!;
+    final operator = match.group(2)!;
+    var expectedToken = match.group(3)!.trim();
+    if ((expectedToken.startsWith('"') && expectedToken.endsWith('"')) ||
+        (expectedToken.startsWith("'") && expectedToken.endsWith("'"))) {
+      expectedToken = expectedToken.substring(1, expectedToken.length - 1);
+    }
+
+    dynamic actualValue;
+    if (groupField != null && rowIndex != null) {
+      final matches =
+          groupField.fields.where((nested) => nested.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getGroupFieldValue(groupField, matches.first, rowIndex);
+    } else {
+      final matches =
+          _fields.where((candidate) => candidate.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getTopLevelFieldValue(matches.first);
+    }
+
+    return _matchesShowIfCondition(actualValue, operator, expectedToken);
+  }
+
   bool _isTopLevelFieldMissing(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return false;
+    }
     if (!field.required) {
       return false;
     }
@@ -528,6 +728,9 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
     DocumentField subField,
     int rowIndex,
   ) {
+    if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
+      return false;
+    }
     if (!subField.required) {
       return false;
     }
@@ -556,6 +759,9 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
 
   bool _isGroupRowEmpty(DocumentField groupField, int rowIndex) {
     for (final subField in groupField.fields) {
+      if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
+        continue;
+      }
       if (subField.type == 'dropdown') {
         final value =
             _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
@@ -600,6 +806,9 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
     final missingFields = <String>[];
 
     for (final field in _fields) {
+      if (!_isFieldVisible(field)) {
+        continue;
+      }
       if (field.type == 'group' && field.fields.isNotEmpty) {
         final rows = _groupFieldControllers[field.name] ?? const [];
         if (field.required && rows.isEmpty) {
@@ -636,6 +845,9 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
   }
 
   dynamic _serializeTopLevelFieldValue(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return null;
+    }
     if (field.type == 'dropdown') {
       return _dropdownValues[field.name] ?? '';
     }
@@ -656,6 +868,9 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
 
         final rowData = <String, dynamic>{};
         for (final subField in field.fields) {
+          if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
+            continue;
+          }
           if (subField.type == 'dropdown') {
             rowData[subField.name] =
                 _groupDropdownValues[field.name]?[rowIndex][subField.name] ??
@@ -720,13 +935,17 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
         _initializeGroupField(field);
       } else if (field.type == 'dropdown') {
         _dropdownValues[field.name] =
-            field.options.isNotEmpty ? field.options.first : '';
+            field.defaultValue != null && field.options.contains(field.defaultValue)
+                ? field.defaultValue.toString()
+                : (field.options.isNotEmpty ? field.options.first : '');
       } else if (field.type == 'boolean') {
-        _boolValues[field.name] = false;
+        _boolValues[field.name] = field.defaultValue == true;
       } else if (field.type == 'multiselect') {
         _multiselectValues[field.name] = <String>{};
       } else {
-        _fieldControllers[field.name] = TextEditingController();
+        _fieldControllers[field.name] = TextEditingController(
+          text: field.defaultValue?.toString() ?? '',
+        );
       }
     }
     setState(() {});
@@ -915,6 +1134,14 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
       return;
     }
 
+    final partitionRuleError = _validatePartitionDeedRules();
+    if (partitionRuleError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(partitionRuleError)),
+      );
+      return;
+    }
+
     setState(() {
       _isGenerating = true;
       _pdfLoadFailed = false; // Reset PDF failure on new generation
@@ -999,6 +1226,64 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
     }
 
     return parsed;
+  }
+
+  String? _validatePartitionDeedRules() {
+    double sumVisibleGroupField(String groupName, String fieldName) {
+      final rows = _groupFieldControllers[groupName] ?? const [];
+      var total = 0.0;
+      for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+        final groupFieldMatch =
+            _fields.where((field) => field.name == groupName).toList();
+        if (groupFieldMatch.isEmpty) continue;
+        final groupField = groupFieldMatch.first;
+        final subFieldMatch =
+            groupField.fields.where((field) => field.name == fieldName).toList();
+        if (subFieldMatch.isEmpty) continue;
+        final subField = subFieldMatch.first;
+        if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
+          continue;
+        }
+        final value = _groupFieldControllers[groupName]?[rowIndex][fieldName]?.text ?? '';
+        final parsed = _parseNumericValue(value);
+        if (parsed != null) {
+          total += parsed;
+        }
+      }
+      return total;
+    }
+
+    final preShareTotal = sumVisibleGroupField('co_owners', 'share_percentage');
+    if ((preShareTotal - 100).abs() > 0.01) {
+      return 'Pre-partition share percentages in Co-owners must total 100%.';
+    }
+
+    final postShareTotal =
+        sumVisibleGroupField('allotment_details', 'post_share_percentage');
+    if ((postShareTotal - 100).abs() > 0.01) {
+      return 'Post-partition share percentages in Allotment Details must total 100%.';
+    }
+
+    final coOwnerRows = _groupFieldControllers['co_owners'] ?? const [];
+    var hasMinorCoOwner = false;
+    for (var rowIndex = 0; rowIndex < coOwnerRows.length; rowIndex++) {
+      final isMinor =
+          _groupBoolValues['co_owners']?[rowIndex]['is_minor'] ?? false;
+      if (isMinor) {
+        hasMinorCoOwner = true;
+        break;
+      }
+    }
+
+    if (hasMinorCoOwner) {
+      final guardianDetails =
+          _fieldControllers['guardian_details']?.text.trim() ?? '';
+      if (guardianDetails.isEmpty) {
+        return 'Guardian Details are required when any co-owner is a minor.';
+      }
+    }
+
+    return null;
   }
 
 
@@ -1449,6 +1734,9 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
 
 
   Widget _buildField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     if (field.type == 'group' && field.fields.isNotEmpty) {
       return _buildGroupField(field);
     }
@@ -1471,6 +1759,7 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
             : (items.isNotEmpty ? items.first.value : null);
         input = DropdownButtonFormField<String>(
           value: value,
+          isExpanded: true,
           items: items,
           onChanged: (selected) {
             if (selected == null) return;
@@ -1478,6 +1767,8 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
           },
           decoration: InputDecoration(
             hintText: field.hint,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             filled: true,
             fillColor: const Color(0xfff9fafb),
             border: OutlineInputBorder(
@@ -1541,7 +1832,8 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
       case 'date':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () =>
+              TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1561,7 +1853,8 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
       case 'textarea':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () =>
+              TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1583,7 +1876,8 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
       case 'number':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () =>
+              TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1605,7 +1899,8 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
       default:
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () =>
+              TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1643,6 +1938,9 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
   }
 
   Widget _buildGroupField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     final controllerRows = _groupFieldControllers[field.name] ?? const [];
     final dropdownRows = _groupDropdownValues[field.name] ?? const [];
     final boolRows = _groupBoolValues[field.name] ?? const [];
@@ -1650,6 +1948,9 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
     final supportsClientAutofill = field.name == 'co_owners';
 
     Widget buildSubField(DocumentField subField, int rowIndex) {
+      if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
+        return const SizedBox.shrink();
+      }
       final label = subField.required ? '${subField.label} *' : subField.label;
       Widget input;
 
@@ -1668,6 +1969,7 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
               : (items.isNotEmpty ? items.first.value : null);
           input = DropdownButtonFormField<String>(
             value: value,
+            isExpanded: true,
             items: items,
             onChanged: (selected) {
               if (selected == null) return;
@@ -1677,6 +1979,8 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
             },
             decoration: InputDecoration(
               hintText: subField.hint,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
               filled: true,
               fillColor: const Color(0xfff9fafb),
               border: OutlineInputBorder(
@@ -1863,7 +2167,10 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
                 ),
                 if (field.repeatable)
                   TextButton.icon(
-                    onPressed: () => _addGroupRow(field),
+                    onPressed: field.maxItems != null &&
+                            controllerRows.length >= field.maxItems!
+                        ? null
+                        : () => _addGroupRow(field),
                     icon: const Icon(Icons.add),
                     label: const Text('Add'),
                   ),
@@ -1930,7 +2237,8 @@ class _PartitionDeedPageState extends State<PartitionDeedPage> {
                             ),
                         ],
                       ),
-                    ...field.fields.map((subField) => buildSubField(subField, rowIndex)),
+                    ...field.fields
+                        .map((subField) => buildSubField(subField, rowIndex)),
                   ],
                 ),
               );

@@ -5,7 +5,7 @@ import json
 import tempfile
 import uuid
 import re
-from html import unescape
+from html import escape, unescape
 from html.parser import HTMLParser
 from datetime import datetime
 from flask import Blueprint, request, jsonify, send_from_directory, abort
@@ -421,6 +421,82 @@ def load_generated_html_content(filename):
         return None
     with open(html_path, "r", encoding="utf-8") as html_file:
         return html_file.read()
+
+
+def get_matching_generated_docx_filename(filename):
+    stem, ext = os.path.splitext(filename)
+    if ext.lower() == ".docx":
+        return filename
+    if ext.lower() == ".pdf":
+        return f"{stem}.docx"
+    return None
+
+
+def build_html_from_docx(filepath):
+    doc = DocxDocument(filepath)
+    blocks = []
+
+    for paragraph in doc.paragraphs:
+        tag = "p"
+        if paragraph.style is not None:
+            style_name = str(paragraph.style.name or "").lower()
+            if "heading 1" in style_name:
+                tag = "h1"
+            elif "heading 2" in style_name:
+                tag = "h2"
+            elif "heading 3" in style_name:
+                tag = "h3"
+
+        styles = []
+        if paragraph.alignment == WD_ALIGN_PARAGRAPH.CENTER:
+            styles.append("text-align:center")
+        elif paragraph.alignment == WD_ALIGN_PARAGRAPH.RIGHT:
+            styles.append("text-align:right")
+        elif paragraph.alignment == WD_ALIGN_PARAGRAPH.JUSTIFY:
+            styles.append("text-align:justify")
+
+        if paragraph.paragraph_format.left_indent:
+            indent_pt = paragraph.paragraph_format.left_indent.pt
+            if indent_pt:
+                styles.append(f"margin-left:{indent_pt:.0f}pt")
+
+        segments = []
+        if paragraph.runs:
+            for run in paragraph.runs:
+                text = escape(run.text or "")
+                if not text and not run._element.xpath(".//w:br"):
+                    continue
+                text = text.replace("\n", "<br>")
+                if run._element.xpath(".//w:br"):
+                    text += "<br>"
+
+                inline_styles = []
+                if run.font.name:
+                    inline_styles.append(f"font-family:{escape(run.font.name)}")
+                if run.font.size:
+                    inline_styles.append(f"font-size:{run.font.size.pt:.0f}px")
+                if run.bold:
+                    inline_styles.append("font-weight:bold")
+                if run.italic:
+                    inline_styles.append("font-style:italic")
+                if run.underline:
+                    inline_styles.append("text-decoration:underline")
+                if run.font.strike:
+                    inline_styles.append("text-decoration:line-through")
+
+                if inline_styles:
+                    segments.append(
+                        f'<span style="{"; ".join(inline_styles)}">{text}</span>'
+                    )
+                else:
+                    segments.append(text)
+        else:
+            segments.append("<br>")
+
+        style_attr = f' style="{"; ".join(styles)}"' if styles else ""
+        blocks.append(f"<{tag}{style_attr}>{''.join(segments) or '<br>'}</{tag}>")
+
+    return "".join(blocks) if blocks else "<p></p>"
 
 
 def html_to_plain_text(html_content):
@@ -1253,24 +1329,42 @@ def get_generated_document_content(filename):
         if username and (info.get("owner_username") or "admin") != username:
             return jsonify({"error": "File not found"}), 404
 
-        directory = get_generated_file_directory(filename)
         ext = os.path.splitext(filename)[1].lower()
         if ext not in (".docx", ".txt", ".pdf"):
             return jsonify({"error": "Unsupported file type"}), 400
 
-        filepath = os.path.join(directory, filename)
+        resolved_filename = filename
+        resolved_ext = ext
+        filepath = os.path.join(get_generated_file_directory(filename), filename)
+
+        matching_docx = get_matching_generated_docx_filename(filename)
+        if matching_docx:
+            matching_docx_path = os.path.join(GENERATED_DOCS_FOLDER, matching_docx)
+            if os.path.exists(matching_docx_path):
+                resolved_filename = matching_docx
+                resolved_ext = ".docx"
+                filepath = matching_docx_path
+
         if not os.path.exists(filepath):
             return jsonify({"error": "File not found"}), 404
 
         html_content = None
-        if ext == ".docx":
-            html_content = load_generated_html_content(filename)
+        if resolved_ext == ".docx":
+            html_content = load_generated_html_content(resolved_filename)
+            if not html_content:
+                html_content = build_html_from_docx(filepath)
 
-        content = extract_text_from_file(filepath, ext)
+        content = extract_text_from_file(filepath, resolved_ext)
         if content is None:
             return jsonify({"error": "Failed to extract content"}), 500
 
-        return jsonify({"content": content, "html": html_content})
+        return jsonify(
+            {
+                "content": content,
+                "html": html_content,
+                "source_filename": resolved_filename,
+            }
+        )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -1288,7 +1382,8 @@ def update_generated_document_content(filename):
             return jsonify({"error": "File not found"}), 404
 
         ext = os.path.splitext(filename)[1].lower()
-        if ext != ".docx":
+        editable_filename = get_matching_generated_docx_filename(filename)
+        if not editable_filename or not editable_filename.lower().endswith(".docx"):
             return jsonify({"error": "Only DOCX documents can be edited"}), 400
 
         payload = request.get_json(silent=True) or {}
@@ -1308,7 +1403,7 @@ def update_generated_document_content(filename):
         if not content:
             return jsonify({"error": "Content is required"}), 400
 
-        docx_path = os.path.join(GENERATED_DOCS_FOLDER, filename)
+        docx_path = os.path.join(GENERATED_DOCS_FOLDER, editable_filename)
         if not os.path.exists(docx_path):
             return jsonify({"error": "File not found"}), 404
 
@@ -1324,14 +1419,14 @@ def update_generated_document_content(filename):
         )
 
         if html_content:
-            save_generated_html_content(filename, html_content)
+            save_generated_html_content(editable_filename, html_content)
 
-        pdf_filename = filename.replace(".docx", ".pdf")
+        pdf_filename = editable_filename.replace(".docx", ".pdf")
         pdf_path = convert_docx_to_pdf(docx_path, GENERATED_FOLDER)
 
         timestamp_iso = datetime.now().isoformat()
-        metadata[filename] = {
-            **metadata.get(filename, {}),
+        metadata[editable_filename] = {
+            **metadata.get(editable_filename, {}),
             "owner_username": username or metadata.get(filename, {}).get("owner_username") or "admin",
             "timestamp": timestamp_iso,
         }
@@ -1344,7 +1439,7 @@ def update_generated_document_content(filename):
 
         return jsonify({
             "message": "Document updated successfully",
-            "docx_file": filename,
+            "docx_file": editable_filename,
             "pdf_file": os.path.basename(pdf_path),
         })
     except Exception as e:

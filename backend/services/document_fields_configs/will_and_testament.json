@@ -14,39 +14,52 @@
     "hint": "Enter execution city"
   },
   {
-    "name": "testator_name",
-    "label": "Testator Full Name",
-    "type": "text",
+    "name": "testators",
+    "label": "Testator Details",
+    "type": "group",
+    "repeatable": true,
+    "min": 1,
+    "max": 2,
     "required": true,
-    "hint": "Enter testator full name"
-  },
-  {
-    "name": "testator_age",
-    "label": "Age",
-    "type": "number",
-    "hint": "Enter age",
-    "required": false
-  },
-  {
-    "name": "testator_occupation",
-    "label": "Occupation",
-    "type": "text",
-    "hint": "Enter occupation",
-    "required": false
-  },
-  {
-    "name": "testator_address",
-    "label": "Residential Address",
-    "type": "textarea",
-    "required": true,
-    "hint": "Enter residential address"
-  },
-  {
-    "name": "testator_id_proof",
-    "label": "ID Proof (Aadhaar/PAN)",
-    "type": "text",
-    "hint": "Enter id proof (aadhaar/pan)",
-    "required": false
+    "fields": [
+      {
+        "name": "testator_name",
+        "label": "Testator Full Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter testator full name"
+      },
+      {
+        "name": "testator_age",
+        "label": "Age",
+        "type": "number",
+        "hint": "Enter age",
+        "required": false
+      },
+      {
+        "name": "testator_occupation",
+        "label": "Occupation",
+        "type": "text",
+        "hint": "Enter occupation",
+        "required": false
+      },
+      {
+        "name": "testator_address",
+        "label": "Residential Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter residential address"
+      },
+      {
+        "name": "testator_id_proof",
+        "label": "ID Proof (Aadhaar/PAN)",
+        "type": "text",
+        "hint": "Enter ID proof (Aadhaar/PAN)",
+        "required": false
+      }
+    ],
+    "hint": "Add one or two testators",
+    "required": true
   },
   {
     "name": "marital_status",
@@ -114,6 +127,27 @@
     "required": false
   },
   {
+    "name": "alternate_executor_name",
+    "label": "Alternate Executor Name",
+    "type": "text",
+    "required": false,
+    "hint": "Enter alternate executor name"
+  },
+  {
+    "name": "alternate_executor_address",
+    "label": "Alternate Executor Address",
+    "type": "textarea",
+    "required": false,
+    "hint": "Enter alternate executor address"
+  },
+  {
+    "name": "alternate_executor_relationship",
+    "label": "Alternate Executor Relationship",
+    "type": "text",
+    "required": false,
+    "hint": "Enter alternate executor's relationship with testator"
+  },
+  {
     "name": "assets",
     "label": "Assets Details",
     "type": "group",
@@ -142,12 +176,11 @@
           "Investment",
           "Cash",
           "Shares / Securities",
+          "Digital Asset",
           "Other"
         ],
         "hint": "Select movable asset type",
-        "visible_when": {
-          "asset_category": "Movable"
-        }
+        "show_if": "asset_category == 'Movable'"
       },
       {
         "name": "asset_type_immovable",
@@ -163,29 +196,23 @@
           "Other"
         ],
         "hint": "Select immovable asset type",
-        "visible_when": {
-          "asset_category": "Immovable"
-        }
+        "show_if": "asset_category == 'Immovable'"
       },
       {
         "name": "asset_type_other_movable",
         "label": "Other Movable Asset Type",
         "type": "text",
-        "required": false,
+        "required": true,
         "hint": "Enter other movable asset type",
-        "visible_when": {
-          "asset_type_movable": "Other"
-        }
+        "show_if": "asset_type_movable == 'Other'"
       },
       {
         "name": "asset_type_other_immovable",
         "label": "Other Immovable Asset Type",
         "type": "text",
-        "required": false,
+        "required": true,
         "hint": "Enter other immovable asset type",
-        "visible_when": {
-          "asset_type_immovable": "Other"
-        }
+        "show_if": "asset_type_immovable == 'Other'"
       },
       {
         "name": "asset_description",
@@ -207,6 +234,14 @@
         "type": "number",
         "hint": "Enter approx value",
         "required": false
+      },
+      {
+        "name": "digital_asset_access_details",
+        "label": "Digital Asset Access Details",
+        "type": "textarea",
+        "required": false,
+        "hint": "Enter access instructions for social media, cloud storage, crypto wallets, or keys",
+        "show_if": "asset_type_movable == 'Digital Asset'"
       }
     ],
     "hint": "Add assets details",
@@ -238,6 +273,20 @@
         "type": "textarea",
         "hint": "Enter address",
         "required": false
+      },
+      {
+        "name": "beneficiary_age",
+        "label": "Age",
+        "type": "number",
+        "hint": "Enter beneficiary age",
+        "required": false
+      },
+      {
+        "name": "beneficiary_is_minor",
+        "label": "Minor Beneficiary",
+        "type": "boolean",
+        "hint": "Tick if beneficiary is a minor",
+        "required": false
       }
     ],
     "hint": "Add beneficiaries",
@@ -254,7 +303,18 @@
         "label": "Asset Reference",
         "type": "text",
         "required": true,
-        "hint": "Enter asset reference"
+        "hint": "Enter asset reference matching the asset description"
+      },
+      {
+        "name": "distribution_type",
+        "label": "Distribution Type",
+        "type": "dropdown",
+        "required": true,
+        "options": [
+          "Specific Bequest",
+          "Percentage Share"
+        ],
+        "hint": "Select whether this is a specific bequest or percentage-based distribution"
       },
       {
         "name": "beneficiary_name",
@@ -264,14 +324,51 @@
         "hint": "Enter beneficiary name"
       },
       {
+        "name": "specific_bequest_details",
+        "label": "Specific Bequest Details",
+        "type": "textarea",
+        "required": true,
+        "hint": "Describe the exact legacy being given to the beneficiary",
+        "show_if": "distribution_type == 'Specific Bequest'"
+      },
+      {
         "name": "share_percentage",
         "label": "Share (%)",
         "type": "number",
         "hint": "Enter share (%)",
-        "required": false
+        "required": true,
+        "show_if": "distribution_type == 'Percentage Share'"
       }
     ],
     "hint": "Add asset distribution",
+    "required": false
+  },
+  {
+    "name": "residuary_beneficiary_name",
+    "label": "Residuary Beneficiary Name",
+    "type": "text",
+    "hint": "Enter the person who receives all remaining assets not specifically mentioned",
+    "required": false
+  },
+  {
+    "name": "residuary_beneficiary_relationship",
+    "label": "Residuary Beneficiary Relationship",
+    "type": "text",
+    "hint": "Enter relationship with testator",
+    "required": false
+  },
+  {
+    "name": "alternate_beneficiary_clause",
+    "label": "Alternate Beneficiary / Lapse Clause",
+    "type": "textarea",
+    "hint": "State what happens if a beneficiary dies before the testator",
+    "required": false
+  },
+  {
+    "name": "has_minor_beneficiary",
+    "label": "Minor Beneficiary Involved",
+    "type": "boolean",
+    "hint": "Tick if any beneficiary is a minor",
     "required": false
   },
   {
@@ -279,14 +376,32 @@
     "label": "Guardian for Minor",
     "type": "text",
     "hint": "Enter guardian for minor",
-    "required": false
+    "required": true,
+    "show_if": "has_minor_beneficiary == true"
   },
   {
     "name": "guardian_address",
     "label": "Guardian Address",
     "type": "textarea",
     "hint": "Enter guardian address",
-    "required": false
+    "required": true,
+    "show_if": "has_minor_beneficiary == true"
+  },
+  {
+    "name": "trustee_name",
+    "label": "Trustee for Minor Beneficiary",
+    "type": "text",
+    "hint": "Enter trustee name for property held on behalf of a minor",
+    "required": false,
+    "show_if": "has_minor_beneficiary == true"
+  },
+  {
+    "name": "delayed_distribution_age",
+    "label": "Delayed Distribution Age",
+    "type": "number",
+    "hint": "Enter age at which the minor beneficiary should receive the inheritance",
+    "required": false,
+    "show_if": "has_minor_beneficiary == true"
   },
   {
     "name": "liabilities",
@@ -303,11 +418,61 @@
     "required": false
   },
   {
+    "name": "exclusion_clause",
+    "label": "Exclusion Clause",
+    "type": "textarea",
+    "hint": "State if any close family member is intentionally excluded from the will",
+    "required": false
+  },
+  {
+    "name": "funeral_burial_wishes",
+    "label": "Funeral / Burial Wishes",
+    "type": "textarea",
+    "hint": "Enter funeral, burial, cremation, or organ donation wishes",
+    "required": false
+  },
+  {
+    "name": "simultaneous_death_clause",
+    "label": "Simultaneous Death / Survival Clause",
+    "type": "textarea",
+    "hint": "Enter clause for simultaneous death, e.g. a 30-day survival rule",
+    "required": false
+  },
+  {
     "name": "previous_will_revoked",
     "label": "Revoke Previous Wills",
     "type": "boolean",
     "hint": "Select yes or no for revoke previous wills",
     "required": false
+  },
+  {
+    "name": "digital_assets_clause",
+    "label": "Separate Digital Assets Clause",
+    "type": "textarea",
+    "hint": "Enter general instructions for digital assets, passwords, keys, and online accounts",
+    "required": false
+  },
+  {
+    "name": "sound_mind_clause",
+    "label": "Sound Mind and Memory Statement",
+    "type": "boolean",
+    "hint": "Tick if the will records that the testator is of sound mind and memory",
+    "required": false
+  },
+  {
+    "name": "medical_certificate_attached",
+    "label": "Medical Certificate Attached",
+    "type": "boolean",
+    "hint": "Tick if a medical certificate is attached to support testamentary capacity",
+    "required": false
+  },
+  {
+    "name": "medical_certificate_details",
+    "label": "Medical Certificate Details",
+    "type": "textarea",
+    "hint": "Enter doctor name, date, and certificate details",
+    "required": false,
+    "show_if": "medical_certificate_attached == true"
   },
   {
     "name": "jurisdiction",

@@ -13,13 +13,13 @@
     "hint": "Enter city and state of execution",
     "required": true
   },
-
   {
     "name": "seller_details",
     "label": "Seller Details",
     "type": "group",
     "repeatable": true,
     "required": true,
+    "min": 1,
     "fields": [
       {
         "name": "name",
@@ -58,13 +58,13 @@
       }
     ]
   },
-
   {
     "name": "buyer_details",
     "label": "Buyer Details",
     "type": "group",
     "repeatable": true,
     "required": true,
+    "min": 1,
     "fields": [
       {
         "name": "name",
@@ -103,7 +103,6 @@
       }
     ]
   },
-
   {
     "name": "property_type",
     "label": "Property Type",
@@ -122,7 +121,7 @@
     "name": "property_description",
     "label": "Property Description",
     "type": "textarea",
-    "hint": "Enter full description (survey no, boundaries, etc.)",
+    "hint": "Enter full description of the property",
     "required": true
   },
   {
@@ -136,21 +135,81 @@
     "name": "survey_number",
     "label": "Survey / Plot Number",
     "type": "text",
-    "hint": "Enter survey/plot number",
+    "hint": "Enter survey or plot number",
     "required": true
   },
   {
     "name": "area_details",
     "label": "Area Details",
     "type": "text",
-    "hint": "Enter built-up / carpet / land area",
+    "hint": "Enter built-up, carpet, super built-up, or land area",
     "required": false
+  },
+  {
+    "name": "north_boundary",
+    "label": "North Boundary",
+    "type": "text",
+    "hint": "Enter what lies on the north side of the property",
+    "required": true
+  },
+  {
+    "name": "south_boundary",
+    "label": "South Boundary",
+    "type": "text",
+    "hint": "Enter what lies on the south side of the property",
+    "required": true
+  },
+  {
+    "name": "east_boundary",
+    "label": "East Boundary",
+    "type": "text",
+    "hint": "Enter what lies on the east side of the property",
+    "required": true
+  },
+  {
+    "name": "west_boundary",
+    "label": "West Boundary",
+    "type": "text",
+    "hint": "Enter what lies on the west side of the property",
+    "required": true
+  },
+  {
+    "name": "flat_floor_number",
+    "label": "Floor Number",
+    "type": "text",
+    "hint": "Enter floor number for flat property",
+    "required": true,
+    "show_if": "property_type == 'Flat'"
+  },
+  {
+    "name": "flat_wing_number",
+    "label": "Wing / Block Number",
+    "type": "text",
+    "hint": "Enter wing or block number for flat property",
+    "required": true,
+    "show_if": "property_type == 'Flat'"
+  },
+  {
+    "name": "parking_included",
+    "label": "Parking Included",
+    "type": "boolean",
+    "hint": "Tick if a parking space is included in the sale",
+    "required": false,
+    "show_if": "property_type == 'Flat'"
+  },
+  {
+    "name": "parking_details",
+    "label": "Parking Details",
+    "type": "textarea",
+    "hint": "Enter parking slot number, type, and location",
+    "required": true,
+    "show_if": "parking_included == true"
   },
   {
     "name": "title_details",
     "label": "Title Details",
     "type": "textarea",
-    "hint": "Explain ownership history of seller",
+    "hint": "Explain ownership history and chain of title",
     "required": true
   },
   {
@@ -165,13 +224,49 @@
     "hint": "Select encumbrance status",
     "required": true
   },
-
+  {
+    "name": "encumbrance_loan_details",
+    "label": "Loan / Charge Details",
+    "type": "textarea",
+    "hint": "Enter lender name, outstanding dues, and release details",
+    "required": true,
+    "show_if": "encumbrance_status == 'Under Loan'"
+  },
+  {
+    "name": "encumbrance_dispute_details",
+    "label": "Dispute Details",
+    "type": "textarea",
+    "hint": "Describe the pending dispute, claim, or litigation",
+    "required": true,
+    "show_if": "encumbrance_status == 'Disputed'"
+  },
+  {
+    "name": "ec_verified_from_date",
+    "label": "EC Verified From Date",
+    "type": "date",
+    "hint": "Select start date of encumbrance certificate verification",
+    "required": false
+  },
+  {
+    "name": "ec_verified_to_date",
+    "label": "EC Verified To Date",
+    "type": "date",
+    "hint": "Select end date of encumbrance certificate verification",
+    "required": false
+  },
   {
     "name": "sale_consideration",
     "label": "Total Sale Consideration",
     "type": "number",
-    "hint": "Enter total amount",
+    "hint": "Enter total sale amount",
     "required": true
+  },
+  {
+    "name": "guideline_value",
+    "label": "Guideline Value / Circle Rate",
+    "type": "number",
+    "hint": "Enter government guideline value or circle rate",
+    "required": false
   },
   {
     "name": "payment_details",
@@ -179,6 +274,7 @@
     "type": "group",
     "repeatable": true,
     "required": true,
+    "min": 1,
     "fields": [
       {
         "name": "amount",
@@ -198,25 +294,25 @@
           "Cash"
         ],
         "required": true,
-        "hint": "Select mode"
+        "hint": "Select payment mode"
       },
       {
         "name": "transaction_details",
         "label": "Transaction Details",
         "type": "text",
-        "required": false,
-        "hint": "Enter cheque/DD/UTR number"
+        "required": true,
+        "hint": "Enter cheque number, DD number, or UTR number",
+        "show_if": "mode != 'Cash'"
       },
       {
         "name": "payment_date",
         "label": "Payment Date",
         "type": "date",
-        "required": false,
+        "required": true,
         "hint": "Select payment date"
       }
     ]
   },
-
   {
     "name": "advance_paid",
     "label": "Advance Paid",
@@ -231,7 +327,22 @@
     "hint": "Enter remaining amount",
     "required": false
   },
-
+  {
+    "name": "tds_applicable",
+    "label": "TDS Applicable",
+    "type": "boolean",
+    "hint": "Tick if TDS under Section 194-IA is applicable",
+    "required": false,
+    "show_if": "sale_consideration >= 5000000"
+  },
+  {
+    "name": "tds_challan_number",
+    "label": "TDS Challan Number",
+    "type": "text",
+    "hint": "Enter TDS challan or Form 26QB reference number",
+    "required": true,
+    "show_if": "tds_applicable == true"
+  },
   {
     "name": "possession_date",
     "label": "Possession Date",
@@ -246,27 +357,110 @@
     "hint": "Describe possession transfer terms",
     "required": true
   },
-
   {
     "name": "indemnity_clause",
     "label": "Indemnity Clause",
     "type": "textarea",
-    "hint": "Seller indemnifies buyer against defects",
+    "hint": "Seller indemnifies buyer against title defects and claims",
     "required": false
   },
   {
     "name": "default_clause",
     "label": "Default Clause",
     "type": "textarea",
-    "hint": "Terms for breach or non-payment",
+    "hint": "Enter consequences for breach or non-payment",
     "required": false
   },
-
+  {
+    "name": "seller_signing_through_poa",
+    "label": "Seller Signing Through Power of Attorney",
+    "type": "boolean",
+    "hint": "Tick if a power of attorney holder is executing the deed",
+    "required": false
+  },
+  {
+    "name": "poa_holder_name",
+    "label": "POA Holder Name",
+    "type": "text",
+    "hint": "Enter power of attorney holder full name",
+    "required": true,
+    "show_if": "seller_signing_through_poa == true"
+  },
+  {
+    "name": "poa_holder_address",
+    "label": "POA Holder Address",
+    "type": "textarea",
+    "hint": "Enter address of power of attorney holder",
+    "required": true,
+    "show_if": "seller_signing_through_poa == true"
+  },
+  {
+    "name": "poa_holder_id_proof",
+    "label": "POA Holder ID Proof",
+    "type": "text",
+    "hint": "Enter Aadhaar, PAN, or other ID proof",
+    "required": false,
+    "show_if": "seller_signing_through_poa == true"
+  },
+  {
+    "name": "registered_poa_number",
+    "label": "Registered POA Number",
+    "type": "text",
+    "hint": "Enter registered power of attorney number",
+    "required": true,
+    "show_if": "seller_signing_through_poa == true"
+  },
+  {
+    "name": "registered_poa_date",
+    "label": "Registered POA Date",
+    "type": "date",
+    "hint": "Select date of registered power of attorney",
+    "required": false,
+    "show_if": "seller_signing_through_poa == true"
+  },
+  {
+    "name": "minor_interest_in_property",
+    "label": "Minor Has Interest in Property",
+    "type": "boolean",
+    "hint": "Tick if a minor is a co-owner or otherwise has interest in the property",
+    "required": false
+  },
+  {
+    "name": "court_permission_details",
+    "label": "Court Permission Details",
+    "type": "textarea",
+    "hint": "Enter guardian and court permission details for the minor's interest",
+    "required": true,
+    "show_if": "minor_interest_in_property == true"
+  },
+  {
+    "name": "original_documents_handed_over",
+    "label": "Original Documents Handed Over",
+    "type": "group",
+    "repeatable": true,
+    "required": false,
+    "fields": [
+      {
+        "name": "document_name",
+        "label": "Document Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter document name, e.g. parent deed or tax receipt"
+      },
+      {
+        "name": "document_details",
+        "label": "Document Details",
+        "type": "text",
+        "required": false,
+        "hint": "Enter date, number, or short description"
+      }
+    ]
+  },
   {
     "name": "registration_details",
     "label": "Registration Details",
     "type": "textarea",
-    "hint": "Sub-registrar office details",
+    "hint": "Enter Sub-Registrar office and registration details",
     "required": true
   },
   {
@@ -283,7 +477,6 @@
     "hint": "Enter registration fee",
     "required": false
   },
-
   {
     "name": "jurisdiction",
     "label": "Jurisdiction",
@@ -291,7 +484,6 @@
     "hint": "Enter court jurisdiction",
     "required": true
   },
-
   {
     "name": "witness_details",
     "label": "Witness Details",
@@ -317,20 +509,20 @@
       }
     ]
   },
-
   {
     "name": "seller_signatures",
     "label": "Seller Signatures",
     "type": "group",
     "repeatable": true,
     "required": true,
+    "min": 1,
     "fields": [
       {
         "name": "name",
         "label": "Seller Name",
         "type": "text",
         "required": true,
-        "hint": "Enter name"
+        "hint": "Enter seller name"
       },
       {
         "name": "signature",
@@ -347,13 +539,14 @@
     "type": "group",
     "repeatable": true,
     "required": true,
+    "min": 1,
     "fields": [
       {
         "name": "name",
         "label": "Buyer Name",
         "type": "text",
         "required": true,
-        "hint": "Enter name"
+        "hint": "Enter buyer name"
       },
       {
         "name": "signature",

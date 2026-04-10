@@ -14,17 +14,48 @@
     "required": true
   },
   {
+    "name": "holding_structure",
+    "label": "Holding Structure",
+    "type": "dropdown",
+    "options": [
+      "Family Co-ownership",
+      "HUF",
+      "Trust",
+      "Other"
+    ],
+    "hint": "Select the structure under which the property is currently held",
+    "required": false
+  },
+  {
     "name": "family_name",
     "label": "Family / Group Name",
     "type": "text",
-    "hint": "Enter family or group name (if applicable)",
-    "required": false
+    "hint": "Enter family, HUF, or trust name",
+    "required": true,
+    "show_if": "holding_structure == 'HUF'"
+  },
+  {
+    "name": "trust_name",
+    "label": "Trust Name",
+    "type": "text",
+    "hint": "Enter trust name",
+    "required": true,
+    "show_if": "holding_structure == 'Trust'"
+  },
+  {
+    "name": "other_holding_structure",
+    "label": "Other Holding Structure",
+    "type": "text",
+    "hint": "Enter other holding structure",
+    "required": true,
+    "show_if": "holding_structure == 'Other'"
   },
   {
     "name": "co_owners",
     "label": "Co-owners / Parties",
     "type": "group",
     "repeatable": true,
+    "min": 1,
     "required": true,
     "fields": [
       {
@@ -66,10 +97,24 @@
         "name": "share_percentage",
         "label": "Pre-Partition Share (%)",
         "type": "number",
-        "required": false,
+        "required": true,
         "hint": "Enter ownership share before partition"
+      },
+      {
+        "name": "is_minor",
+        "label": "Minor Co-owner",
+        "type": "boolean",
+        "required": false,
+        "hint": "Tick if this co-owner is under 18"
       }
     ]
+  },
+  {
+    "name": "guardian_details",
+    "label": "Guardian Details",
+    "type": "textarea",
+    "hint": "Enter guardian details for any minor co-owner and confirm authority to sign",
+    "required": false
   },
   {
     "name": "property_type",
@@ -79,7 +124,9 @@
       "Residential",
       "Commercial",
       "Agricultural",
-      "Mixed"
+      "Mixed",
+      "Building",
+      "Plot"
     ],
     "hint": "Select type of property",
     "required": true
@@ -88,7 +135,7 @@
     "name": "property_description",
     "label": "Property Description",
     "type": "textarea",
-    "hint": "Enter detailed description (survey no, area, boundaries)",
+    "hint": "Enter detailed description including survey number, area, and boundaries",
     "required": true
   },
   {
@@ -102,15 +149,29 @@
     "name": "title_details",
     "label": "Title Details",
     "type": "textarea",
-    "hint": "Mention how property was acquired (inheritance, purchase, etc.)",
+    "hint": "Mention how the property was acquired, such as inheritance or purchase",
     "required": true
+  },
+  {
+    "name": "encumbrance_status",
+    "label": "Encumbrance Status",
+    "type": "dropdown",
+    "options": [
+      "None",
+      "Mortgage / Loan",
+      "Dispute",
+      "Other"
+    ],
+    "hint": "Select current encumbrance status",
+    "required": false
   },
   {
     "name": "encumbrance_details",
     "label": "Encumbrance Details",
     "type": "textarea",
-    "hint": "Mention any loans, charges, or disputes",
-    "required": false
+    "hint": "Mention any loans, charges, or disputes affecting the property",
+    "required": true,
+    "show_if": "encumbrance_status != 'None'"
   },
   {
     "name": "partition_mode",
@@ -136,6 +197,7 @@
     "label": "Allotment Details",
     "type": "group",
     "repeatable": true,
+    "min": 1,
     "required": true,
     "fields": [
       {
@@ -150,13 +212,13 @@
         "label": "Allocated Portion",
         "type": "textarea",
         "required": true,
-        "hint": "Describe allocated share (area, boundaries)"
+        "hint": "Describe allocated share including area and boundaries"
       },
       {
         "name": "post_share_percentage",
         "label": "Post-Partition Share (%)",
         "type": "number",
-        "required": false,
+        "required": true,
         "hint": "Ownership after partition"
       }
     ]
@@ -172,21 +234,58 @@
     "name": "common_areas",
     "label": "Common Areas / Shared Rights",
     "type": "textarea",
-    "hint": "Mention shared access (roads, water, etc.)",
+    "hint": "Mention shared access such as roads, stairs, terrace, well, or irrigation channels",
     "required": false
   },
   {
     "name": "consideration_if_any",
-    "label": "Consideration (if any)",
+    "label": "Consideration / Owelty (if any)",
     "type": "number",
-    "hint": "Enter any monetary settlement",
+    "hint": "Enter any balancing payment between parties",
     "required": false
   },
   {
     "name": "liabilities_distribution",
     "label": "Liabilities Distribution",
     "type": "textarea",
-    "hint": "Divide loans, taxes, or liabilities",
+    "hint": "Divide loans, taxes, or liabilities among parties",
+    "required": false
+  },
+  {
+    "name": "easement_rights",
+    "label": "Easement Rights",
+    "type": "textarea",
+    "hint": "Describe rights of way, access paths, drainage, or utility rights after partition",
+    "required": false
+  },
+  {
+    "name": "revenue_records_mutation",
+    "label": "Revenue Records / Mutation Clause",
+    "type": "textarea",
+    "hint": "Mention updating 7/12 extract, mutation entry, patta, or revenue records after partition",
+    "required": true,
+    "show_if": "property_type == 'Agricultural'"
+  },
+  {
+    "name": "poa_signing",
+    "label": "Signing Through Power of Attorney",
+    "type": "boolean",
+    "hint": "Tick if any party is signing through a power of attorney holder",
+    "required": false
+  },
+  {
+    "name": "poa_details",
+    "label": "Power of Attorney Details",
+    "type": "textarea",
+    "hint": "Enter attorney holder details and registered POA reference",
+    "required": true,
+    "show_if": "poa_signing == true"
+  },
+  {
+    "name": "map_annexure_ref",
+    "label": "Map / Survey Annexure Reference",
+    "type": "text",
+    "hint": "Enter reference to attached survey map, sketch, or annexure",
     "required": false
   },
   {
@@ -200,7 +299,7 @@
     "name": "dispute_resolution",
     "label": "Dispute Resolution",
     "type": "textarea",
-    "hint": "Mention arbitration/settlement process",
+    "hint": "Mention arbitration or settlement process",
     "required": false
   },
   {
@@ -211,17 +310,26 @@
     "required": true
   },
   {
+    "name": "market_value",
+    "label": "Market Value",
+    "type": "number",
+    "hint": "Enter market value of the property for stamp duty purposes",
+    "required": true,
+    "show_if": "registration_required == true"
+  },
+  {
     "name": "stamp_duty_details",
     "label": "Stamp Duty Details",
     "type": "textarea",
-    "hint": "Mention stamp duty paid/applicable",
-    "required": false
+    "hint": "Mention stamp duty paid or applicable",
+    "required": true,
+    "show_if": "registration_required == true"
   },
   {
     "name": "governing_law",
     "label": "Governing Law",
     "type": "text",
-    "hint": "Enter applicable law (e.g., Indian laws)",
+    "hint": "Enter applicable law, e.g. Indian laws",
     "required": true
   },
   {
@@ -236,6 +344,7 @@
     "label": "Party Signatures",
     "type": "group",
     "repeatable": true,
+    "min": 1,
     "required": true,
     "fields": [
       {

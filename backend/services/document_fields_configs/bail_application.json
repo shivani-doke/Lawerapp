@@ -56,20 +56,53 @@
     "required": false
   },
   {
-    "name": "sections_applied",
-    "label": "Sections Applied",
-    "type": "multi_select_with_custom_input",
+    "name": "legal_sections",
+    "label": "Applicable Acts and Sections",
+    "type": "group",
+    "repeatable": true,
+    "min": 1,
     "required": true,
-    "options": [
-      "IPC",
-      "CrPC",
-      "Evidence Act",
-      "BNS (Bharatiya Nyaya Sanhita)",
-      "BNSS (Bharatiya Nagarik Suraksha Sanhita)",
-      "BSA (Bharatiya Sakshya Adhiniyam)"
+    "fields": [
+      {
+        "name": "act_name",
+        "label": "Act",
+        "type": "dropdown",
+        "required": true,
+        "options": [
+          "IPC",
+          "CrPC",
+          "Evidence Act",
+          "BNS (Bharatiya Nyaya Sanhita)",
+          "BNSS (Bharatiya Nagarik Suraksha Sanhita)",
+          "BSA (Bharatiya Sakshya Adhiniyam)",
+          "Other"
+        ],
+        "hint": "Select the applicable Act"
+      },
+      {
+        "name": "other_act_name",
+        "label": "Other Act Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter the name of the other Act",
+        "show_if": "act_name == 'Other'"
+      },
+      {
+        "name": "section_numbers",
+        "label": "Section Number(s)",
+        "type": "text",
+        "required": true,
+        "hint": "Enter section numbers, e.g. 420, 406, 438"
+      }
     ],
-    "allow_custom": true,
-    "hint": "Select applicable laws and enter section numbers (e.g., IPC 420, BNS 318). You can also add other laws."
+    "hint": "Add one or more Act/Section combinations"
+  },
+  {
+    "name": "hybrid_law_transition_note",
+    "label": "Old Law / New Law Transition Note",
+    "type": "textarea",
+    "required": false,
+    "hint": "Mention if the offence predates July 1, 2024 and involves IPC/CrPC with BNSS procedure"
   },
   {
     "name": "applicant_name",
@@ -84,6 +117,18 @@
     "type": "text",
     "hint": "Enter father's or spouse's name",
     "required": false
+  },
+  {
+    "name": "applicant_gender",
+    "label": "Gender",
+    "type": "dropdown",
+    "required": false,
+    "options": [
+      "Male",
+      "Female",
+      "Other"
+    ],
+    "hint": "Select gender"
   },
   {
     "name": "applicant_age",
@@ -105,6 +150,13 @@
     "type": "textarea",
     "required": true,
     "hint": "Enter complete residential address with PIN code"
+  },
+  {
+    "name": "passport_photo_attached",
+    "label": "Applicant Passport Size Photo Attached",
+    "type": "boolean",
+    "hint": "Tick if applicant passport size photo is affixed",
+    "required": false
   },
   {
     "name": "bail_type",
@@ -134,15 +186,73 @@
     "name": "arrest_date",
     "label": "Arrest Date",
     "type": "date",
-    "hint": "Select date of arrest (if applicable)",
-    "required": false
+    "hint": "Select date of arrest",
+    "required": true,
+    "show_if": "arrest_status == 'Arrested'"
   },
   {
     "name": "custody_details",
     "label": "Custody Details",
     "type": "textarea",
-    "hint": "Mention whether in judicial/police custody",
-    "required": false
+    "hint": "Mention whether in judicial or police custody",
+    "required": true,
+    "show_if": "arrest_status == 'Arrested'"
+  },
+  {
+    "name": "date_of_remand",
+    "label": "Date of Remand",
+    "type": "date",
+    "hint": "Select remand date",
+    "required": true,
+    "show_if": "bail_type == 'Default Bail'"
+  },
+  {
+    "name": "total_days_in_custody",
+    "label": "Total Days in Custody",
+    "type": "number",
+    "hint": "Enter total days in custody",
+    "required": true,
+    "show_if": "bail_type == 'Default Bail'"
+  },
+  {
+    "name": "default_bail_basis",
+    "label": "Default Bail Basis",
+    "type": "textarea",
+    "hint": "Mention non-filing of charge sheet within the statutory 60/90 day period",
+    "required": true,
+    "show_if": "bail_type == 'Default Bail'"
+  },
+  {
+    "name": "apprehension_of_arrest",
+    "label": "Apprehension of Arrest",
+    "type": "textarea",
+    "hint": "Explain why the applicant believes arrest is imminent and the accusation is malicious",
+    "required": true,
+    "show_if": "bail_type == 'Anticipatory Bail'"
+  },
+  {
+    "name": "interim_bail_start_date",
+    "label": "Interim Bail Start Date",
+    "type": "date",
+    "hint": "Select interim bail start date",
+    "required": true,
+    "show_if": "bail_type == 'Interim Bail'"
+  },
+  {
+    "name": "interim_bail_end_date",
+    "label": "Interim Bail End Date",
+    "type": "date",
+    "hint": "Select interim bail end date",
+    "required": true,
+    "show_if": "bail_type == 'Interim Bail'"
+  },
+  {
+    "name": "interim_bail_reason",
+    "label": "Reason for Interim Bail",
+    "type": "textarea",
+    "hint": "Mention urgent reason such as funeral, wedding, or medical treatment",
+    "required": true,
+    "show_if": "bail_type == 'Interim Bail'"
   },
   {
     "name": "case_facts",
@@ -152,17 +262,32 @@
     "hint": "Provide concise case background"
   },
   {
+    "name": "co_accused_details",
+    "label": "Co-accused Details",
+    "type": "textarea",
+    "hint": "Mention co-accused names and whether they have been granted bail or are pending",
+    "required": false
+  },
+  {
+    "name": "medical_history_infirmity",
+    "label": "Medical History / Infirmity",
+    "type": "textarea",
+    "hint": "Mention illness, infirmity, disability, or medical grounds, if any",
+    "required": false
+  },
+  {
     "name": "grounds_for_bail",
     "label": "Grounds for Bail",
     "type": "group",
     "repeatable": true,
+    "min": 1,
     "fields": [
       {
         "name": "ground",
         "label": "Ground",
         "type": "textarea",
         "required": true,
-        "hint": "e.g., False implication, no criminal history, etc."
+        "hint": "e.g., false implication, no criminal history, medical grounds, parity with co-accused"
       }
     ],
     "hint": "Add multiple legal grounds",
@@ -180,7 +305,8 @@
     "label": "Previous Bail Details",
     "type": "textarea",
     "hint": "Mention court and result of previous application",
-    "required": false
+    "required": true,
+    "show_if": "previous_bail_applied == true"
   },
   {
     "name": "criminal_antecedents",
@@ -194,21 +320,55 @@
     "label": "Surety Amount",
     "type": "number",
     "hint": "Enter proposed surety amount",
-    "required": false
+    "required": false,
+    "show_if": "bail_type == 'Regular Bail'"
   },
   {
     "name": "surety_details",
     "label": "Surety Details",
     "type": "textarea",
     "hint": "Enter surety person details",
-    "required": false
+    "required": false,
+    "show_if": "bail_type == 'Regular Bail'"
+  },
+  {
+    "name": "surety_passport_photo_attached",
+    "label": "Surety Passport Size Photo Attached",
+    "type": "boolean",
+    "hint": "Tick if surety passport size photo is affixed",
+    "required": false,
+    "show_if": "bail_type == 'Regular Bail'"
   },
   {
     "name": "undertaking",
     "label": "Undertaking by Applicant",
     "type": "textarea",
-    "hint": "e.g., Will cooperate, not tamper evidence, attend court",
+    "hint": "e.g., will cooperate, not tamper evidence, attend court",
     "required": true
+  },
+  {
+    "name": "annexures",
+    "label": "Annexures / List of Documents",
+    "type": "group",
+    "repeatable": true,
+    "fields": [
+      {
+        "name": "document_name",
+        "label": "Document Name",
+        "type": "text",
+        "required": true,
+        "hint": "e.g., FIR Copy, Remand Order, Medical Report"
+      },
+      {
+        "name": "document_details",
+        "label": "Document Details",
+        "type": "text",
+        "required": false,
+        "hint": "Enter document number, date, or short description"
+      }
+    ],
+    "hint": "Add annexures attached with the bail application",
+    "required": false
   },
   {
     "name": "advocate_name",

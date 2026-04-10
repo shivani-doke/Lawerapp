@@ -23,6 +23,10 @@ class DocumentField {
   final bool repeatable;
   final List<DocumentField> fields;
   final Map<String, List<String>> visibleWhen;
+  final dynamic defaultValue;
+  final String? showIf;
+  final int? minItems;
+  final int? maxItems;
 
   DocumentField({
     required this.name,
@@ -34,6 +38,10 @@ class DocumentField {
     this.repeatable = false,
     this.fields = const [],
     this.visibleWhen = const {},
+    this.defaultValue,
+    this.showIf,
+    this.minItems,
+    this.maxItems,
   });
 
   factory DocumentField.fromJson(Map<String, dynamic> json) {
@@ -74,6 +82,10 @@ class DocumentField {
           ? rawOptions.map((e) => e.toString()).toList()
           : const [],
       repeatable: json['repeatable'] == true,
+      defaultValue: json['default'],
+      showIf: json['show_if']?.toString(),
+      minItems: json['min'] is num ? (json['min'] as num).toInt() : null,
+      maxItems: json['max'] is num ? (json['max'] as num).toInt() : null,
       fields: rawFields is List
           ? rawFields
               .whereType<Map<String, dynamic>>()
@@ -118,10 +130,10 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
   bool _isUploading = false;
   List<Map<String, dynamic>> _clients = [];
   bool _isLoadingClients = false;
-  String? _linkedTestatorClientName;
   String? _linkedExecutorClientName;
-  String? _linkedTestatorClientId;
   String? _linkedExecutorClientId;
+  final Map<String, List<String?>> _linkedClientNamesByGroup = {};
+  final Map<String, List<String?>> _linkedClientIdsByGroup = {};
 
   // UI state
   bool _isGenerating = false;
@@ -203,6 +215,8 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
     _groupDropdownValues.clear();
     _groupBoolValues.clear();
     _groupMultiselectValues.clear();
+    _linkedClientNamesByGroup.clear();
+    _linkedClientIdsByGroup.clear();
   }
 
   Future<void> _loadClients() async {
@@ -242,8 +256,9 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
     controller.text = value;
   }
 
-  void _applyClientToWillParty({
-    required String party,
+  void _applyClientToTestator({
+    required String groupName,
+    required int rowIndex,
     required Map<String, dynamic> client,
   }) {
     final name = (client['name'] ?? '').toString();
@@ -251,17 +266,48 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
     final occupation = (client['occupation'] ?? '').toString();
     final address = (client['address'] ?? '').toString();
     final idProof = _buildIdProofText(client);
+    final rows = _groupFieldControllers[groupName];
+    if (rows == null || rows.length <= rowIndex) return;
+    final controllerRow = rows[rowIndex];
 
     setState(() {
-      if (party == 'testator') {
-        _setFieldText('testator_name', name);
-        _setFieldText('testator_age', age);
-        _setFieldText('testator_occupation', occupation);
-        _setFieldText('testator_address', address);
-        _setFieldText('testator_id_proof', idProof);
-        _linkedTestatorClientName = name;
-        _linkedTestatorClientId = (client['id'] ?? '').toString();
-      } else if (party == 'executor') {
+      _linkedClientNamesByGroup.putIfAbsent(groupName, () => <String?>[]);
+      _linkedClientIdsByGroup.putIfAbsent(groupName, () => <String?>[]);
+      while (_linkedClientNamesByGroup[groupName]!.length <= rowIndex) {
+        _linkedClientNamesByGroup[groupName]!.add(null);
+      }
+      while (_linkedClientIdsByGroup[groupName]!.length <= rowIndex) {
+        _linkedClientIdsByGroup[groupName]!.add(null);
+      }
+      _linkedClientNamesByGroup[groupName]![rowIndex] = name;
+      _linkedClientIdsByGroup[groupName]![rowIndex] =
+          (client['id'] ?? '').toString();
+
+      final mappedValues = <String, String>{
+        'testator_name': name,
+        'testator_age': age,
+        'testator_occupation': occupation,
+        'testator_address': address,
+        'testator_id_proof': idProof,
+      };
+      mappedValues.forEach((fieldName, value) {
+        final controller = controllerRow[fieldName];
+        if (controller != null) {
+          controller.text = value;
+        }
+      });
+    });
+  }
+
+  void _applyClientToWillParty({
+    required String party,
+    required Map<String, dynamic> client,
+  }) {
+    final name = (client['name'] ?? '').toString();
+    final address = (client['address'] ?? '').toString();
+
+    setState(() {
+      if (party == 'executor') {
         _setFieldText('executor_name', name);
         _setFieldText('executor_address', address);
         _linkedExecutorClientName = name;
@@ -273,10 +319,22 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
   String? _willClientAssignmentLabel({
     required String clientId,
     required String currentParty,
+    int? currentRowIndex,
   }) {
     if (clientId.isEmpty) return null;
-    if (currentParty != 'testator' && _linkedTestatorClientId == clientId) {
-      return 'Testator';
+    for (final entry in _linkedClientIdsByGroup.entries) {
+      for (var rowIndex = 0; rowIndex < entry.value.length; rowIndex++) {
+        final linkedId = entry.value[rowIndex];
+        if (linkedId == null || linkedId.isEmpty || linkedId != clientId) {
+          continue;
+        }
+        if (entry.key == currentParty && rowIndex == currentRowIndex) {
+          continue;
+        }
+        if (entry.key == 'testators') {
+          return 'Testator ${rowIndex + 1}';
+        }
+      }
     }
     if (currentParty != 'executor' && _linkedExecutorClientId == clientId) {
       return 'Executor';
@@ -287,6 +345,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
   Future<void> _showClientAutofillDialog({
     required String party,
     required String title,
+    int? rowIndex,
   }) async {
     if (_isLoadingClients) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -366,6 +425,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
                                 final assignmentLabel = _willClientAssignmentLabel(
                                   clientId: clientId,
                                   currentParty: party,
+                                  currentRowIndex: rowIndex,
                                 );
                                 final isAssignedElsewhere =
                                     assignmentLabel != null;
@@ -417,6 +477,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
     final assignmentLabel = _willClientAssignmentLabel(
       clientId: selectedClientId,
       currentParty: party,
+      currentRowIndex: rowIndex,
     );
     if (assignmentLabel != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -425,6 +486,15 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
             'This client is already linked to $assignmentLabel. Please choose a different client.',
           ),
         ),
+      );
+      return;
+    }
+
+    if (party == 'testators' && rowIndex != null) {
+      _applyClientToTestator(
+        groupName: party,
+        rowIndex: rowIndex,
+        client: selectedClient,
       );
       return;
     }
@@ -442,7 +512,9 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
           (nestedField.type == 'group' && nestedField.fields.isNotEmpty)) {
         continue;
       }
-      controllers[nestedField.name] = TextEditingController();
+      controllers[nestedField.name] = TextEditingController(
+        text: nestedField.defaultValue?.toString() ?? '',
+      );
     }
     return controllers;
   }
@@ -452,7 +524,12 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
     for (final nestedField in groupField.fields) {
       if (nestedField.type == 'dropdown') {
         values[nestedField.name] =
-            nestedField.options.isNotEmpty ? nestedField.options.first : '';
+            nestedField.defaultValue != null &&
+                    nestedField.options.contains(nestedField.defaultValue)
+                ? nestedField.defaultValue.toString()
+                : (nestedField.options.isNotEmpty
+                    ? nestedField.options.first
+                    : '');
       }
     }
     return values;
@@ -483,14 +560,43 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
       return;
     }
 
-    _groupFieldControllers[field.name] = [_createGroupControllerRow(field)];
-    _groupDropdownValues[field.name] = [_createGroupDropdownRow(field)];
-    _groupBoolValues[field.name] = [_createGroupBoolRow(field)];
-    _groupMultiselectValues[field.name] = [_createGroupMultiselectRow(field)];
+    final initialRowCount = field.minItems != null && field.minItems! > 0
+        ? field.minItems!
+        : 1;
+
+    _groupFieldControllers[field.name] = <Map<String, TextEditingController>>[];
+    _groupDropdownValues[field.name] = <Map<String, String>>[];
+    _groupBoolValues[field.name] = <Map<String, bool>>[];
+    _groupMultiselectValues[field.name] = <Map<String, Set<String>>>[];
+
+    for (var rowIndex = 0; rowIndex < initialRowCount; rowIndex++) {
+      _groupFieldControllers[field.name]!.add(_createGroupControllerRow(field));
+      _groupDropdownValues[field.name]!.add(_createGroupDropdownRow(field));
+      _groupBoolValues[field.name]!.add(_createGroupBoolRow(field));
+      _groupMultiselectValues[field.name]!
+          .add(_createGroupMultiselectRow(field));
+      if (field.name == 'testators') {
+        _linkedClientNamesByGroup.putIfAbsent(field.name, () => <String?>[]);
+        _linkedClientIdsByGroup.putIfAbsent(field.name, () => <String?>[]);
+        _linkedClientNamesByGroup[field.name]!.add(null);
+        _linkedClientIdsByGroup[field.name]!.add(null);
+      }
+    }
   }
 
   void _addGroupRow(DocumentField field) {
     if (field.type != 'group' || field.fields.isEmpty) {
+      return;
+    }
+
+    final maxItems = field.maxItems;
+    final currentCount = _groupFieldControllers[field.name]?.length ?? 0;
+    if (maxItems != null && currentCount >= maxItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${field.label} allows a maximum of $maxItems entries.'),
+        ),
+      );
       return;
     }
 
@@ -505,6 +611,12 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
       _groupBoolValues[field.name]!.add(_createGroupBoolRow(field));
       _groupMultiselectValues[field.name]!
           .add(_createGroupMultiselectRow(field));
+      if (field.name == 'testators') {
+        _linkedClientNamesByGroup.putIfAbsent(field.name, () => <String?>[]);
+        _linkedClientIdsByGroup.putIfAbsent(field.name, () => <String?>[]);
+        _linkedClientNamesByGroup[field.name]!.add(null);
+        _linkedClientIdsByGroup[field.name]!.add(null);
+      }
     });
   }
 
@@ -524,6 +636,16 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
       return;
     }
 
+    final minItems = field.minItems;
+    if (minItems != null && controllerRows.length <= minItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${field.label} requires at least $minItems entries.'),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       for (final controller in controllerRows[index].values) {
         controller.dispose();
@@ -532,10 +654,106 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
       dropdownRows.removeAt(index);
       boolRows.removeAt(index);
       multiselectRows.removeAt(index);
+      if (_linkedClientNamesByGroup[field.name] != null &&
+          _linkedClientNamesByGroup[field.name]!.length > index) {
+        _linkedClientNamesByGroup[field.name]!.removeAt(index);
+      }
+      if (_linkedClientIdsByGroup[field.name] != null &&
+          _linkedClientIdsByGroup[field.name]!.length > index) {
+        _linkedClientIdsByGroup[field.name]!.removeAt(index);
+      }
     });
   }
 
-  bool _isFieldVisible(
+  dynamic _getTopLevelFieldValue(DocumentField field) {
+    if (_dropdownValues.containsKey(field.name)) {
+      return _dropdownValues[field.name] ?? '';
+    }
+    if (_boolValues.containsKey(field.name)) {
+      return _boolValues[field.name] ?? false;
+    }
+    if (_multiselectValues.containsKey(field.name)) {
+      return _multiselectValues[field.name] ?? <String>{};
+    }
+    return _fieldControllers[field.name]?.text ?? '';
+  }
+
+  dynamic _getGroupFieldValue(
+    DocumentField groupField,
+    DocumentField subField,
+    int rowIndex,
+  ) {
+    if (subField.type == 'dropdown') {
+      return _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
+          '';
+    }
+    if (subField.type == 'boolean') {
+      return _groupBoolValues[groupField.name]?[rowIndex][subField.name] ??
+          false;
+    }
+    if (subField.type == 'multiselect') {
+      return _groupMultiselectValues[groupField.name]?[rowIndex]
+              [subField.name] ??
+          <String>{};
+    }
+    return _groupFieldControllers[groupField.name]?[rowIndex][subField.name]
+            ?.text ??
+        '';
+  }
+
+  double? _parseNumericValue(dynamic rawValue) {
+    if (rawValue == null) return null;
+    final normalized = rawValue
+        .toString()
+        .replaceAll(',', '')
+        .replaceAll('%', '')
+        .replaceAll(RegExp(r'[^\d.\-]'), '')
+        .trim();
+    if (normalized.isEmpty) return null;
+    return double.tryParse(normalized);
+  }
+
+  bool _matchesShowIfCondition(
+    dynamic actualValue,
+    String operator,
+    String expectedToken,
+  ) {
+    final actualNumber = _parseNumericValue(actualValue);
+    final expectedNumber = double.tryParse(expectedToken);
+
+    if (actualNumber != null && expectedNumber != null) {
+      switch (operator) {
+        case '<':
+          return actualNumber < expectedNumber;
+        case '<=':
+          return actualNumber <= expectedNumber;
+        case '>':
+          return actualNumber > expectedNumber;
+        case '>=':
+          return actualNumber >= expectedNumber;
+        case '!=':
+          return actualNumber != expectedNumber;
+        case '=':
+        case '==':
+          return actualNumber == expectedNumber;
+      }
+    }
+
+    final normalizedActual = (actualValue ?? '').toString().trim().toLowerCase();
+    final normalizedExpected = expectedToken.trim().toLowerCase();
+
+    switch (operator) {
+      case '!=':
+        return normalizedActual != normalizedExpected;
+      case '=':
+      case '==':
+        return normalizedActual == normalizedExpected;
+      default:
+        return false;
+    }
+  }
+
+  bool _matchesVisibleWhen(
     DocumentField field, {
     DocumentField? groupField,
     int? rowIndex,
@@ -556,6 +774,53 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
     }
 
     return true;
+  }
+
+  bool _isFieldVisible(
+    DocumentField field, {
+    DocumentField? groupField,
+    int? rowIndex,
+  }) {
+    if (!_matchesVisibleWhen(field, groupField: groupField, rowIndex: rowIndex)) {
+      return false;
+    }
+
+    final condition = field.showIf?.trim();
+    if (condition == null || condition.isEmpty) {
+      return true;
+    }
+
+    final match = RegExp(r'^\s*([a-zA-Z0-9_]+)\s*(<=|>=|==|!=|=|<|>)\s*(.+?)\s*$')
+        .firstMatch(condition);
+    if (match == null) {
+      return true;
+    }
+
+    final targetFieldName = match.group(1)!;
+    final operator = match.group(2)!;
+    var expectedToken = match.group(3)!.trim();
+    if ((expectedToken.startsWith('"') && expectedToken.endsWith('"')) ||
+        (expectedToken.startsWith("'") && expectedToken.endsWith("'"))) {
+      expectedToken = expectedToken.substring(1, expectedToken.length - 1);
+    }
+
+    dynamic actualValue;
+    if (groupField != null && rowIndex != null) {
+      final matches =
+          groupField.fields.where((nested) => nested.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getGroupFieldValue(groupField, matches.first, rowIndex);
+    } else {
+      final matches = _fields.where((candidate) => candidate.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getTopLevelFieldValue(matches.first);
+    }
+
+    return _matchesShowIfCondition(actualValue, operator, expectedToken);
   }
 
   String _getConditionalFieldValue(
@@ -827,13 +1092,17 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
         _initializeGroupField(field);
       } else if (field.type == 'dropdown') {
         _dropdownValues[field.name] =
-            field.options.isNotEmpty ? field.options.first : '';
+            field.defaultValue != null && field.options.contains(field.defaultValue)
+                ? field.defaultValue.toString()
+                : (field.options.isNotEmpty ? field.options.first : '');
       } else if (field.type == 'boolean') {
-        _boolValues[field.name] = false;
+        _boolValues[field.name] = field.defaultValue == true;
       } else if (field.type == 'multiselect') {
         _multiselectValues[field.name] = <String>{};
       } else {
-        _fieldControllers[field.name] = TextEditingController();
+        _fieldControllers[field.name] = TextEditingController(
+          text: field.defaultValue?.toString() ?? '',
+        );
       }
     }
     setState(() {});
@@ -1538,19 +1807,18 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
 
 
   Widget _buildField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     if (field.type == 'group' && field.fields.isNotEmpty) {
       return _buildGroupField(field);
     }
 
     final isRequired = field.required;
     final label = isRequired ? '${field.label} *' : field.label;
-    final supportsClientAutofill =
-        field.name == 'testator_name' || field.name == 'executor_name';
-    final linkedClientName = field.name == 'testator_name'
-        ? _linkedTestatorClientName
-        : field.name == 'executor_name'
-            ? _linkedExecutorClientName
-            : null;
+    final supportsClientAutofill = field.name == 'executor_name';
+    final linkedClientName =
+        field.name == 'executor_name' ? _linkedExecutorClientName : null;
 
     Widget input;
     switch (field.type) {
@@ -1567,6 +1835,19 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
             : (items.isNotEmpty ? items.first.value : null);
         input = DropdownButtonFormField<String>(
           value: value,
+          isExpanded: true,
+          selectedItemBuilder: (context) => field.options
+              .map(
+                (option) => Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    option,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              )
+              .toList(),
           items: items,
           onChanged: (selected) {
             if (selected == null) return;
@@ -1574,6 +1855,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
           },
           decoration: InputDecoration(
             hintText: field.hint,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             filled: true,
             fillColor: const Color(0xfff9fafb),
             border: OutlineInputBorder(
@@ -1637,7 +1919,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
       case 'date':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1657,7 +1939,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
       case 'textarea':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1679,7 +1961,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
       case 'number':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1701,7 +1983,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
       default:
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1757,11 +2039,8 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
               if (supportsClientAutofill)
                 TextButton.icon(
                   onPressed: () => _showClientAutofillDialog(
-                    party:
-                        field.name == 'testator_name' ? 'testator' : 'executor',
-                    title: field.name == 'testator_name'
-                        ? 'Autofill Testator Details'
-                        : 'Autofill Executor Details',
+                    party: 'executor',
+                    title: 'Autofill Executor Details',
                   ),
                   icon: const Icon(Icons.person_search, size: 18),
                   label: const Text('Autofill from Client'),
@@ -1776,12 +2055,19 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
   }
 
   Widget _buildGroupField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     final controllerRows = _groupFieldControllers[field.name] ?? const [];
     final dropdownRows = _groupDropdownValues[field.name] ?? const [];
     final boolRows = _groupBoolValues[field.name] ?? const [];
     final multiselectRows = _groupMultiselectValues[field.name] ?? const [];
+    final supportsClientAutofill = field.name == 'testators';
 
     Widget buildSubField(DocumentField subField, int rowIndex) {
+      if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
+        return const SizedBox.shrink();
+      }
       final label = subField.required ? '${subField.label} *' : subField.label;
       Widget input;
 
@@ -1800,6 +2086,19 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
               : (items.isNotEmpty ? items.first.value : null);
           input = DropdownButtonFormField<String>(
             value: value,
+            isExpanded: true,
+            selectedItemBuilder: (context) => subField.options
+                .map(
+                  (option) => Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      option,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                )
+                .toList(),
             items: items,
             onChanged: (selected) {
               if (selected == null) return;
@@ -1809,6 +2108,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
             },
             decoration: InputDecoration(
               hintText: subField.hint,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
               filled: true,
               fillColor: const Color(0xfff9fafb),
               border: OutlineInputBorder(
@@ -1995,7 +2295,10 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
                 ),
                 if (field.repeatable)
                   TextButton.icon(
-                    onPressed: () => _addGroupRow(field),
+                    onPressed: field.maxItems != null &&
+                            controllerRows.length >= field.maxItems!
+                        ? null
+                        : () => _addGroupRow(field),
                     icon: const Icon(Icons.add),
                     label: const Text('Add'),
                   ),
@@ -2017,11 +2320,44 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
                     if (field.repeatable || controllerRows.length > 1)
                       Row(
                         children: [
-                          Text(
-                            '${field.label} ${rowIndex + 1}',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${field.label} ${rowIndex + 1}',
+                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                if (supportsClientAutofill &&
+                                    _linkedClientNamesByGroup[field.name] != null &&
+                                    _linkedClientNamesByGroup[field.name]!.length >
+                                        rowIndex &&
+                                    (_linkedClientNamesByGroup[field.name]![rowIndex] ??
+                                            '')
+                                        .isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      'Linked client: ${_linkedClientNamesByGroup[field.name]![rowIndex]!}',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                          const Spacer(),
+                          if (supportsClientAutofill)
+                            TextButton.icon(
+                              onPressed: () => _showClientAutofillDialog(
+                                party: field.name,
+                                title: 'Autofill Testator Details',
+                                rowIndex: rowIndex,
+                              ),
+                              icon: const Icon(Icons.person_search, size: 18),
+                              label: const Text('Autofill from Client'),
+                            ),
                           if (controllerRows.length > 1)
                             IconButton(
                               onPressed: () => _removeGroupRow(field, rowIndex),

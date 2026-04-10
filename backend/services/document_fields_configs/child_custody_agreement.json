@@ -45,16 +45,49 @@
     "name": "relationship_status",
     "label": "Relationship Status",
     "type": "dropdown",
-    "options": ["Married", "Separated", "Divorced", "Unmarried"],
+    "options": ["Married", "Separated", "Divorced", "Unmarried", "Other"],
     "hint": "Select relationship status of parents",
     "required": true
   },
   {
+    "name": "relationship_status_other",
+    "label": "Other Relationship Status",
+    "type": "text",
+    "hint": "Enter other relationship status",
+    "required": true,
+    "show_if": "relationship_status == 'Other'"
+  },
+  {
     "name": "child_details",
     "label": "Child Details",
-    "type": "textarea",
-    "hint": "Enter name(s), date(s) of birth, and gender of child(ren)",
-    "required": true
+    "type": "group",
+    "repeatable": true,
+    "min": 1,
+    "required": true,
+    "fields": [
+      {
+        "name": "child_name",
+        "label": "Child Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full name of child"
+      },
+      {
+        "name": "date_of_birth",
+        "label": "Date of Birth",
+        "type": "date",
+        "required": true,
+        "hint": "Select date of birth"
+      },
+      {
+        "name": "gender",
+        "label": "Gender",
+        "type": "dropdown",
+        "options": ["Male", "Female", "Other"],
+        "required": true,
+        "hint": "Select gender"
+      }
+    ]
   },
   {
     "name": "number_of_children",
@@ -67,44 +100,57 @@
     "name": "legal_custody",
     "label": "Legal Custody Type",
     "type": "dropdown",
-    "options": [
-      "Joint",
-      "Sole"
-    ],
+    "options": ["Joint", "Sole"],
     "hint": "Select legal custody type",
     "required": true
+  },
+  {
+    "name": "sole_legal_custodian",
+    "label": "Sole Legal Custodian",
+    "type": "dropdown",
+    "options": ["Parent 1", "Parent 2"],
+    "hint": "Select the parent having sole legal custody",
+    "required": true,
+    "show_if": "legal_custody == 'Sole'"
   },
   {
     "name": "physical_custody",
     "label": "Physical Custody Type",
     "type": "dropdown",
-    "options": [
-      "Joint",
-      "Sole",
-      "Primary with visitation"
-    ],
+    "options": ["Joint", "Sole", "Primary with visitation"],
     "hint": "Select physical custody arrangement",
     "required": true
   },
   {
     "name": "primary_custodian",
     "label": "Primary Custodian",
-    "type": "text",
-    "hint": "Enter name of primary custodial parent (if applicable)",
-    "required": false
+    "type": "dropdown",
+    "options": ["Parent 1", "Parent 2"],
+    "hint": "Select the primary custodial parent",
+    "required": true,
+    "show_if": "physical_custody != 'Joint'"
   },
   {
     "name": "visitation_schedule",
     "label": "Visitation Schedule",
     "type": "textarea",
-    "hint": "Enter detailed visitation terms (weekends, holidays, etc.)",
-    "required": false
+    "hint": "Enter detailed visitation terms such as weekdays, weekends, and handover timings",
+    "required": true,
+    "show_if": "physical_custody != 'Joint'"
   },
   {
     "name": "holiday_schedule",
     "label": "Holiday / Vacation Schedule",
     "type": "textarea",
-    "hint": "Define custody during holidays and vacations",
+    "hint": "Define custody during school holidays, festivals, birthdays, and vacations",
+    "required": true,
+    "show_if": "physical_custody != 'Joint'"
+  },
+  {
+    "name": "child_support_applicable",
+    "label": "Child Support Included",
+    "type": "boolean",
+    "hint": "Tick if one parent will pay child support",
     "required": false
   },
   {
@@ -112,55 +158,162 @@
     "label": "Child Support Amount",
     "type": "number",
     "hint": "Enter monthly support amount",
-    "required": false
+    "required": true,
+    "show_if": "child_support_applicable == true"
   },
   {
     "name": "child_support_terms",
     "label": "Child Support Terms",
     "type": "textarea",
-    "hint": "Mention payment method, due date, and conditions",
-    "required": false
+    "hint": "Mention payment method, due date, escalation, and default consequences",
+    "required": true,
+    "show_if": "child_support_applicable == true"
   },
   {
     "name": "education_decisions",
     "label": "Education Decisions",
     "type": "textarea",
-    "hint": "Specify responsibility for educational decisions",
+    "hint": "Specify responsibility for school selection, fees, and educational decisions",
     "required": false
   },
   {
     "name": "medical_decisions",
     "label": "Medical Decisions",
     "type": "textarea",
-    "hint": "Specify responsibility for healthcare decisions",
+    "hint": "Specify responsibility for healthcare decisions and emergency treatment",
     "required": false
+  },
+  {
+    "name": "health_insurance_holder",
+    "label": "Health Insurance Holder",
+    "type": "dropdown",
+    "options": ["Parent 1", "Parent 2", "Shared", "Not Applicable"],
+    "hint": "Select who will maintain health insurance for the child",
+    "required": false
+  },
+  {
+    "name": "unreimbursed_medical_expense_split",
+    "label": "Unreimbursed Medical Expense Split",
+    "type": "text",
+    "hint": "Enter how co-pays, dental, therapy, and uncovered medical expenses will be shared",
+    "required": false
+  },
+  {
+    "name": "communication_clause",
+    "label": "Parent Communication Clause",
+    "type": "textarea",
+    "hint": "State how parents will communicate about the child, for example app, email, or phone",
+    "required": false
+  },
+  {
+    "name": "child_communication_with_non_custodial_parent",
+    "label": "Child Communication with Non-Custodial Parent",
+    "type": "textarea",
+    "hint": "Define phone, video call, or messaging access for the child",
+    "required": false,
+    "show_if": "physical_custody != 'Joint'"
+  },
+  {
+    "name": "extracurricular_activities",
+    "label": "Extracurricular Activities",
+    "type": "textarea",
+    "hint": "State how sports, music, coaching, camps, and related costs will be decided and paid",
+    "required": false
+  },
+  {
+    "name": "travel_permission_required",
+    "label": "Travel Permission Clause Included",
+    "type": "boolean",
+    "hint": "Tick if written consent is required for out-of-state or international travel",
+    "required": false
+  },
+  {
+    "name": "travel_permission_terms",
+    "label": "Travel Permission Terms",
+    "type": "textarea",
+    "hint": "Describe written-consent requirements, notice period, itinerary sharing, and emergency exceptions",
+    "required": true,
+    "show_if": "travel_permission_required == true"
+  },
+  {
+    "name": "passport_possession",
+    "label": "Passport Possession",
+    "type": "textarea",
+    "hint": "State which parent keeps the child passport and how it is released for travel",
+    "required": false,
+    "show_if": "travel_permission_required == true"
+  },
+  {
+    "name": "right_of_first_refusal",
+    "label": "Right of First Refusal Included",
+    "type": "boolean",
+    "hint": "Tick if the other parent must be contacted before arranging third-party childcare",
+    "required": false
+  },
+  {
+    "name": "right_of_first_refusal_hours",
+    "label": "Right of First Refusal Threshold (Hours)",
+    "type": "number",
+    "hint": "Enter the minimum number of hours after which the other parent must be contacted",
+    "required": true,
+    "show_if": "right_of_first_refusal == true"
+  },
+  {
+    "name": "right_of_first_refusal_terms",
+    "label": "Right of First Refusal Terms",
+    "type": "textarea",
+    "hint": "Describe how and when the other parent must be contacted before using babysitters or relatives",
+    "required": true,
+    "show_if": "right_of_first_refusal == true"
+  },
+  {
+    "name": "social_media_privacy_clause",
+    "label": "Social Media / Privacy Clause",
+    "type": "textarea",
+    "hint": "State whether parents may post child photos or information on public social media accounts",
+    "required": false
+  },
+  {
+    "name": "new_partner_introduction_clause_included",
+    "label": "New Partner Introduction Clause Included",
+    "type": "boolean",
+    "hint": "Tick if there are rules for introducing new romantic partners to the child",
+    "required": false
+  },
+  {
+    "name": "new_partner_introduction_clause",
+    "label": "New Partner Introduction Clause",
+    "type": "textarea",
+    "hint": "Describe notice period, cohabitation restrictions, and introduction rules for new partners",
+    "required": true,
+    "show_if": "new_partner_introduction_clause_included == true"
   },
   {
     "name": "relocation_clause",
     "label": "Relocation Clause",
     "type": "textarea",
-    "hint": "Conditions for relocation of child",
+    "hint": "Conditions for relocation of the child and notice to the other parent",
     "required": false
   },
   {
     "name": "dispute_resolution",
     "label": "Dispute Resolution",
     "type": "textarea",
-    "hint": "Mention mediation/arbitration process",
+    "hint": "Mention mediation, counseling, or court process before filing disputes",
     "required": false
   },
   {
     "name": "modification_clause",
     "label": "Modification Clause",
     "type": "textarea",
-    "hint": "Conditions under which agreement can be modified",
+    "hint": "Conditions under which the agreement can be modified",
     "required": false
   },
   {
     "name": "governing_law",
     "label": "Governing Law",
     "type": "text",
-    "hint": "Enter applicable law (e.g., Laws of India)",
+    "hint": "Enter applicable law, for example Laws of India",
     "required": true
   },
   {
@@ -175,14 +328,14 @@
     "label": "Parent 1 Signature",
     "type": "text",
     "hint": "Enter name as signature",
-    "required": false
+    "required": true
   },
   {
     "name": "parent2_signature",
     "label": "Parent 2 Signature",
     "type": "text",
     "hint": "Enter name as signature",
-    "required": false
+    "required": true
   },
   {
     "name": "witness_details",

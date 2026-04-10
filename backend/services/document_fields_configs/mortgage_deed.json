@@ -14,39 +14,86 @@
     "required": true
   },
   {
-    "name": "mortgagor_name",
-    "label": "Mortgagor Name",
-    "type": "text",
-    "hint": "Enter borrower full legal name",
-    "required": true
-  },
-  {
-    "name": "mortgagor_address",
-    "label": "Mortgagor Address",
-    "type": "textarea",
-    "hint": "Enter complete residential address",
-    "required": true
-  },
-  {
-    "name": "mortgagor_id_proof",
-    "label": "Mortgagor ID Proof",
-    "type": "text",
-    "hint": "Enter Aadhaar/PAN details",
-    "required": false
-  },
-  {
-    "name": "mortgagor_type",
-    "label": "Mortgagor Type",
-    "type": "dropdown",
-    "options": ["Individual", "Company", "LLP", "Partnership"],
-    "hint": "Select mortgagor type",
-    "required": true
+    "name": "mortgagor_details",
+    "label": "Mortgagor Details",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "min": 1,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Mortgagor Name",
+        "type": "text",
+        "hint": "Enter borrower or owner full legal name",
+        "required": true
+      },
+      {
+        "name": "address",
+        "label": "Mortgagor Address",
+        "type": "textarea",
+        "hint": "Enter complete address",
+        "required": true
+      },
+      {
+        "name": "id_proof",
+        "label": "Mortgagor ID Proof",
+        "type": "text",
+        "hint": "Enter Aadhaar, PAN, or other ID details",
+        "required": false
+      },
+      {
+        "name": "mortgagor_type",
+        "label": "Mortgagor Type",
+        "type": "dropdown",
+        "options": [
+          "Individual",
+          "Company",
+          "LLP",
+          "Partnership"
+        ],
+        "hint": "Select mortgagor type",
+        "required": true
+      },
+      {
+        "name": "authorized_signatory_name",
+        "label": "Authorized Signatory Name",
+        "type": "text",
+        "hint": "Enter name of the person signing on behalf of the entity",
+        "required": true,
+        "show_if": "mortgagor_type != 'Individual'"
+      },
+      {
+        "name": "authorized_signatory_title",
+        "label": "Authorized Signatory Title",
+        "type": "text",
+        "hint": "Enter designation such as Director, Partner, or Designated Partner",
+        "required": true,
+        "show_if": "mortgagor_type != 'Individual'"
+      },
+      {
+        "name": "board_resolution_date",
+        "label": "Board Resolution Date",
+        "type": "date",
+        "hint": "Select board resolution or authorization date",
+        "required": true,
+        "show_if": "mortgagor_type == 'Company'"
+      },
+      {
+        "name": "signatory_identifier",
+        "label": "DIN / DPIN",
+        "type": "text",
+        "hint": "Enter DIN for company or DPIN for LLP signatory",
+        "required": true,
+        "show_if": "mortgagor_type == 'Company'"
+      }
+    ]
   },
   {
     "name": "mortgagee_name",
     "label": "Mortgagee Name",
     "type": "text",
-    "hint": "Enter lender/bank name",
+    "hint": "Enter lender or bank name",
     "required": true
   },
   {
@@ -60,7 +107,12 @@
     "name": "mortgagee_type",
     "label": "Mortgagee Type",
     "type": "dropdown",
-    "options": ["Individual", "Bank", "NBFC", "Company"],
+    "options": [
+      "Individual",
+      "Bank",
+      "NBFC",
+      "Company"
+    ],
     "hint": "Select mortgagee type",
     "required": true
   },
@@ -89,7 +141,10 @@
     "name": "interest_type",
     "label": "Interest Type",
     "type": "dropdown",
-    "options": ["Fixed", "Floating"],
+    "options": [
+      "Fixed",
+      "Floating"
+    ],
     "hint": "Select interest type",
     "required": true
   },
@@ -113,6 +168,25 @@
     "type": "date",
     "hint": "Select EMI start date",
     "required": false
+  },
+  {
+    "name": "disbursement_schedule",
+    "label": "Disbursement Schedule",
+    "type": "dropdown",
+    "options": [
+      "Lump Sum",
+      "In Stages"
+    ],
+    "hint": "Select whether the loan is disbursed at once or in stages",
+    "required": false
+  },
+  {
+    "name": "stage_disbursement_details",
+    "label": "Stage Disbursement Details",
+    "type": "textarea",
+    "hint": "Describe each stage or tranche of disbursement",
+    "required": true,
+    "show_if": "disbursement_schedule == 'In Stages'"
   },
   {
     "name": "security_type",
@@ -142,6 +216,34 @@
     "required": true
   },
   {
+    "name": "north_boundary",
+    "label": "North Boundary",
+    "type": "text",
+    "hint": "Enter what lies on the north side",
+    "required": true
+  },
+  {
+    "name": "south_boundary",
+    "label": "South Boundary",
+    "type": "text",
+    "hint": "Enter what lies on the south side",
+    "required": true
+  },
+  {
+    "name": "east_boundary",
+    "label": "East Boundary",
+    "type": "text",
+    "hint": "Enter what lies on the east side",
+    "required": true
+  },
+  {
+    "name": "west_boundary",
+    "label": "West Boundary",
+    "type": "text",
+    "hint": "Enter what lies on the west side",
+    "required": true
+  },
+  {
     "name": "property_value",
     "label": "Property Market Value",
     "type": "number",
@@ -163,6 +265,38 @@
     "required": false
   },
   {
+    "name": "original_title_deeds",
+    "label": "Original Title Deeds Deposited",
+    "type": "group",
+    "repeatable": true,
+    "required": false,
+    "show_if": "security_type == 'Equitable Mortgage'",
+    "fields": [
+      {
+        "name": "document_name",
+        "label": "Document Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter document name, e.g. Sale Deed or Tax Receipt"
+      },
+      {
+        "name": "document_details",
+        "label": "Document Details",
+        "type": "text",
+        "required": false,
+        "hint": "Enter date, number, or short description"
+      }
+    ]
+  },
+  {
+    "name": "rent_profit_appropriation",
+    "label": "Rent / Profit Appropriation",
+    "type": "textarea",
+    "hint": "Explain how rents or profits will be adjusted against the mortgage debt",
+    "required": true,
+    "show_if": "security_type == 'Usufructuary Mortgage'"
+  },
+  {
     "name": "insurance_required",
     "label": "Insurance Requirement",
     "type": "boolean",
@@ -175,6 +309,76 @@
     "type": "textarea",
     "hint": "Responsibility for property maintenance",
     "required": false
+  },
+  {
+    "name": "has_guarantor",
+    "label": "Guarantor Involved",
+    "type": "boolean",
+    "hint": "Tick if a third-party guarantor is part of the mortgage",
+    "required": false
+  },
+  {
+    "name": "guarantor_name",
+    "label": "Guarantor Name",
+    "type": "text",
+    "hint": "Enter guarantor full name",
+    "required": true,
+    "show_if": "has_guarantor == true"
+  },
+  {
+    "name": "guarantor_address",
+    "label": "Guarantor Address",
+    "type": "textarea",
+    "hint": "Enter guarantor address",
+    "required": true,
+    "show_if": "has_guarantor == true"
+  },
+  {
+    "name": "guarantor_signature",
+    "label": "Guarantor Signature",
+    "type": "text",
+    "hint": "Enter guarantor name as signature",
+    "required": true,
+    "show_if": "has_guarantor == true"
+  },
+  {
+    "name": "signed_through_poa",
+    "label": "Signed Through Power of Attorney",
+    "type": "boolean",
+    "hint": "Tick if the mortgage is executed through an agent or attorney",
+    "required": false
+  },
+  {
+    "name": "poa_holder_name",
+    "label": "POA Holder Name",
+    "type": "text",
+    "hint": "Enter power of attorney holder name",
+    "required": true,
+    "show_if": "signed_through_poa == true"
+  },
+  {
+    "name": "poa_holder_address",
+    "label": "POA Holder Address",
+    "type": "textarea",
+    "hint": "Enter power of attorney holder address",
+    "required": false,
+    "show_if": "signed_through_poa == true"
+  },
+  {
+    "name": "poa_date",
+    "label": "POA Date",
+    "type": "date",
+    "hint": "Select power of attorney date",
+    "required": true,
+    "show_if": "signed_through_poa == true"
+  },
+  {
+    "name": "poa_registration_number",
+    "label": "POA Registration Number",
+    "type": "text",
+    "hint": "Enter registered power of attorney number",
+    "required": true,
+    "show_if": "signed_through_poa == true"
   },
   {
     "name": "default_clause",
@@ -223,13 +427,14 @@
     "label": "Stamp Duty Details",
     "type": "textarea",
     "hint": "Mention stamp duty paid or applicable",
-    "required": false
+    "required": false,
+    "show_if": "registration_required == true"
   },
   {
     "name": "governing_law",
     "label": "Governing Law",
     "type": "text",
-    "hint": "Enter applicable law (e.g., Transfer of Property Act, India)",
+    "hint": "Enter applicable law",
     "required": true
   },
   {
@@ -240,17 +445,34 @@
     "required": true
   },
   {
-    "name": "mortgagor_signature",
-    "label": "Mortgagor Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
+    "name": "mortgagor_signatures",
+    "label": "Mortgagor Signatures",
+    "type": "group",
+    "repeatable": true,
+    "required": true,
+    "min": 1,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Mortgagor Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter mortgagor name"
+      },
+      {
+        "name": "signature",
+        "label": "Signature",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name as signature"
+      }
+    ]
   },
   {
     "name": "mortgagee_signature",
     "label": "Mortgagee Signature",
     "type": "text",
-    "hint": "Enter name as signature",
+    "hint": "Enter mortgagee name as signature",
     "required": true
   },
   {

@@ -34,6 +34,14 @@
     "required": true
   },
   {
+    "name": "jurisdiction_basis_other",
+    "label": "Other Jurisdiction Basis",
+    "type": "text",
+    "hint": "Enter other basis of jurisdiction",
+    "required": true,
+    "show_if": "jurisdiction_basis == 'Other'"
+  },
+  {
     "name": "marriage_date",
     "label": "Marriage Date",
     "type": "date",
@@ -51,9 +59,38 @@
     "name": "marriage_type",
     "label": "Marriage Type",
     "type": "dropdown",
-    "options": ["Hindu Marriage", "Special Marriage Act", "Other"],
+    "options": [
+      "Hindu Marriage",
+      "Special Marriage Act",
+      "Christian Marriage",
+      "Muslim Marriage",
+      "Parsi Marriage",
+      "Other"
+    ],
     "hint": "Select applicable marriage law",
     "required": true
+  },
+  {
+    "name": "marriage_type_other",
+    "label": "Other Marriage Law",
+    "type": "text",
+    "hint": "Enter other applicable marriage law",
+    "required": true,
+    "show_if": "marriage_type == 'Other'"
+  },
+  {
+    "name": "marriage_registration_number",
+    "label": "Marriage Registration Number",
+    "type": "text",
+    "hint": "Enter marriage registration or certificate number",
+    "required": false
+  },
+  {
+    "name": "marriage_registration_office",
+    "label": "Marriage Registration Office",
+    "type": "text",
+    "hint": "Enter marriage registration office location",
+    "required": false
   },
   {
     "name": "last_cohabitation_address",
@@ -90,9 +127,7 @@
     ],
     "hint": "Select who will be Petitioner No. 1 in mutual consent petition",
     "required": true,
-    "visible_when": {
-      "divorce_type": "Mutual Consent"
-    }
+    "show_if": "divorce_type == 'Mutual Consent'"
   },
   {
     "name": "contested_filed_by",
@@ -104,9 +139,7 @@
     ],
     "hint": "Select who is filing the contested divorce petition",
     "required": true,
-    "visible_when": {
-      "divorce_type": "Contested"
-    }
+    "show_if": "divorce_type == 'Contested'"
   },
   {
     "name": "husband_name",
@@ -121,6 +154,20 @@
     "type": "number",
     "hint": "Enter age in years",
     "required": true
+  },
+  {
+    "name": "husband_religion",
+    "label": "Husband Religion",
+    "type": "text",
+    "hint": "Enter religion of husband",
+    "required": false
+  },
+  {
+    "name": "husband_nationality_domicile",
+    "label": "Husband Nationality / Domicile",
+    "type": "text",
+    "hint": "Enter nationality or domicile details",
+    "required": false
   },
   {
     "name": "husband_occupation",
@@ -151,6 +198,13 @@
     "required": true
   },
   {
+    "name": "husband_passport_photo_attached",
+    "label": "Husband Passport Photo Attached",
+    "type": "boolean",
+    "hint": "Tick if husband's passport-size photo is attached",
+    "required": false
+  },
+  {
     "name": "wife_name",
     "label": "Wife Full Name",
     "type": "text",
@@ -163,6 +217,20 @@
     "type": "number",
     "hint": "Enter age in years",
     "required": true
+  },
+  {
+    "name": "wife_religion",
+    "label": "Wife Religion",
+    "type": "text",
+    "hint": "Enter religion of wife",
+    "required": false
+  },
+  {
+    "name": "wife_nationality_domicile",
+    "label": "Wife Nationality / Domicile",
+    "type": "text",
+    "hint": "Enter nationality or domicile details",
+    "required": false
   },
   {
     "name": "wife_occupation",
@@ -193,14 +261,27 @@
     "required": true
   },
   {
+    "name": "wife_passport_photo_attached",
+    "label": "Wife Passport Photo Attached",
+    "type": "boolean",
+    "hint": "Tick if wife's passport-size photo is attached",
+    "required": false
+  },
+  {
     "name": "grounds_for_divorce",
     "label": "Grounds for Divorce",
     "type": "textarea",
     "hint": "Enter legal grounds such as cruelty, desertion, adultery, etc.",
     "required": true,
-    "visible_when": {
-      "divorce_type": "Contested"
-    }
+    "show_if": "divorce_type == 'Contested'"
+  },
+  {
+    "name": "no_collusion_declaration",
+    "label": "No Collusion Declaration",
+    "type": "boolean",
+    "hint": "Tick to confirm the petitioner is not colluding with the respondent to mislead the court",
+    "required": false,
+    "show_if": "divorce_type == 'Contested'"
   },
   {
     "name": "mutual_consent_terms",
@@ -208,9 +289,7 @@
     "type": "textarea",
     "hint": "Enter the terms agreed between both parties",
     "required": true,
-    "visible_when": {
-      "divorce_type": "Mutual Consent"
-    }
+    "show_if": "divorce_type == 'Mutual Consent'"
   },
   {
     "name": "children_details",
@@ -224,14 +303,39 @@
     "label": "Child Custody Terms",
     "type": "textarea",
     "hint": "Specify custody and visitation arrangements",
-    "required": false
+    "required": true,
+    "show_if": "children_details != ''"
   },
   {
     "name": "child_support_amount",
     "label": "Child Support Amount",
     "type": "number",
     "hint": "Enter monthly support amount",
+    "required": false,
+    "show_if": "children_details != ''"
+  },
+  {
+    "name": "interim_maintenance_requested",
+    "label": "Interim Maintenance Requested",
+    "type": "boolean",
+    "hint": "Tick if interim maintenance is sought during pendency of the case",
     "required": false
+  },
+  {
+    "name": "interim_maintenance_amount",
+    "label": "Interim Maintenance Amount",
+    "type": "number",
+    "hint": "Enter interim monthly amount sought",
+    "required": false,
+    "show_if": "interim_maintenance_requested == true"
+  },
+  {
+    "name": "interim_maintenance_details",
+    "label": "Interim Maintenance Details",
+    "type": "textarea",
+    "hint": "Enter grounds and details for interim maintenance",
+    "required": false,
+    "show_if": "interim_maintenance_requested == true"
   },
   {
     "name": "maintenance_alimony",
@@ -244,14 +348,14 @@
     "name": "income_details_husband",
     "label": "Husband Income Details",
     "type": "textarea",
-    "hint": "Mention salary/business income",
+    "hint": "Mention salary or business income",
     "required": false
   },
   {
     "name": "income_details_wife",
     "label": "Wife Income Details",
     "type": "textarea",
-    "hint": "Mention salary/business income",
+    "hint": "Mention salary or business income",
     "required": false
   },
   {
@@ -280,7 +384,8 @@
     "label": "Final Settlement Terms",
     "type": "textarea",
     "hint": "Enter complete settlement agreement",
-    "required": true
+    "required": true,
+    "show_if": "divorce_type == 'Mutual Consent'"
   },
   {
     "name": "prayer",
@@ -308,14 +413,16 @@
     "label": "Husband Signature",
     "type": "text",
     "hint": "Enter name as signature",
-    "required": true
+    "required": true,
+    "show_if": "divorce_type == 'Mutual Consent'"
   },
   {
     "name": "wife_signature",
     "label": "Wife Signature",
     "type": "text",
     "hint": "Enter name as signature",
-    "required": true
+    "required": true,
+    "show_if": "divorce_type == 'Mutual Consent'"
   },
   {
     "name": "advocate_name",
