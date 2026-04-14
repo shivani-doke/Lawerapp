@@ -14,6 +14,26 @@
     "required": true
   },
   {
+    "name": "collaboration_scenario",
+    "label": "Collaboration Scenario",
+    "type": "dropdown",
+    "options": [
+      "General Collaboration",
+      "Academic Collaboration",
+      "Joint Venture / Business",
+      "Data Sharing"
+    ],
+    "hint": "Select the primary purpose of this MOU",
+    "required": true
+  },
+  {
+    "name": "agreement_title",
+    "label": "MOU Title",
+    "type": "text",
+    "hint": "e.g., MOU for Business Collaboration",
+    "required": false
+  },
+  {
     "name": "party_a_name",
     "label": "Party A Name",
     "type": "text",
@@ -34,6 +54,51 @@
     "options": ["Individual", "Company", "LLP", "Partnership", "Government"],
     "hint": "Select type of Party A",
     "required": true
+  },
+  {
+    "name": "party_a_authorized_signatory_name",
+    "label": "Party A Authorized Signatory Name",
+    "type": "text",
+    "hint": "Enter authorized signatory name",
+    "required": true,
+    "show_if": "party_a_type != 'Individual'"
+  },
+  {
+    "name": "party_a_authorized_signatory_designation",
+    "label": "Party A Authorized Signatory Designation",
+    "type": "text",
+    "hint": "Enter designation, e.g. Director, Partner, Secretary",
+    "required": true,
+    "show_if": "party_a_type != 'Individual'"
+  },
+  {
+    "name": "party_a_notice_details",
+    "label": "Party A Notice Details",
+    "type": "group",
+    "required": true,
+    "fields": [
+      {
+        "name": "contact_person",
+        "label": "Contact Person",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name of contact person for legal notices"
+      },
+      {
+        "name": "email",
+        "label": "Email",
+        "type": "text",
+        "required": true,
+        "hint": "Enter official notice email"
+      },
+      {
+        "name": "official_address",
+        "label": "Official Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter official address where notices should be served"
+      }
+    ]
   },
   {
     "name": "party_b_name",
@@ -58,11 +123,49 @@
     "required": true
   },
   {
-    "name": "agreement_title",
-    "label": "MOU Title",
+    "name": "party_b_authorized_signatory_name",
+    "label": "Party B Authorized Signatory Name",
     "type": "text",
-    "hint": "e.g., MOU for Business Collaboration",
-    "required": false
+    "hint": "Enter authorized signatory name",
+    "required": true,
+    "show_if": "party_b_type != 'Individual'"
+  },
+  {
+    "name": "party_b_authorized_signatory_designation",
+    "label": "Party B Authorized Signatory Designation",
+    "type": "text",
+    "hint": "Enter designation, e.g. Director, Partner, Secretary",
+    "required": true,
+    "show_if": "party_b_type != 'Individual'"
+  },
+  {
+    "name": "party_b_notice_details",
+    "label": "Party B Notice Details",
+    "type": "group",
+    "required": true,
+    "fields": [
+      {
+        "name": "contact_person",
+        "label": "Contact Person",
+        "type": "text",
+        "required": true,
+        "hint": "Enter name of contact person for legal notices"
+      },
+      {
+        "name": "email",
+        "label": "Email",
+        "type": "text",
+        "required": true,
+        "hint": "Enter official notice email"
+      },
+      {
+        "name": "official_address",
+        "label": "Official Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter official address where notices should be served"
+      }
+    ]
   },
   {
     "name": "purpose",
@@ -86,52 +189,100 @@
     "required": true
   },
   {
+    "name": "representations_and_warranties",
+    "label": "Representations & Warranties",
+    "type": "textarea",
+    "hint": "Confirm both parties have authority and capacity to enter into this MOU",
+    "required": true
+  },
+  {
+    "name": "include_deliverables",
+    "label": "Include Deliverables",
+    "type": "boolean",
+    "hint": "Tick if the MOU should define specific deliverables and milestones",
+    "required": false
+  },
+  {
     "name": "deliverables",
     "label": "Deliverables",
     "type": "textarea",
     "hint": "Specify expected outcomes or outputs",
-    "required": false
+    "required": true,
+    "show_if": "include_deliverables == true"
   },
   {
     "name": "timeline",
     "label": "Timeline",
     "type": "textarea",
     "hint": "Define milestones and deadlines",
-    "required": false
+    "required": true,
+    "show_if": "include_deliverables == true"
+  },
+  {
+    "name": "milestones",
+    "label": "Milestones",
+    "type": "textarea",
+    "hint": "List measurable milestone dates, review checkpoints, or phases",
+    "required": true,
+    "show_if": "include_deliverables == true"
   },
   {
     "name": "term_duration",
     "label": "Term / Duration",
-    "type": "text",
-    "hint": "Enter duration (e.g., 12 months, until completion)",
+    "type": "dropdown",
+    "options": [
+      "Fixed Term / Specific Date Range",
+      "Project-Based / Until Completion",
+      "Open-Ended",
+      "Other"
+    ],
+    "hint": "Select how the term of the MOU should be defined",
     "required": true
+  },
+  {
+    "name": "term_duration_details",
+    "label": "Term Details",
+    "type": "text",
+    "hint": "Enter any additional term details",
+    "required": true,
+    "show_if": "term_duration == 'Other'"
   },
   {
     "name": "start_date",
     "label": "Start Date",
     "type": "date",
     "hint": "Select start date",
-    "required": false
+    "required": true,
+    "show_if": "term_duration == 'Fixed Term / Specific Date Range'"
   },
   {
     "name": "end_date",
     "label": "End Date",
     "type": "date",
     "hint": "Select end date",
-    "required": false
+    "required": true,
+    "show_if": "term_duration == 'Fixed Term / Specific Date Range'"
+  },
+  {
+    "name": "non_binding_clause",
+    "label": "Non-Binding Nature",
+    "type": "boolean",
+    "hint": "Tick if this MOU is intended to be non-binding except for limited surviving clauses",
+    "required": true
   },
   {
     "name": "financial_terms",
     "label": "Financial Terms",
     "type": "textarea",
-    "hint": "Specify cost sharing, funding, or payments",
-    "required": false
+    "hint": "Specify cost sharing, funding, reimbursements, or payments",
+    "required": true,
+    "show_if": "non_binding_clause == false"
   },
   {
     "name": "resource_sharing",
     "label": "Resource Sharing",
     "type": "textarea",
-    "hint": "Mention sharing of manpower, infrastructure, etc.",
+    "hint": "Mention sharing of manpower, infrastructure, technology, or data",
     "required": false
   },
   {
@@ -142,17 +293,47 @@
     "required": false
   },
   {
-    "name": "non_binding_clause",
-    "label": "Non-Binding Nature",
-    "type": "boolean",
-    "hint": "Specify if MOU is non-binding",
-    "required": true
-  },
-  {
     "name": "intellectual_property",
     "label": "Intellectual Property Rights",
     "type": "textarea",
     "hint": "Define ownership of IP created",
+    "required": false
+  },
+  {
+    "name": "exclusivity",
+    "label": "Exclusivity",
+    "type": "boolean",
+    "hint": "Tick if the parties cannot work with competitors on the same project during the MOU term",
+    "required": false
+  },
+  {
+    "name": "exclusivity_details",
+    "label": "Exclusivity Details",
+    "type": "textarea",
+    "hint": "Define scope, duration, and competitor restrictions",
+    "required": false,
+    "show_if": "exclusivity == true"
+  },
+  {
+    "name": "include_force_majeure",
+    "label": "Include Force Majeure",
+    "type": "boolean",
+    "hint": "Tick to include a force majeure clause for events beyond a party's control",
+    "required": false
+  },
+  {
+    "name": "force_majeure",
+    "label": "Force Majeure Clause",
+    "type": "textarea",
+    "hint": "Describe acts of God, government restrictions, strikes, disasters, or similar events",
+    "required": true,
+    "show_if": "include_force_majeure == true"
+  },
+  {
+    "name": "survival_clause",
+    "label": "Survival Clause",
+    "type": "textarea",
+    "hint": "Specify which obligations continue after termination, such as confidentiality or IP",
     "required": false
   },
   {
@@ -173,50 +354,80 @@
     "name": "dispute_resolution",
     "label": "Dispute Resolution",
     "type": "textarea",
-    "hint": "Specify mediation/arbitration process",
-    "required": false
+    "hint": "Specify mediation, arbitration, or court process",
+    "required": true,
+    "show_if": "non_binding_clause == false"
   },
   {
     "name": "governing_law",
     "label": "Governing Law",
-    "type": "text",
-    "hint": "Enter applicable law (e.g., Laws of India)",
+    "type": "dropdown",
+    "options": ["India", "United States", "United Kingdom", "Other"],
+    "hint": "Select the governing law",
     "required": true
+  },
+  {
+    "name": "governing_law_other",
+    "label": "Other Governing Law",
+    "type": "text",
+    "hint": "Enter the governing law if not listed",
+    "required": true,
+    "show_if": "governing_law == 'Other'"
+  },
+  {
+    "name": "stamp_duty_details",
+    "label": "Stamp Duty Details",
+    "type": "textarea",
+    "hint": "Enter applicable stamp duty, e-stamp, or execution requirements",
+    "required": false,
+    "show_if": "governing_law == 'India'"
   },
   {
     "name": "jurisdiction",
     "label": "Jurisdiction",
     "type": "text",
-    "hint": "Enter court jurisdiction",
+    "hint": "Enter court or dispute jurisdiction",
     "required": true
   },
   {
-    "name": "party_a_signatory_name",
-    "label": "Party A Signatory Name",
-    "type": "text",
-    "hint": "Authorized signatory name",
-    "required": true
+    "name": "student_faculty_exchange_details",
+    "label": "Student / Faculty Exchange Details",
+    "type": "textarea",
+    "hint": "Describe exchange programs, eligibility, tenure, and responsibilities",
+    "required": true,
+    "show_if": "collaboration_scenario == 'Academic Collaboration'"
   },
   {
-    "name": "party_b_signatory_name",
-    "label": "Party B Signatory Name",
-    "type": "text",
-    "hint": "Authorized signatory name",
-    "required": true
+    "name": "joint_research_credits",
+    "label": "Joint Research Credits",
+    "type": "textarea",
+    "hint": "Define publication credits, authorship, and recognition terms",
+    "required": true,
+    "show_if": "collaboration_scenario == 'Academic Collaboration'"
   },
   {
-    "name": "party_a_signature",
-    "label": "Party A Signature",
+    "name": "profit_sharing_ratio",
+    "label": "Profit Sharing Ratio",
     "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
+    "hint": "Enter the agreed profit-sharing ratio",
+    "required": true,
+    "show_if": "collaboration_scenario == 'Joint Venture / Business'"
   },
   {
-    "name": "party_b_signature",
-    "label": "Party B Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
+    "name": "initial_capital_contribution",
+    "label": "Initial Capital Contribution",
+    "type": "textarea",
+    "hint": "Specify cash, assets, or services contributed by each party at the start",
+    "required": true,
+    "show_if": "collaboration_scenario == 'Joint Venture / Business'"
+  },
+  {
+    "name": "data_protection_clause",
+    "label": "Data Protection / GDPR Compliance",
+    "type": "textarea",
+    "hint": "Describe privacy, security, DPDP, GDPR, or user-data compliance obligations",
+    "required": true,
+    "show_if": "collaboration_scenario == 'Data Sharing'"
   },
   {
     "name": "witness_details",
@@ -226,6 +437,7 @@
     "min": 2,
     "max": 2,
     "required": true,
+    "show_if": "governing_law == 'India'",
     "fields": [
       {
         "name": "name",

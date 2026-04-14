@@ -408,7 +408,7 @@
   },
   {
     "name": "inventory_items",
-    "label": "Inventory Items (JSON/List)",
+    "label": "Inventory Items ",
     "type": "textarea",
     "hint": "Example: Fans: 4, AC: 2, Beds: 2",
     "required": false

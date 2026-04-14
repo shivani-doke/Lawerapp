@@ -325,33 +325,5 @@
     "type": "text",
     "hint": "Enter court jurisdiction",
     "required": true
-  },
-  {
-    "name": "employer_signatory_name",
-    "label": "Employer Signatory Name",
-    "type": "text",
-    "hint": "Authorized signatory name",
-    "required": true
-  },
-  {
-    "name": "employer_signatory_title",
-    "label": "Employer Signatory Title",
-    "type": "text",
-    "hint": "Enter signatory designation",
-    "required": false
-  },
-  {
-    "name": "employee_signature",
-    "label": "Employee Signature",
-    "type": "text",
-    "hint": "Enter employee name as signature",
-    "required": true
-  },
-  {
-    "name": "employer_signature",
-    "label": "Employer Signature",
-    "type": "text",
-    "hint": "Enter employer signatory name",
-    "required": true
   }
 ]

@@ -22,6 +22,7 @@ class DocumentField {
   final List<String> options;
   final bool repeatable;
   final List<DocumentField> fields;
+  final String? showIf;
 
   DocumentField({
     required this.name,
@@ -32,6 +33,7 @@ class DocumentField {
     this.options = const [],
     this.repeatable = false,
     this.fields = const [],
+    this.showIf,
   });
 
   factory DocumentField.fromJson(Map<String, dynamic> json) {
@@ -51,6 +53,7 @@ class DocumentField {
           ? rawOptions.map((e) => e.toString()).toList()
           : const [],
       repeatable: json['repeatable'] == true,
+      showIf: json['show_if']?.toString(),
       fields: rawFields is List
           ? rawFields
               .whereType<Map>()
@@ -496,6 +499,9 @@ class _AssignmentAgreementPageState extends State<AssignmentAgreementPage> {
   }
 
   bool _isTopLevelFieldMissing(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return false;
+    }
     if (!field.required) {
       return false;
     }
@@ -521,6 +527,9 @@ class _AssignmentAgreementPageState extends State<AssignmentAgreementPage> {
     DocumentField subField,
     int rowIndex,
   ) {
+    if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
+      return false;
+    }
     if (!subField.required) {
       return false;
     }
@@ -549,6 +558,9 @@ class _AssignmentAgreementPageState extends State<AssignmentAgreementPage> {
 
   bool _isGroupRowEmpty(DocumentField groupField, int rowIndex) {
     for (final subField in groupField.fields) {
+      if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
+        continue;
+      }
       if (subField.type == 'dropdown') {
         final value =
             _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
@@ -629,6 +641,18 @@ class _AssignmentAgreementPageState extends State<AssignmentAgreementPage> {
   }
 
   dynamic _serializeTopLevelFieldValue(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      if (field.type == 'group' && field.fields.isNotEmpty) {
+        return field.repeatable ? <Map<String, dynamic>>[] : <String, dynamic>{};
+      }
+      if (field.type == 'boolean') {
+        return false;
+      }
+      if (field.type == 'multiselect') {
+        return <String>[];
+      }
+      return '';
+    }
     if (field.type == 'dropdown') {
       return _dropdownValues[field.name] ?? '';
     }
@@ -649,6 +673,9 @@ class _AssignmentAgreementPageState extends State<AssignmentAgreementPage> {
 
         final rowData = <String, dynamic>{};
         for (final subField in field.fields) {
+          if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
+            continue;
+          }
           if (subField.type == 'dropdown') {
             rowData[subField.name] =
                 _groupDropdownValues[field.name]?[rowIndex][subField.name] ??
@@ -681,6 +708,122 @@ class _AssignmentAgreementPageState extends State<AssignmentAgreementPage> {
     }
 
     return _fieldControllers[field.name]?.text ?? '';
+  }
+
+  dynamic _getTopLevelFieldValue(DocumentField field) {
+    if (field.type == 'dropdown') {
+      return _dropdownValues[field.name] ?? '';
+    }
+    if (field.type == 'boolean') {
+      return _boolValues[field.name] ?? false;
+    }
+    if (field.type == 'multiselect') {
+      return _multiselectValues[field.name] ?? <String>{};
+    }
+    return _fieldControllers[field.name]?.text ?? '';
+  }
+
+  dynamic _getGroupFieldValue(
+    DocumentField groupField,
+    DocumentField subField,
+    int rowIndex,
+  ) {
+    if (subField.type == 'dropdown') {
+      return _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ?? '';
+    }
+    if (subField.type == 'boolean') {
+      return _groupBoolValues[groupField.name]?[rowIndex][subField.name] ?? false;
+    }
+    if (subField.type == 'multiselect') {
+      return _groupMultiselectValues[groupField.name]?[rowIndex][subField.name] ??
+          <String>{};
+    }
+    return _groupFieldControllers[groupField.name]?[rowIndex][subField.name]?.text ??
+        '';
+  }
+
+  bool _matchesShowIfCondition(
+    dynamic actualValue,
+    String operator,
+    String expectedToken,
+  ) {
+    final actualNumber = double.tryParse((actualValue ?? '').toString().trim());
+    final expectedNumber = double.tryParse(expectedToken.trim());
+
+    if (actualNumber != null && expectedNumber != null) {
+      switch (operator) {
+        case '>':
+          return actualNumber > expectedNumber;
+        case '<':
+          return actualNumber < expectedNumber;
+        case '>=':
+          return actualNumber >= expectedNumber;
+        case '<=':
+          return actualNumber <= expectedNumber;
+        case '!=':
+          return actualNumber != expectedNumber;
+        case '=':
+        case '==':
+          return actualNumber == expectedNumber;
+      }
+    }
+
+    final normalizedActual = (actualValue ?? '').toString().trim().toLowerCase();
+    final normalizedExpected = expectedToken.trim().toLowerCase();
+
+    switch (operator) {
+      case '!=':
+        return normalizedActual != normalizedExpected;
+      case '=':
+      case '==':
+        return normalizedActual == normalizedExpected;
+      default:
+        return false;
+    }
+  }
+
+  bool _isFieldVisible(
+    DocumentField field, {
+    DocumentField? groupField,
+    int? rowIndex,
+  }) {
+    final condition = field.showIf?.trim();
+    if (condition == null || condition.isEmpty) {
+      return true;
+    }
+
+    final match = RegExp(
+      r'^\s*([a-zA-Z0-9_]+)\s*(<=|>=|==|!=|=|<|>)\s*(.+?)\s*$',
+    ).firstMatch(condition);
+    if (match == null) {
+      return true;
+    }
+
+    final targetFieldName = match.group(1)!;
+    final operator = match.group(2)!;
+    var expectedToken = match.group(3)!.trim();
+    if ((expectedToken.startsWith('"') && expectedToken.endsWith('"')) ||
+        (expectedToken.startsWith("'") && expectedToken.endsWith("'"))) {
+      expectedToken = expectedToken.substring(1, expectedToken.length - 1);
+    }
+
+    dynamic actualValue;
+    if (groupField != null && rowIndex != null) {
+      final matches =
+          groupField.fields.where((nested) => nested.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getGroupFieldValue(groupField, matches.first, rowIndex);
+    } else {
+      final matches = _fields.where((candidate) => candidate.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getTopLevelFieldValue(matches.first);
+    }
+
+    return _matchesShowIfCondition(actualValue, operator, expectedToken);
   }
 
   // Clear all fields and controllers
@@ -915,7 +1058,8 @@ class _AssignmentAgreementPageState extends State<AssignmentAgreementPage> {
 
     try {
       final fields = <String, dynamic>{
-        for (var field in _fields) field.name: _serializeTopLevelFieldValue(field),
+        for (var field in _fields)
+          if (_isFieldVisible(field)) field.name: _serializeTopLevelFieldValue(field),
       };
 
       fields.addAll({
@@ -1442,6 +1586,9 @@ class _AssignmentAgreementPageState extends State<AssignmentAgreementPage> {
 
 
   Widget _buildField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     if (field.type == 'group' && field.fields.isNotEmpty) {
       return _buildGroupField(field);
     }
@@ -1470,6 +1617,7 @@ class _AssignmentAgreementPageState extends State<AssignmentAgreementPage> {
             ? currentValue
             : (items.isNotEmpty ? items.first.value : null);
         input = DropdownButtonFormField<String>(
+          isExpanded: true,
           value: value,
           items: items,
           onChanged: (selected) {
@@ -1680,12 +1828,18 @@ class _AssignmentAgreementPageState extends State<AssignmentAgreementPage> {
   }
 
   Widget _buildGroupField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     final controllerRows = _groupFieldControllers[field.name] ?? const [];
     final dropdownRows = _groupDropdownValues[field.name] ?? const [];
     final boolRows = _groupBoolValues[field.name] ?? const [];
     final multiselectRows = _groupMultiselectValues[field.name] ?? const [];
 
     Widget buildSubField(DocumentField subField, int rowIndex) {
+      if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
+        return const SizedBox.shrink();
+      }
       final label = subField.required ? '${subField.label} *' : subField.label;
       Widget input;
 
@@ -1703,6 +1857,7 @@ class _AssignmentAgreementPageState extends State<AssignmentAgreementPage> {
               ? currentValue
               : (items.isNotEmpty ? items.first.value : null);
           input = DropdownButtonFormField<String>(
+            isExpanded: true,
             value: value,
             items: items,
             onChanged: (selected) {

@@ -87,6 +87,14 @@
     "required": true
   },
   {
+    "name": "patent_numbers",
+    "label": "Patent Numbers / Application Numbers",
+    "type": "textarea",
+    "hint": "List patent registration or application numbers covered by the license",
+    "required": false,
+    "show_if": "ip_type == 'Patent'"
+  },
+  {
     "name": "ownership_confirmation",
     "label": "Ownership Confirmation",
     "type": "textarea",
@@ -106,6 +114,14 @@
     "required": true
   },
   {
+    "name": "exclusivity_carve_outs",
+    "label": "Exclusivity Carve-outs / Retained Rights",
+    "type": "textarea",
+    "hint": "List rights the licensor retains despite granting the license",
+    "required": false,
+    "show_if": "license_type == 'Sole' || license_type == 'Non-Exclusive'"
+  },
+  {
     "name": "license_scope",
     "label": "License Scope",
     "type": "textarea",
@@ -115,9 +131,27 @@
   {
     "name": "territory",
     "label": "Territory",
-    "type": "text",
-    "hint": "Enter geographical scope (e.g., India, Worldwide)",
+    "type": "multiselect",
+    "options": [
+      "India",
+      "United States",
+      "Europe",
+      "United Kingdom",
+      "Asia-Pacific",
+      "Middle East",
+      "Africa",
+      "Worldwide",
+      "Rest of World"
+    ],
+    "hint": "Select applicable territories",
     "required": true
+  },
+  {
+    "name": "territory_details",
+    "label": "Territory Details",
+    "type": "textarea",
+    "hint": "Add specific country names, exclusions, or field-of-use restrictions for the selected territory",
+    "required": false
   },
   {
     "name": "duration",
@@ -147,18 +181,37 @@
     "required": true
   },
   {
+    "name": "consideration_currency",
+    "label": "Consideration Currency",
+    "type": "dropdown",
+    "options": ["INR", "USD", "EUR", "GBP"],
+    "hint": "Select the currency for payment obligations",
+    "required": false,
+    "show_if": "consideration_type == 'Lump Sum' || consideration_type == 'Both'"
+  },
+  {
     "name": "consideration_amount",
     "label": "Consideration Amount",
     "type": "number",
     "hint": "Enter fixed payment amount",
-    "required": false
+    "required": false,
+    "show_if": "consideration_type == 'Lump Sum' || consideration_type == 'Both'"
   },
   {
     "name": "royalty_terms",
     "label": "Royalty Terms",
     "type": "textarea",
-    "hint": "Enter percentage, frequency, and calculation method",
-    "required": false
+    "hint": "Enter percentage, frequency, reporting cycle, and calculation method",
+    "required": false,
+    "show_if": "consideration_type == 'Royalty' || consideration_type == 'Both'"
+  },
+  {
+    "name": "audit_rights",
+    "label": "Audit Rights",
+    "type": "textarea",
+    "hint": "Specify whether the licensor may inspect the licensee's books and records for royalty verification",
+    "required": false,
+    "show_if": "consideration_type == 'Royalty' || consideration_type == 'Both'"
   },
   {
     "name": "payment_terms",
@@ -175,6 +228,28 @@
     "required": true
   },
   {
+    "name": "sublicensing_approval",
+    "label": "Sublicensing Approval Requirement",
+    "type": "dropdown",
+    "options": [
+      "Prior Written Consent Required",
+      "Permitted Without Consent",
+      "Permitted Subject to Conditions",
+      "Custom"
+    ],
+    "hint": "Choose whether the licensor must approve sublicenses",
+    "required": false,
+    "show_if": "sub_licensing_allowed == true"
+  },
+  {
+    "name": "sublicensing_conditions",
+    "label": "Sublicensing Conditions",
+    "type": "textarea",
+    "hint": "State any conditions for sublicensing, such as same terms, limited scope, or liability back-to-back",
+    "required": false,
+    "show_if": "sub_licensing_allowed == true"
+  },
+  {
     "name": "restrictions",
     "label": "Restrictions",
     "type": "textarea",
@@ -185,7 +260,23 @@
     "name": "quality_control",
     "label": "Quality Control",
     "type": "textarea",
-    "hint": "Standards for use (important for trademarks)",
+    "hint": "Specify quality standards, approval rights, and brand usage controls",
+    "required": false,
+    "show_if": "ip_type == 'Trademark'"
+  },
+  {
+    "name": "maintenance_support",
+    "label": "Technical Support / Maintenance",
+    "type": "textarea",
+    "hint": "State whether updates, patches, bug fixes, or support services are included",
+    "required": false,
+    "show_if": "ip_type == 'Software'"
+  },
+  {
+    "name": "infringement_notification",
+    "label": "Infringement Notification & Enforcement",
+    "type": "textarea",
+    "hint": "Specify who must notify, control, and fund action against third-party infringement",
     "required": false
   },
   {
@@ -217,6 +308,13 @@
     "required": false
   },
   {
+    "name": "force_majeure",
+    "label": "Force Majeure",
+    "type": "textarea",
+    "hint": "State events beyond reasonable control that excuse performance delays or failures",
+    "required": false
+  },
+  {
     "name": "termination_clause",
     "label": "Termination Clause",
     "type": "textarea",
@@ -238,31 +336,25 @@
     "required": true
   },
   {
+    "name": "notice_details",
+    "label": "Notice Details",
+    "type": "textarea",
+    "hint": "Provide the email and physical addresses where legal notices must be sent",
+    "required": false
+  },
+  {
     "name": "governing_law",
     "label": "Governing Law",
     "type": "text",
     "hint": "Enter applicable law (e.g., Laws of India)",
-    "required": true
+    "required": true,
+    "default": "Laws of India"
   },
   {
     "name": "jurisdiction",
     "label": "Jurisdiction",
     "type": "text",
     "hint": "Enter court jurisdiction",
-    "required": true
-  },
-  {
-    "name": "licensor_signature",
-    "label": "Licensor Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
-  },
-  {
-    "name": "licensee_signature",
-    "label": "Licensee Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
     "required": true
   },
   {

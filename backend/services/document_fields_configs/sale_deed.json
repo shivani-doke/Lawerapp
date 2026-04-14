@@ -508,53 +508,6 @@
         "hint": "Enter address of witness"
       }
     ]
-  },
-  {
-    "name": "seller_signatures",
-    "label": "Seller Signatures",
-    "type": "group",
-    "repeatable": true,
-    "required": true,
-    "min": 1,
-    "fields": [
-      {
-        "name": "name",
-        "label": "Seller Name",
-        "type": "text",
-        "required": true,
-        "hint": "Enter seller name"
-      },
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "text",
-        "required": true,
-        "hint": "Enter name as signature"
-      }
-    ]
-  },
-  {
-    "name": "buyer_signatures",
-    "label": "Buyer Signatures",
-    "type": "group",
-    "repeatable": true,
-    "required": true,
-    "min": 1,
-    "fields": [
-      {
-        "name": "name",
-        "label": "Buyer Name",
-        "type": "text",
-        "required": true,
-        "hint": "Enter buyer name"
-      },
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "text",
-        "required": true,
-        "hint": "Enter name as signature"
-      }
-    ]
   }
+  
 ]

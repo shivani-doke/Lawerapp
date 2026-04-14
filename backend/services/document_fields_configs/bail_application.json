@@ -411,19 +411,6 @@
     "type": "text",
     "hint": "Enter place of verification",
     "required": true
-  },
-  {
-    "name": "applicant_signature",
-    "label": "Applicant Signature",
-    "type": "text",
-    "hint": "Enter applicant name as signature",
-    "required": false
-  },
-  {
-    "name": "advocate_signature",
-    "label": "Advocate Signature",
-    "type": "text",
-    "hint": "Enter advocate name as signature",
-    "required": false
   }
+
 ]

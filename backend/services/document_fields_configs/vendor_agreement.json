@@ -13,7 +13,6 @@
     "hint": "Enter city and state",
     "required": true
   },
-
   {
     "name": "client_details",
     "label": "Client/Company Details",
@@ -44,7 +43,6 @@
       }
     ]
   },
-
   {
     "name": "vendor_details",
     "label": "Vendor Details",
@@ -75,20 +73,38 @@
       }
     ]
   },
-
   {
     "name": "agreement_type",
     "label": "Agreement Type",
     "type": "dropdown",
     "options": [
-      "Goods Supply",
-      "Service Agreement",
+      "Goods",
+      "Services",
       "Hybrid (Goods + Services)"
     ],
     "hint": "Select agreement type",
     "required": true
   },
-
+  {
+    "name": "relationship_of_parties",
+    "label": "Relationship of Parties",
+    "type": "dropdown",
+    "options": [
+      "Independent Contractor",
+      "Other"
+    ],
+    "hint": "State the legal relationship of the vendor to the client",
+    "required": true,
+    "default": "Independent Contractor"
+  },
+  {
+    "name": "relationship_of_parties_other",
+    "label": "Other Relationship Description",
+    "type": "text",
+    "hint": "Describe any alternative relationship wording",
+    "required": true,
+    "show_if": "relationship_of_parties == 'Other'"
+  },
   {
     "name": "scope_of_work",
     "label": "Scope of Work",
@@ -96,7 +112,6 @@
     "hint": "Describe detailed scope",
     "required": true
   },
-
   {
     "name": "deliverables",
     "label": "Deliverables",
@@ -104,7 +119,6 @@
     "hint": "Define deliverables or items",
     "required": true
   },
-
   {
     "name": "delivery_schedule",
     "label": "Delivery Schedule",
@@ -112,7 +126,6 @@
     "hint": "Mention timelines and milestones",
     "required": false
   },
-
   {
     "name": "pricing_structure",
     "label": "Pricing Structure",
@@ -120,7 +133,6 @@
     "hint": "Fixed / per unit / milestone-based",
     "required": true
   },
-
   {
     "name": "tax_details",
     "label": "Tax Details (GST etc.)",
@@ -128,13 +140,13 @@
     "hint": "Mention GST applicability",
     "required": false
   },
-
   {
     "name": "payment_terms",
     "label": "Payment Terms",
     "type": "group",
     "repeatable": true,
     "required": true,
+    "min": 1,
     "fields": [
       {
         "name": "milestone",
@@ -159,23 +171,62 @@
       }
     ]
   },
-
+  {
+    "name": "bank_account_details",
+    "label": "Bank Account Details",
+    "type": "textarea",
+    "hint": "Enter beneficiary name, bank, account number, SWIFT, IBAN, IFSC, or routing details",
+    "required": false,
+    "show_if": "payment_terms > 0"
+  },
+  {
+    "name": "warranty_period",
+    "label": "Warranty Period",
+    "type": "text",
+    "hint": "Enter warranty period for supplied goods",
+    "required": true,
+    "show_if": "agreement_type == 'Goods' || agreement_type == 'Hybrid (Goods + Services)'"
+  },
+  {
+    "name": "shipping_freight_terms",
+    "label": "Shipping / Freight Terms",
+    "type": "textarea",
+    "hint": "Define shipping charges, freight responsibility, and Incoterms if applicable",
+    "required": true,
+    "show_if": "agreement_type == 'Goods' || agreement_type == 'Hybrid (Goods + Services)'"
+  },
+  {
+    "name": "title_risk_of_loss",
+    "label": "Title & Risk of Loss",
+    "type": "textarea",
+    "hint": "State when title transfers and who bears the risk of loss",
+    "required": true,
+    "show_if": "agreement_type == 'Goods' || agreement_type == 'Hybrid (Goods + Services)'"
+  },
   {
     "name": "sla_terms",
     "label": "Service Level Agreement (SLA)",
     "type": "textarea",
     "hint": "Define performance standards",
-    "required": false
+    "required": true,
+    "show_if": "agreement_type == 'Services' || agreement_type == 'Hybrid (Goods + Services)'"
   },
-
   {
-    "name": "penalty_clause",
-    "label": "Penalty / Liquidated Damages",
+    "name": "key_personnel",
+    "label": "Key Personnel",
     "type": "textarea",
-    "hint": "Delay or performance penalties",
-    "required": false
+    "hint": "List key personnel or roles critical to service performance",
+    "required": true,
+    "show_if": "agreement_type == 'Services' || agreement_type == 'Hybrid (Goods + Services)'"
   },
-
+  {
+    "name": "reporting_requirements",
+    "label": "Reporting Requirements",
+    "type": "textarea",
+    "hint": "Describe reporting frequency, format, and escalation points",
+    "required": true,
+    "show_if": "agreement_type == 'Services' || agreement_type == 'Hybrid (Goods + Services)'"
+  },
   {
     "name": "quality_standards",
     "label": "Quality Standards",
@@ -183,7 +234,6 @@
     "hint": "Define quality benchmarks",
     "required": false
   },
-
   {
     "name": "inspection_acceptance",
     "label": "Inspection & Acceptance",
@@ -191,7 +241,67 @@
     "hint": "Acceptance criteria and process",
     "required": false
   },
-
+  {
+    "name": "subcontracting_allowed",
+    "label": "Sub-Contracting Allowed",
+    "type": "boolean",
+    "hint": "Tick if the vendor may sub-contract any part of the work",
+    "required": false
+  },
+  {
+    "name": "subcontracting_terms",
+    "label": "Sub-Contracting Terms",
+    "type": "textarea",
+    "hint": "Specify that prior written consent from the client is required and any conditions that apply",
+    "required": true,
+    "show_if": "subcontracting_allowed == true"
+  },
+  {
+    "name": "insurance_required",
+    "label": "Insurance Required",
+    "type": "boolean",
+    "hint": "Tick if the vendor must maintain insurance coverage",
+    "required": false
+  },
+  {
+    "name": "insurance_requirements",
+    "label": "Insurance Requirements",
+    "type": "textarea",
+    "hint": "List required coverage such as Professional Indemnity, General Liability, cyber, worker compensation, or product liability",
+    "required": true,
+    "show_if": "insurance_required == true"
+  },
+  {
+    "name": "penalty_applicable",
+    "label": "Penalty Clause Included",
+    "type": "boolean",
+    "hint": "Tick if delay or performance penalties apply",
+    "required": false
+  },
+  {
+    "name": "penalty_clause",
+    "label": "Penalty / Liquidated Damages",
+    "type": "textarea",
+    "hint": "Delay or performance penalties",
+    "required": true,
+    "show_if": "penalty_applicable == true"
+  },
+  {
+    "name": "grace_period_days",
+    "label": "Grace Period (Days)",
+    "type": "number",
+    "hint": "Enter the buffer period before penalty begins",
+    "required": true,
+    "show_if": "penalty_applicable == true"
+  },
+  {
+    "name": "maximum_penalty_cap",
+    "label": "Maximum Penalty Cap",
+    "type": "text",
+    "hint": "Enter the penalty cap as amount or percentage",
+    "required": true,
+    "show_if": "penalty_applicable == true"
+  },
   {
     "name": "confidentiality_clause",
     "label": "Confidentiality Clause",
@@ -199,7 +309,13 @@
     "hint": "Data protection obligations",
     "required": false
   },
-
+  {
+    "name": "non_solicitation_clause",
+    "label": "Non-Solicitation",
+    "type": "textarea",
+    "hint": "Restrict the vendor from soliciting employees, contractors, or clients during the term and any post-term period",
+    "required": false
+  },
   {
     "name": "intellectual_property",
     "label": "Intellectual Property Rights",
@@ -207,7 +323,22 @@
     "hint": "Ownership of work/products",
     "required": false
   },
-
+  {
+    "name": "work_for_hire",
+    "label": "Work for Hire",
+    "type": "boolean",
+    "hint": "Tick if deliverables created by the vendor are intended to be work made for hire",
+    "required": false,
+    "show_if": "agreement_type == 'Services' || agreement_type == 'Hybrid (Goods + Services)'"
+  },
+  {
+    "name": "pre_existing_ip_list",
+    "label": "Pre-Existing IP List",
+    "type": "textarea",
+    "hint": "List any vendor-owned pre-existing tools, libraries, templates, or materials excluded from transfer",
+    "required": false,
+    "show_if": "agreement_type == 'Services' || agreement_type == 'Hybrid (Goods + Services)'"
+  },
   {
     "name": "indemnity_clause",
     "label": "Indemnity Clause",
@@ -215,7 +346,6 @@
     "hint": "Vendor liability and indemnity",
     "required": false
   },
-
   {
     "name": "limitation_of_liability",
     "label": "Limitation of Liability",
@@ -223,7 +353,25 @@
     "hint": "Cap on liability",
     "required": false
   },
-
+  {
+    "name": "conflict_of_interest",
+    "label": "Conflict of Interest",
+    "type": "textarea",
+    "hint": "State that the vendor has no conflicts that would impair performance and must disclose any arising conflicts",
+    "required": false
+  },
+  {
+    "name": "termination_type",
+    "label": "Termination Type",
+    "type": "dropdown",
+    "options": [
+      "Without Cause",
+      "For Cause",
+      "Both"
+    ],
+    "hint": "Select the termination model",
+    "required": true
+  },
   {
     "name": "termination_clause",
     "label": "Termination Clause",
@@ -231,15 +379,22 @@
     "hint": "Conditions for termination",
     "required": true
   },
-
   {
     "name": "termination_notice_days",
     "label": "Termination Notice (Days)",
     "type": "number",
-    "hint": "Notice period",
-    "required": false
+    "hint": "Notice period for ordinary termination",
+    "required": false,
+    "show_if": "termination_type != 'For Cause'"
   },
-
+  {
+    "name": "cure_period_days",
+    "label": "Cure Period (Days)",
+    "type": "number",
+    "hint": "Days allowed to cure a breach before termination for cause becomes effective",
+    "required": true,
+    "show_if": "termination_type == 'For Cause'"
+  },
   {
     "name": "force_majeure",
     "label": "Force Majeure",
@@ -247,7 +402,6 @@
     "hint": "Unforeseen events clause",
     "required": false
   },
-
   {
     "name": "compliance_clause",
     "label": "Legal Compliance",
@@ -255,13 +409,19 @@
     "hint": "Regulatory compliance obligations",
     "required": false
   },
-
   {
-    "name": "governing_law",
-    "label": "Governing Law",
-    "type": "text",
-    "hint": "Applicable law",
-    "required": true
+    "name": "survival_clause",
+    "label": "Survival Clause",
+    "type": "textarea",
+    "hint": "List which clauses survive termination, such as confidentiality, indemnity, IP, payment, audit, or dispute resolution",
+    "required": false
+  },
+  {
+    "name": "amendment_process",
+    "label": "Amendment Process",
+    "type": "textarea",
+    "hint": "Describe how changes must be documented, usually in writing and signed by both parties",
+    "required": false
   },
   {
     "name": "jurisdiction",
@@ -270,31 +430,14 @@
     "hint": "Court jurisdiction",
     "required": true
   },
-
   {
-    "name": "signatures",
-    "label": "Signatures",
-    "type": "group",
-    "repeatable": true,
-    "required": true,
-    "fields": [
-      {
-        "name": "party_name",
-        "label": "Party Name",
-        "type": "text",
-        "required": true,
-        "hint": "Enter name"
-      },
-      {
-        "name": "authorized_signatory",
-        "label": "Authorized Signatory",
-        "type": "text",
-        "required": true,
-        "hint": "Enter signatory name"
-      }
-    ]
+    "name": "include_witness_details",
+    "label": "Include Witness Details",
+    "type": "boolean",
+    "hint": "Tick if witnesses are required for execution in this jurisdiction or transaction context",
+    "required": false,
+    "show_if": "governing_law == 'India'"
   },
-
   {
     "name": "witness_details",
     "label": "Witness Details",
@@ -303,6 +446,7 @@
     "min": 2,
     "max": 2,
     "required": true,
+    "show_if": "include_witness_details == true",
     "fields": [
       {
         "name": "name",

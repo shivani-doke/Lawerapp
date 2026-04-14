@@ -28,13 +28,6 @@
     "required": true
   },
   {
-    "name": "company_logo",
-    "label": "Company Logo URL",
-    "type": "text",
-    "hint": "Enter logo URL (optional)",
-    "required": false
-  },
-  {
     "name": "candidate_name",
     "label": "Candidate Name",
     "type": "text",
@@ -310,26 +303,13 @@
     "hint": "Enter designation of signatory",
     "required": false
   },
-  {
-    "name": "company_signature",
-    "label": "Company Signature",
-    "type": "text",
-    "hint": "Enter signatory name",
-    "required": true
-  },
+
   {
     "name": "candidate_acceptance",
     "label": "Candidate Acceptance",
     "type": "boolean",
     "hint": "Has candidate accepted?",
     "required": false
-  },
-  {
-    "name": "candidate_signature",
-    "label": "Candidate Signature",
-    "type": "text",
-    "hint": "Enter candidate name as signature",
-    "required": true,
-    "show_if": "candidate_acceptance == true"
   }
+
 ]

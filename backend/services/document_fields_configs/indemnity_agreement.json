@@ -14,6 +14,19 @@
     "required": true
   },
   {
+    "name": "indemnity_context",
+    "label": "Indemnity Context",
+    "type": "dropdown",
+    "options": [
+      "General Commercial",
+      "Intellectual Property",
+      "Property / Real Estate",
+      "Employment / Contractor"
+    ],
+    "hint": "Select the scenario for this indemnity",
+    "required": true
+  },
+  {
     "name": "indemnifier_name",
     "label": "Indemnifier Name",
     "type": "text",
@@ -34,6 +47,30 @@
     "options": ["Individual", "Company", "LLP", "Partnership"],
     "hint": "Select type of indemnifier",
     "required": true
+  },
+  {
+    "name": "indemnifier_authorized_signatory_name",
+    "label": "Indemnifier Authorized Signatory Name",
+    "type": "text",
+    "hint": "Enter name of the person signing for the entity",
+    "required": true,
+    "show_if": "indemnifier_type != 'Individual'"
+  },
+  {
+    "name": "indemnifier_authorized_signatory_designation",
+    "label": "Indemnifier Authorized Signatory Designation",
+    "type": "text",
+    "hint": "Enter designation, e.g. Director, CEO, Partner",
+    "required": true,
+    "show_if": "indemnifier_type != 'Individual'"
+  },
+  {
+    "name": "indemnifier_registration_number",
+    "label": "Indemnifier Registration Number",
+    "type": "text",
+    "hint": "Enter CIN, LLPIN, registration number, or similar identifier",
+    "required": true,
+    "show_if": "indemnifier_type != 'Individual'"
   },
   {
     "name": "indemnified_party_name",
@@ -72,6 +109,22 @@
     "required": true
   },
   {
+    "name": "condition_of_premises",
+    "label": "Condition of Premises",
+    "type": "textarea",
+    "hint": "Describe the condition, handover status, defects, or property-specific background facts",
+    "required": true,
+    "show_if": "indemnity_context == 'Property / Real Estate'"
+  },
+  {
+    "name": "warranty_of_ownership",
+    "label": "Warranty of Ownership",
+    "type": "textarea",
+    "hint": "Confirm ownership or valid rights over the IP, software, creative work, or materials being indemnified",
+    "required": true,
+    "show_if": "indemnity_context == 'Intellectual Property'"
+  },
+  {
     "name": "indemnity_scope",
     "label": "Indemnity Scope",
     "type": "textarea",
@@ -93,11 +146,28 @@
     "required": false
   },
   {
-    "name": "liability_cap",
-    "label": "Liability Cap",
-    "type": "number",
-    "hint": "Enter maximum indemnity amount (if any)",
+    "name": "liability_cap_toggle",
+    "label": "Liability Cap Applies",
+    "type": "boolean",
+    "hint": "Tick if the indemnity has a financial cap; leave unchecked for unlimited indemnity",
     "required": false
+  },
+  {
+    "name": "liability_cap",
+    "label": "Liability Cap Amount",
+    "type": "number",
+    "hint": "Enter maximum indemnity amount",
+    "required": true,
+    "show_if": "liability_cap_toggle == true"
+  },
+  {
+    "name": "currency",
+    "label": "Currency",
+    "type": "dropdown",
+    "options": ["INR", "USD", "EUR", "GBP", "Other"],
+    "hint": "Select currency for the liability cap",
+    "required": true,
+    "show_if": "liability_cap_toggle == true"
   },
   {
     "name": "claim_procedure",
@@ -111,7 +181,8 @@
     "label": "Notice Period for Claims",
     "type": "text",
     "hint": "e.g., within 30 days of claim",
-    "required": false
+    "required": false,
+    "show_if": "claim_procedure != ''"
   },
   {
     "name": "defense_control",
@@ -128,11 +199,26 @@
     "required": false
   },
   {
+    "name": "subrogation_rights",
+    "label": "Subrogation Rights",
+    "type": "textarea",
+    "hint": "Specify whether and how recovery rights against third parties transfer after payment",
+    "required": false,
+    "show_if": "indemnity_type == 'Both' || indemnity_type == 'Third-Party Claims'"
+  },
+  {
     "name": "duration",
     "label": "Duration",
     "type": "text",
     "hint": "Enter duration (fixed term or ongoing)",
     "required": true
+  },
+  {
+    "name": "survival_clause",
+    "label": "Survival Clause",
+    "type": "textarea",
+    "hint": "Specify how long indemnity obligations continue after termination or expiry",
+    "required": false
   },
   {
     "name": "termination_clause",
@@ -142,11 +228,19 @@
     "required": false
   },
   {
-    "name": "insurance_requirement",
-    "label": "Insurance Requirement",
-    "type": "textarea",
-    "hint": "Specify insurance obligations if any",
+    "name": "insurance_required",
+    "label": "Insurance Required",
+    "type": "boolean",
+    "hint": "Tick if insurance must be maintained to support the indemnity",
     "required": false
+  },
+  {
+    "name": "insurance_requirement",
+    "label": "Insurance Details",
+    "type": "textarea",
+    "hint": "Specify policy types, limits, insurer requirements, or certificate obligations",
+    "required": true,
+    "show_if": "insurance_required == true"
   },
   {
     "name": "confidentiality_clause",
@@ -154,6 +248,22 @@
     "type": "textarea",
     "hint": "Confidentiality obligations",
     "required": false
+  },
+  {
+    "name": "include_non_solicitation",
+    "label": "Include Non-Solicitation",
+    "type": "boolean",
+    "hint": "Tick if this indemnity is paired with non-solicitation restrictions",
+    "required": false,
+    "show_if": "indemnity_context == 'Employment / Contractor'"
+  },
+  {
+    "name": "non_solicitation_details",
+    "label": "Non-Solicitation Details",
+    "type": "textarea",
+    "hint": "Describe restrictions on soliciting employees, contractors, vendors, or clients",
+    "required": false,
+    "show_if": "include_non_solicitation == true"
   },
   {
     "name": "indemnity_type",
@@ -165,6 +275,25 @@
       "Both"
     ],
     "hint": "Select indemnity type",
+    "required": true
+  },
+  {
+    "name": "tax_gross_up",
+    "label": "Tax Gross-up",
+    "type": "boolean",
+    "hint": "Tick if the indemnifier must pay additional amounts so the indemnified party receives the full amount net of taxes",
+    "required": false
+  },
+  {
+    "name": "dispute_resolution_method",
+    "label": "Dispute Resolution Method",
+    "type": "dropdown",
+    "options": [
+      "Litigation",
+      "Arbitration",
+      "Mediation"
+    ],
+    "hint": "Select how disputes should be resolved",
     "required": true
   },
   {
@@ -181,27 +310,13 @@
     "hint": "Enter court jurisdiction",
     "required": true
   },
-  {
-    "name": "indemnifier_signature",
-    "label": "Indemnifier Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
-  },
-  {
-    "name": "indemnified_signature",
-    "label": "Indemnified Party Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
-  },
+ 
   {
     "name": "witness_details",
     "label": "Witness Details",
     "type": "group",
     "repeatable": true,
-    "min": 2,
-    "max": 2,
+    "min": 1,
     "required": true,
     "fields": [
       {

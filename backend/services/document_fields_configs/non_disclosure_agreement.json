@@ -381,20 +381,7 @@
     "hint": "Enter court jurisdiction",
     "required": true
   },
-  {
-    "name": "disclosing_party_signature",
-    "label": "Disclosing Party Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
-  },
-  {
-    "name": "receiving_party_signature",
-    "label": "Receiving Party Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
-  },
+  
   {
     "name": "witness_details",
     "label": "Witness Details",

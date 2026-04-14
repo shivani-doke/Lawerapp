@@ -50,6 +50,7 @@ class RichEditorSurface extends StatefulWidget {
 
 class _RichEditorSurfaceState extends State<RichEditorSurface> {
   static int _nextId = 0;
+  static const double _minimumReadableLineHeight = 1.35;
 
   late final String _viewType;
   late final html.DivElement _container;
@@ -74,13 +75,11 @@ class _RichEditorSurfaceState extends State<RichEditorSurface> {
       ..style.minHeight = '100%'
       ..style.outline = 'none'
       ..style.whiteSpace = 'pre-wrap'
-      ..style.overflowWrap = 'anywhere'
+      ..style.overflowWrap = 'break-word'
       ..style.paddingBottom = '48px'
-      ..style.fontFamily = widget.fontFamily
-      ..style.fontSize = '${widget.fontSize}px'
-      ..style.lineHeight = '${widget.lineSpacing}'
       ..style.color = '#111827';
     _container.children.add(_editor);
+    _applyEditorSurfaceStyle();
 
     _setHtml(widget.initialHtml);
 
@@ -110,13 +109,16 @@ class _RichEditorSurfaceState extends State<RichEditorSurface> {
       _setHtml(widget.initialHtml);
     }
     if (oldWidget.fontFamily != widget.fontFamily) {
-      _editor.style.fontFamily = widget.fontFamily;
+      _applyEditorSurfaceStyle();
+      _applyDocumentStyles();
     }
     if (oldWidget.fontSize != widget.fontSize) {
-      _editor.style.fontSize = '${widget.fontSize}px';
+      _applyEditorSurfaceStyle();
+      _applyDocumentStyles();
     }
     if (oldWidget.lineSpacing != widget.lineSpacing) {
-      _editor.style.lineHeight = '${widget.lineSpacing}';
+      _applyEditorSurfaceStyle();
+      _applyDocumentStyles();
     }
   }
 
@@ -132,6 +134,8 @@ class _RichEditorSurfaceState extends State<RichEditorSurface> {
       htmlContent.isEmpty ? '<p></p>' : htmlContent,
       treeSanitizer: html.NodeTreeSanitizer.trusted,
     );
+    _normalizeRootNodes();
+    _applyDocumentStyles();
   }
 
   void _execCommand(String command, [String? value]) {
@@ -151,6 +155,122 @@ class _RichEditorSurfaceState extends State<RichEditorSurface> {
 
   void _notifyChanged() {
     widget.onChanged(_editor.innerHtml ?? '', _editor.text ?? '');
+  }
+
+  double get _displayLineHeight {
+    return widget.lineSpacing < _minimumReadableLineHeight
+        ? _minimumReadableLineHeight
+        : widget.lineSpacing;
+  }
+
+  void _applyEditorSurfaceStyle() {
+    _editor.style.fontFamily = widget.fontFamily;
+    _editor.style.fontSize = '${widget.fontSize}px';
+    _editor.style.lineHeight = '$_displayLineHeight';
+  }
+
+  void _normalizeRootNodes() {
+    final originalNodes = List<html.Node>.from(_editor.nodes);
+    if (originalNodes.isEmpty) return;
+
+    final rebuiltNodes = <html.Node>[];
+    final bufferedInlineNodes = <html.Node>[];
+    var changed = false;
+
+    void flushInlineNodes() {
+      if (bufferedInlineNodes.isEmpty) return;
+      final paragraph = html.ParagraphElement();
+      for (final node in bufferedInlineNodes) {
+        paragraph.append(node);
+      }
+      rebuiltNodes.add(paragraph);
+      bufferedInlineNodes.clear();
+      changed = true;
+    }
+
+    for (final node in originalNodes) {
+      if (_isIgnorableWhitespace(node)) {
+        changed = true;
+        continue;
+      }
+      if (_isBlockNode(node)) {
+        flushInlineNodes();
+        rebuiltNodes.add(node);
+      } else {
+        bufferedInlineNodes.add(node);
+      }
+    }
+    flushInlineNodes();
+
+    if (!changed) return;
+
+    while (_editor.firstChild != null) {
+      _editor.firstChild!.remove();
+    }
+    for (final node in rebuiltNodes) {
+      _editor.append(node);
+    }
+  }
+
+  bool _isIgnorableWhitespace(html.Node node) {
+    return node.nodeType == html.Node.TEXT_NODE &&
+        (node.text?.trim().isEmpty ?? true);
+  }
+
+  bool _isBlockNode(html.Node node) {
+    if (node is! html.Element) return false;
+    final tag = node.tagName.toLowerCase();
+    return <String>{
+      'p',
+      'div',
+      'h1',
+      'h2',
+      'h3',
+      'blockquote',
+      'ul',
+      'ol',
+      'li',
+      'table',
+      'hr',
+    }.contains(tag);
+  }
+
+  void _applyDocumentStyles() {
+    final readableLineHeight = '$_displayLineHeight';
+    final blockSelector = 'p, div, li, blockquote, h1, h2, h3';
+
+    for (final element in _editor.querySelectorAll(blockSelector)) {
+      if (element is! html.Element) continue;
+      element.style.lineHeight = readableLineHeight;
+
+      final tag = element.tagName.toLowerCase();
+      if (tag == 'h1') {
+        element.style.margin = '0 0 0.9em';
+        element.style.fontSize = '${(widget.fontSize + 10).round()}px';
+        element.style.fontWeight = '700';
+      } else if (tag == 'h2') {
+        element.style.margin = '0 0 0.8em';
+        element.style.fontSize = '${(widget.fontSize + 6).round()}px';
+        element.style.fontWeight = '700';
+      } else if (tag == 'h3') {
+        element.style.margin = '0 0 0.75em';
+        element.style.fontSize = '${(widget.fontSize + 3).round()}px';
+        element.style.fontWeight = '700';
+      } else if (tag == 'li') {
+        element.style.margin = '0 0 0.35em';
+      } else {
+        element.style.margin = '0 0 0.85em';
+      }
+
+      if (tag == 'p' && (element.innerHtml ?? '').trim().isEmpty) {
+        element.style.minHeight = '${widget.fontSize}px';
+      }
+    }
+
+    for (final element in _editor.querySelectorAll('span, strong, em, u, b, i, font')) {
+      if (element is! html.Element) continue;
+      element.style.lineHeight = 'inherit';
+    }
   }
 
   @override

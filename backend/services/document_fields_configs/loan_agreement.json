@@ -424,20 +424,6 @@
     "required": false
   },
   {
-    "name": "lender_signature",
-    "label": "Lender Signature",
-    "type": "text",
-    "hint": "Enter lender signature",
-    "required": false
-  },
-  {
-    "name": "borrower_signature",
-    "label": "Borrower Signature",
-    "type": "text",
-    "hint": "Enter borrower signature",
-    "required": false
-  },
-  {
     "name": "witness_details",
     "label": "Witness Details",
     "type": "group",

@@ -50,6 +50,21 @@
     "required": true
   },
   {
+    "name": "signatory_designation",
+    "label": "Signatory Designation",
+    "type": "text",
+    "hint": "Enter designation such as Director, Partner, or Authorized Signatory",
+    "required": false,
+    "show_if": "party_type == 'Company' || party_type == 'LLP' || party_type == 'Partnership'"
+  },
+  {
+    "name": "is_work_for_hire",
+    "label": "Is this a Work-for-Hire?",
+    "type": "boolean",
+    "hint": "Enable if the work was created in the course of employment or commissioned as a work made for hire",
+    "required": false
+  },
+  {
     "name": "work_title",
     "label": "Work Title",
     "type": "text",
@@ -78,6 +93,22 @@
     ],
     "hint": "Select type of work",
     "required": true
+  },
+  {
+    "name": "software_source_code_delivery",
+    "label": "Software Source Code Delivery",
+    "type": "textarea",
+    "hint": "Specify whether source code, repositories, documentation, and credentials will be delivered",
+    "required": false,
+    "show_if": "work_type == 'Software'"
+  },
+  {
+    "name": "performer_rights",
+    "label": "Performer / Related Rights",
+    "type": "textarea",
+    "hint": "Specify performer consents, neighboring rights, or performer releases linked to the work",
+    "required": false,
+    "show_if": "work_type == 'Music' || work_type == 'Cinematographic'"
   },
   {
     "name": "creation_date",
@@ -113,6 +144,22 @@
     "required": true
   },
   {
+    "name": "derivative_works",
+    "label": "Right to Create Derivatives",
+    "type": "dropdown",
+    "options": ["Yes", "No"],
+    "hint": "Can the receiving party remix, translate, adapt, or otherwise create derivative works?",
+    "required": false
+  },
+  {
+    "name": "sublicensing_rights",
+    "label": "Right to Sublicense",
+    "type": "dropdown",
+    "options": ["Yes", "No"],
+    "hint": "Can the receiving party sublicense the work to others?",
+    "required": false
+  },
+  {
     "name": "usage_scope",
     "label": "Usage Scope",
     "type": "textarea",
@@ -145,14 +192,24 @@
     "label": "Consideration Amount",
     "type": "number",
     "hint": "Enter payment amount",
-    "required": false
+    "required": false,
+    "show_if": "transfer_type != 'Non-Exclusive License'"
+  },
+  {
+    "name": "payment_milestones",
+    "label": "Payment Schedule",
+    "type": "textarea",
+    "hint": "Describe milestone-based, installment, or staged payment obligations",
+    "required": false,
+    "show_if": "consideration_amount > 0"
   },
   {
     "name": "royalty_details",
     "label": "Royalty Details",
     "type": "textarea",
     "hint": "Enter royalty percentage and payment terms",
-    "required": false
+    "required": false,
+    "show_if": "consideration_amount > 0"
   },
   {
     "name": "credit_clause",
@@ -167,6 +224,36 @@
     "type": "textarea",
     "hint": "Specify retention or waiver of moral rights",
     "required": false
+  },
+  {
+    "name": "warranty_non_infringement",
+    "label": "Warranty of Originality",
+    "type": "textarea",
+    "hint": "Confirm that the work is original and does not infringe the rights of third parties",
+    "required": false
+  },
+  {
+    "name": "digital_rights_specifics",
+    "label": "Digital / NFT Rights",
+    "type": "textarea",
+    "hint": "Specify online, streaming, social media, app, metaverse, blockchain, or NFT-related rights",
+    "required": false
+  },
+  {
+    "name": "renewal_terms",
+    "label": "Renewal Terms",
+    "type": "textarea",
+    "hint": "State whether and how the license may be renewed or extended",
+    "required": false,
+    "show_if": "transfer_type == 'Exclusive License' || transfer_type == 'Non-Exclusive License'"
+  },
+  {
+    "name": "reversion_of_rights",
+    "label": "Reversion of Rights",
+    "type": "textarea",
+    "hint": "State when rights revert to the author or owner after expiry or breach",
+    "required": false,
+    "show_if": "transfer_type != 'Assignment'"
   },
   {
     "name": "confidentiality_clause",
@@ -190,6 +277,18 @@
     "required": false
   },
   {
+    "name": "arbitration_clause",
+    "label": "Dispute Resolution",
+    "type": "dropdown",
+    "options": [
+      "Court Litigation",
+      "Arbitration",
+      "Mediation"
+    ],
+    "hint": "Select how disputes under the agreement will be resolved",
+    "required": false
+  },
+  {
     "name": "governing_law",
     "label": "Governing Law",
     "type": "text",
@@ -202,20 +301,6 @@
     "type": "text",
     "hint": "Enter court jurisdiction",
     "required": true
-  },
-  {
-    "name": "author_signature",
-    "label": "Author / Owner Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": false
-  },
-  {
-    "name": "assignee_signature",
-    "label": "Assignee / Licensee Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": false
   },
   {
     "name": "witness_details",

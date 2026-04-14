@@ -22,6 +22,10 @@ class DocumentField {
   final List<String> options;
   final bool repeatable;
   final List<DocumentField> fields;
+  final dynamic defaultValue;
+  final String? showIf;
+  final int? minItems;
+  final int? maxItems;
 
   DocumentField({
     required this.name,
@@ -32,6 +36,10 @@ class DocumentField {
     this.options = const [],
     this.repeatable = false,
     this.fields = const [],
+    this.defaultValue,
+    this.showIf,
+    this.minItems,
+    this.maxItems,
   });
 
   factory DocumentField.fromJson(Map<String, dynamic> json) {
@@ -51,6 +59,10 @@ class DocumentField {
           ? rawOptions.map((e) => e.toString()).toList()
           : const [],
       repeatable: json['repeatable'] == true,
+      defaultValue: json['default'],
+      showIf: json['show_if']?.toString(),
+      minItems: json['min'] is num ? (json['min'] as num).toInt() : null,
+      maxItems: json['max'] is num ? (json['max'] as num).toInt() : null,
       fields: rawFields is List
           ? rawFields
               .whereType<Map>()
@@ -427,7 +439,9 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
           (nestedField.type == 'group' && nestedField.fields.isNotEmpty)) {
         continue;
       }
-      controllers[nestedField.name] = TextEditingController();
+      controllers[nestedField.name] = TextEditingController(
+        text: nestedField.defaultValue?.toString() ?? '',
+      );
     }
     return controllers;
   }
@@ -436,8 +450,10 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
     final values = <String, String>{};
     for (final nestedField in groupField.fields) {
       if (nestedField.type == 'dropdown') {
-        values[nestedField.name] =
-            nestedField.options.isNotEmpty ? nestedField.options.first : '';
+        final defaultValue = nestedField.defaultValue?.toString().trim();
+        values[nestedField.name] = nestedField.options.contains(defaultValue)
+            ? defaultValue!
+            : (nestedField.options.isNotEmpty ? nestedField.options.first : '');
       }
     }
     return values;
@@ -447,7 +463,9 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
     final values = <String, bool>{};
     for (final nestedField in groupField.fields) {
       if (nestedField.type == 'boolean') {
-        values[nestedField.name] = false;
+        final defaultValue = nestedField.defaultValue;
+        values[nestedField.name] = defaultValue == true ||
+            defaultValue?.toString().toLowerCase() == 'true';
       }
     }
     return values;
@@ -468,12 +486,30 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
       return;
     }
 
-    _groupFieldControllers[field.name] = [_createGroupControllerRow(field)];
-    _groupDropdownValues[field.name] = [_createGroupDropdownRow(field)];
-    _groupBoolValues[field.name] = [_createGroupBoolRow(field)];
-    _groupMultiselectValues[field.name] = [_createGroupMultiselectRow(field)];
-    _linkedClientNamesByGroup[field.name] = [null];
-    _linkedClientIdsByGroup[field.name] = [null];
+    final initialCount = field.minItems != null && field.minItems! > 0
+        ? field.minItems!
+        : 1;
+
+    _groupFieldControllers[field.name] = List.generate(
+      initialCount,
+      (_) => _createGroupControllerRow(field),
+    );
+    _groupDropdownValues[field.name] = List.generate(
+      initialCount,
+      (_) => _createGroupDropdownRow(field),
+    );
+    _groupBoolValues[field.name] = List.generate(
+      initialCount,
+      (_) => _createGroupBoolRow(field),
+    );
+    _groupMultiselectValues[field.name] = List.generate(
+      initialCount,
+      (_) => _createGroupMultiselectRow(field),
+    );
+    _linkedClientNamesByGroup[field.name] =
+        List<String?>.filled(initialCount, null);
+    _linkedClientIdsByGroup[field.name] =
+        List<String?>.filled(initialCount, null);
   }
 
   void _addGroupRow(DocumentField field) {
@@ -511,7 +547,7 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
         multiselectRows == null ||
         index < 0 ||
         index >= controllerRows.length ||
-        controllerRows.length <= 1) {
+        controllerRows.length <= (field.minItems ?? 1)) {
       return;
     }
 
@@ -534,7 +570,181 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
     });
   }
 
+  dynamic _getTopLevelFieldValue(DocumentField field) {
+    if (field.type == 'group' && field.fields.isNotEmpty) {
+      var nonEmptyRowCount = 0;
+      final rows = _groupFieldControllers[field.name] ?? const [];
+      for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+        if (!_isGroupRowEmpty(field, rowIndex)) {
+          nonEmptyRowCount++;
+        }
+      }
+      return nonEmptyRowCount;
+    }
+    if (_dropdownValues.containsKey(field.name)) {
+      return _dropdownValues[field.name] ?? '';
+    }
+    if (_boolValues.containsKey(field.name)) {
+      return _boolValues[field.name] ?? false;
+    }
+    if (_multiselectValues.containsKey(field.name)) {
+      return _multiselectValues[field.name] ?? <String>{};
+    }
+    return _fieldControllers[field.name]?.text ?? '';
+  }
+
+  dynamic _getGroupFieldValue(
+    DocumentField groupField,
+    DocumentField subField,
+    int rowIndex,
+  ) {
+    if (subField.type == 'dropdown') {
+      return _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
+          '';
+    }
+    if (subField.type == 'boolean') {
+      return _groupBoolValues[groupField.name]?[rowIndex][subField.name] ??
+          false;
+    }
+    if (subField.type == 'multiselect') {
+      return _groupMultiselectValues[groupField.name]?[rowIndex]
+              [subField.name] ??
+          <String>{};
+    }
+    return _groupFieldControllers[groupField.name]?[rowIndex][subField.name]
+            ?.text ??
+        '';
+  }
+
+  double? _parseNumericValue(dynamic rawValue) {
+    if (rawValue == null) return null;
+    final normalized = rawValue
+        .toString()
+        .replaceAll(',', '')
+        .replaceAll('%', '')
+        .replaceAll(RegExp(r'[^\d.\-]'), '')
+        .trim();
+    if (normalized.isEmpty) return null;
+    return double.tryParse(normalized);
+  }
+
+  bool _matchesShowIfCondition(
+    dynamic actualValue,
+    String operator,
+    String expectedToken,
+  ) {
+    final actualNumber = _parseNumericValue(actualValue);
+    final expectedNumber = double.tryParse(expectedToken);
+
+    if (actualNumber != null && expectedNumber != null) {
+      switch (operator) {
+        case '<':
+          return actualNumber < expectedNumber;
+        case '<=':
+          return actualNumber <= expectedNumber;
+        case '>':
+          return actualNumber > expectedNumber;
+        case '>=':
+          return actualNumber >= expectedNumber;
+        case '!=':
+          return actualNumber != expectedNumber;
+        case '=':
+        case '==':
+          return actualNumber == expectedNumber;
+      }
+    }
+
+    final normalizedActual = (actualValue ?? '').toString().trim().toLowerCase();
+    final normalizedExpected = expectedToken.trim().toLowerCase();
+
+    switch (operator) {
+      case '!=':
+        return normalizedActual != normalizedExpected;
+      case '=':
+      case '==':
+        return normalizedActual == normalizedExpected;
+      default:
+        return false;
+    }
+  }
+
+  bool _evaluateSingleShowIfCondition(
+    String condition, {
+    DocumentField? groupField,
+    int? rowIndex,
+  }) {
+    final match = RegExp(
+      r'^\s*([a-zA-Z0-9_]+)\s*(<=|>=|==|!=|=|<|>)\s*(.+?)\s*$',
+    ).firstMatch(condition);
+    if (match == null) {
+      return true;
+    }
+
+    final targetFieldName = match.group(1)!;
+    final operator = match.group(2)!;
+    var expectedToken = match.group(3)!.trim();
+    if ((expectedToken.startsWith('"') && expectedToken.endsWith('"')) ||
+        (expectedToken.startsWith("'") && expectedToken.endsWith("'"))) {
+      expectedToken = expectedToken.substring(1, expectedToken.length - 1);
+    }
+
+    dynamic actualValue;
+    if (groupField != null && rowIndex != null) {
+      final matches =
+          groupField.fields.where((nested) => nested.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getGroupFieldValue(groupField, matches.first, rowIndex);
+    } else {
+      final matches = _fields.where((candidate) => candidate.name == targetFieldName);
+      if (matches.isEmpty) {
+        return true;
+      }
+      actualValue = _getTopLevelFieldValue(matches.first);
+    }
+
+    return _matchesShowIfCondition(actualValue, operator, expectedToken);
+  }
+
+  bool _isFieldVisible(
+    DocumentField field, {
+    DocumentField? groupField,
+    int? rowIndex,
+  }) {
+    final condition = field.showIf?.trim();
+    if (condition == null || condition.isEmpty) {
+      return true;
+    }
+
+    final orClauses = condition.split('||');
+    for (final orClause in orClauses) {
+      final andClauses = orClause
+          .split('&&')
+          .map((part) => part.trim())
+          .where((part) => part.isNotEmpty)
+          .toList();
+      if (andClauses.isEmpty) {
+        continue;
+      }
+      final allMatched = andClauses.every(
+        (part) => _evaluateSingleShowIfCondition(
+          part,
+          groupField: groupField,
+          rowIndex: rowIndex,
+        ),
+      );
+      if (allMatched) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   bool _isTopLevelFieldMissing(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return false;
+    }
     if (!field.required) {
       return false;
     }
@@ -560,6 +770,9 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
     DocumentField subField,
     int rowIndex,
   ) {
+    if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
+      return false;
+    }
     if (!subField.required) {
       return false;
     }
@@ -588,6 +801,9 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
 
   bool _isGroupRowEmpty(DocumentField groupField, int rowIndex) {
     for (final subField in groupField.fields) {
+      if (!_isFieldVisible(subField, groupField: groupField, rowIndex: rowIndex)) {
+        continue;
+      }
       if (subField.type == 'dropdown') {
         final value =
             _groupDropdownValues[groupField.name]?[rowIndex][subField.name] ??
@@ -632,6 +848,9 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
     final missingFields = <String>[];
 
     for (final field in _fields) {
+      if (!_isFieldVisible(field)) {
+        continue;
+      }
       if (field.type == 'group' && field.fields.isNotEmpty) {
         final rows = _groupFieldControllers[field.name] ?? const [];
         if (field.required && rows.isEmpty) {
@@ -668,6 +887,9 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
   }
 
   dynamic _serializeTopLevelFieldValue(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return null;
+    }
     if (field.type == 'dropdown') {
       return _dropdownValues[field.name] ?? '';
     }
@@ -688,6 +910,9 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
 
         final rowData = <String, dynamic>{};
         for (final subField in field.fields) {
+          if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
+            continue;
+          }
           if (subField.type == 'dropdown') {
             rowData[subField.name] =
                 _groupDropdownValues[field.name]?[rowIndex][subField.name] ??
@@ -751,14 +976,21 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
       if (field.type == 'group' && field.fields.isNotEmpty) {
         _initializeGroupField(field);
       } else if (field.type == 'dropdown') {
+        final defaultValue = field.defaultValue?.toString().trim();
         _dropdownValues[field.name] =
-            field.options.isNotEmpty ? field.options.first : '';
+            field.options.contains(defaultValue)
+                ? defaultValue!
+                : (field.options.isNotEmpty ? field.options.first : '');
       } else if (field.type == 'boolean') {
-        _boolValues[field.name] = false;
+        final defaultValue = field.defaultValue;
+        _boolValues[field.name] = defaultValue == true ||
+            defaultValue?.toString().toLowerCase() == 'true';
       } else if (field.type == 'multiselect') {
         _multiselectValues[field.name] = <String>{};
       } else {
-        _fieldControllers[field.name] = TextEditingController();
+        _fieldControllers[field.name] = TextEditingController(
+          text: field.defaultValue?.toString() ?? '',
+        );
       }
     }
     setState(() {});
@@ -968,7 +1200,8 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
 
     try {
       final fields = <String, dynamic>{
-        for (var field in _fields) field.name: _serializeTopLevelFieldValue(field),
+        for (var field in _fields)
+          if (_isFieldVisible(field)) field.name: _serializeTopLevelFieldValue(field),
       };
 
       fields.addAll({
@@ -1495,6 +1728,9 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
 
 
   Widget _buildField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     if (field.type == 'group' && field.fields.isNotEmpty) {
       return _buildGroupField(field);
     }
@@ -1587,7 +1823,7 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
       case 'date':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
@@ -1607,11 +1843,12 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
       case 'textarea':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
           maxLines: 4,
+          onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
             hintText: field.hint,
             suffixIcon: VoiceFieldMicIcon(
@@ -1629,11 +1866,12 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
       case 'number':
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
           keyboardType: TextInputType.number,
+          onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
             hintText: field.hint,
             suffixIcon: VoiceFieldMicIcon(
@@ -1651,11 +1889,12 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
       default:
         final controller = _fieldControllers.putIfAbsent(
           field.name,
-          () => TextEditingController(),
+          () => TextEditingController(text: field.defaultValue?.toString() ?? ''),
         );
         input = TextFormField(
           controller: controller,
           maxLines: field.type == 'long_text' ? 4 : 1,
+          onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
             hintText: field.hint,
             suffixIcon: VoiceFieldMicIcon(
@@ -1689,6 +1928,9 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
   }
 
   Widget _buildGroupField(DocumentField field) {
+    if (!_isFieldVisible(field)) {
+      return const SizedBox.shrink();
+    }
     final controllerRows = _groupFieldControllers[field.name] ?? const [];
     final dropdownRows = _groupDropdownValues[field.name] ?? const [];
     final boolRows = _groupBoolValues[field.name] ?? const [];
@@ -1697,6 +1939,9 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
         field.name == 'client_details' || field.name == 'vendor_details';
 
     Widget buildSubField(DocumentField subField, int rowIndex) {
+      if (!_isFieldVisible(subField, groupField: field, rowIndex: rowIndex)) {
+        return const SizedBox.shrink();
+      }
       final label = subField.required ? '${subField.label} *' : subField.label;
       Widget input;
 
@@ -1813,6 +2058,7 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
           input = TextFormField(
             controller: controller,
             maxLines: 4,
+            onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: subField.hint,
               suffixIcon: VoiceFieldMicIcon(
@@ -1833,6 +2079,7 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
           input = TextFormField(
             controller: controller,
             keyboardType: TextInputType.number,
+            onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: subField.hint,
               suffixIcon: VoiceFieldMicIcon(
@@ -1852,6 +2099,7 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
               _groupFieldControllers[field.name]![rowIndex][subField.name]!;
           input = TextFormField(
             controller: controller,
+            onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: subField.hint,
               suffixIcon: VoiceFieldMicIcon(
@@ -1910,7 +2158,10 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
                 ),
                 if (field.repeatable)
                   TextButton.icon(
-                    onPressed: () => _addGroupRow(field),
+                    onPressed: field.maxItems != null &&
+                            controllerRows.length >= field.maxItems!
+                        ? null
+                        : () => _addGroupRow(field),
                     icon: const Icon(Icons.add),
                     label: const Text('Add'),
                   ),
@@ -2159,7 +2410,7 @@ class _VendorAgreementPageState extends State<VendorAgreementPage> {
           ),
           SizedBox(height: 8),
           Text(
-            "Fill in the details on the left, then click\n\"Generate Document\" to create your Power of Attorney.",
+            "Fill in the details on the left, then click\n\"Generate Document\" to create your Vendor Agreement.",
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey),
           ),

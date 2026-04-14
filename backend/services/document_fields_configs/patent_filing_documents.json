@@ -7,17 +7,64 @@
     "required": true
   },
   {
+    "name": "patent_office",
+    "label": "Jurisdiction / Patent Office",
+    "type": "dropdown",
+    "options": [
+      "Indian Patent Office",
+      "USPTO",
+      "EPO",
+      "WIPO",
+      "UKIPO",
+      "JPO",
+      "Other"
+    ],
+    "hint": "Select the patent office or jurisdiction where the filing will be made",
+    "required": true
+  },
+  {
+    "name": "address_for_service",
+    "label": "Address for Service",
+    "type": "textarea",
+    "hint": "Enter the local service address for receipt of patent office communications",
+    "required": true
+  },
+  {
     "name": "application_type",
     "label": "Application Type",
     "type": "dropdown",
     "options": [
       "Provisional",
       "Complete",
-      "PCT International",
+      "PCT International (National Phase)",
       "Convention Application"
     ],
     "hint": "Select type of patent application",
     "required": true
+  },
+  {
+    "name": "international_application_number",
+    "label": "International Application Number",
+    "type": "text",
+    "hint": "Enter PCT application number, e.g. PCT/IN2026/000123",
+    "required": false,
+    "show_if": "application_type == 'PCT International (National Phase)'"
+  },
+  {
+    "name": "international_filing_date",
+    "label": "International Filing Date",
+    "type": "date",
+    "hint": "Select international filing date",
+    "required": false,
+    "show_if": "application_type == 'PCT International (National Phase)'"
+  },
+  {
+    "name": "wipo_publication_number",
+    "label": "WIPO Publication Number",
+    "type": "text",
+    "hint": "Enter WIPO publication number for the PCT application",
+    "required": false,
+    "show_if": "application_type == 'PCT International (National Phase)'"
   },
   {
     "name": "applicant_details",
@@ -58,6 +105,27 @@
     ]
   },
   {
+    "name": "entity_fee_status",
+    "label": "Small / Micro Entity Status",
+    "type": "dropdown",
+    "options": [
+      "Standard Entity",
+      "Small Entity",
+      "Micro Entity",
+      "Startup"
+    ],
+    "hint": "Select fee-status category for government fee concessions",
+    "required": false
+  },
+  {
+    "name": "entity_status_certification",
+    "label": "Entity Status Certification / Form Number",
+    "type": "text",
+    "hint": "Enter the certification, declaration, or form number used to claim reduced fees",
+    "required": false,
+    "show_if": "entity_fee_status == 'Small Entity' || entity_fee_status == 'Micro Entity' || entity_fee_status == 'Startup'"
+  },
+  {
     "name": "inventor_details",
     "label": "Inventor Details",
     "type": "group",
@@ -91,7 +159,7 @@
     "name": "assignee_details",
     "label": "Assignee Details",
     "type": "textarea",
-    "hint": "Enter assignee (if rights assigned)",
+    "hint": "Enter assignee details if rights are assigned",
     "required": false
   },
   {
@@ -128,20 +196,6 @@
     "type": "textarea",
     "hint": "Explain invention in detail with embodiments",
     "required": true
-  },
-  {
-    "name": "drawings_description",
-    "label": "Drawings Description",
-    "type": "textarea",
-    "hint": "Explain diagrams/figures",
-    "required": false
-  },
-  {
-    "name": "drawings_upload",
-    "label": "Upload Drawings",
-    "type": "file",
-    "hint": "Upload technical drawings (optional)",
-    "required": false
   },
   {
     "name": "claims",
@@ -181,11 +235,73 @@
     "required": true
   },
   {
-    "name": "priority_details",
-    "label": "Priority Details",
-    "type": "textarea",
-    "hint": "Enter priority application number/date/country",
+    "name": "priority_applications",
+    "label": "Priority Applications",
+    "type": "group",
+    "repeatable": true,
+    "required": false,
+    "show_if": "priority_claimed == true",
+    "fields": [
+      {
+        "name": "priority_country",
+        "label": "Priority Country",
+        "type": "text",
+        "required": true,
+        "hint": "Enter country of the earlier filing"
+      },
+      {
+        "name": "priority_application_number",
+        "label": "Priority Application Number",
+        "type": "text",
+        "required": true,
+        "hint": "Enter earlier application number"
+      },
+      {
+        "name": "priority_date",
+        "label": "Priority Date",
+        "type": "date",
+        "required": true,
+        "hint": "Select priority filing date"
+      }
+    ]
+  },
+  {
+    "name": "das_code",
+    "label": "DAS Code",
+    "type": "text",
+    "hint": "Enter Digital Access Service code for electronic priority document retrieval",
+    "required": false,
+    "show_if": "priority_claimed == true"
+  },
+  {
+    "name": "relation_to_parent",
+    "label": "Relation to Parent Application",
+    "type": "dropdown",
+    "options": [
+      "",
+      "Divisional",
+      "Continuation",
+      "Continuation-in-part",
+      "Patent of Addition"
+    ],
+    "hint": "Select if this filing is related to a parent application",
     "required": false
+  },
+  {
+    "name": "parent_application_number",
+    "label": "Parent Application Number",
+    "type": "text",
+    "hint": "Enter parent application number",
+    "required": false,
+    "show_if": "relation_to_parent != ''"
+  },
+  {
+    "name": "parent_filing_date",
+    "label": "Parent Filing Date",
+    "type": "date",
+    "hint": "Select parent filing date",
+    "required": false,
+    "show_if": "relation_to_parent != ''"
   },
   {
     "name": "publication_preference",
@@ -206,11 +322,42 @@
     "required": false
   },
   {
+    "name": "biological_material_disclosure",
+    "label": "Biological Material Disclosure",
+    "type": "boolean",
+    "hint": "Enable if the invention involves biological material requiring deposit details",
+    "required": false
+  },
+  {
+    "name": "deposition_number",
+    "label": "Deposition Number",
+    "type": "text",
+    "hint": "Enter biological material deposition number",
+    "required": false,
+    "show_if": "biological_material_disclosure == true"
+  },
+  {
+    "name": "international_depository_authority",
+    "label": "Name of International Depository Authority",
+    "type": "text",
+    "hint": "Enter name of the recognized depository authority",
+    "required": false,
+    "show_if": "biological_material_disclosure == true"
+  },
+  {
     "name": "agent_details",
     "label": "Patent Agent Details",
     "type": "textarea",
-    "hint": "Enter patent agent/attorney details",
+    "hint": "Enter patent agent or attorney details",
     "required": false
+  },
+  {
+    "name": "registration_number",
+    "label": "Agent Registration Number",
+    "type": "text",
+    "hint": "Enter the agent's patent office registration or enrollment number",
+    "required": false,
+    "show_if": "agent_details != ''"
   },
   {
     "name": "declaration_of_inventorship",
@@ -220,24 +367,10 @@
     "required": true
   },
   {
-    "name": "assignment_document",
-    "label": "Assignment Document Uploaded",
-    "type": "boolean",
-    "hint": "Upload assignment if applicable",
-    "required": false
-  },
-  {
     "name": "government_fee_details",
     "label": "Government Fee Details",
     "type": "textarea",
     "hint": "Mention filing fees paid",
     "required": false
-  },
-  {
-    "name": "digital_signature",
-    "label": "Digital Signature",
-    "type": "text",
-    "hint": "Enter applicant/agent signature",
-    "required": true
   }
 ]

@@ -36,6 +36,52 @@
     "required": true
   },
   {
+    "name": "assignor_representative_name",
+    "label": "Assignor Representative Name",
+    "type": "text",
+    "hint": "Enter the name of the authorized signatory for the assignor",
+    "required": false,
+    "show_if": "assignor_type == 'Company'"
+  },
+  {
+    "name": "assignor_representative_designation",
+    "label": "Assignor Representative Designation",
+    "type": "text",
+    "hint": "Enter designation such as Director, Partner, or Authorized Signatory",
+    "required": false,
+    "show_if": "assignor_type == 'Company'"
+  },
+  {
+    "name": "assignor_llp_representative_name",
+    "label": "Assignor LLP Representative Name",
+    "type": "text",
+    "hint": "Enter the name of the partner or authorized signatory for the assignor LLP",
+    "required": false,
+    "show_if": "assignor_type == 'LLP'"
+  },
+  {
+    "name": "assignor_llp_representative_designation",
+    "label": "Assignor LLP Representative Designation",
+    "type": "text",
+    "hint": "Enter designation such as Designated Partner or Authorized Signatory",
+    "required": false,
+    "show_if": "assignor_type == 'LLP'"
+  },
+  {
+    "name": "assignor_pan",
+    "label": "Assignor PAN",
+    "type": "text",
+    "hint": "Enter PAN of the assignor, if applicable",
+    "required": false
+  },
+  {
+    "name": "assignor_gst",
+    "label": "Assignor GST",
+    "type": "text",
+    "hint": "Enter GST number of the assignor, if applicable",
+    "required": false
+  },
+  {
     "name": "assignee_name",
     "label": "Assignee Name",
     "type": "text",
@@ -58,11 +104,72 @@
     "required": true
   },
   {
+    "name": "assignee_representative_name",
+    "label": "Assignee Representative Name",
+    "type": "text",
+    "hint": "Enter the name of the authorized signatory for the assignee",
+    "required": false,
+    "show_if": "assignee_type == 'Company'"
+  },
+  {
+    "name": "assignee_representative_designation",
+    "label": "Assignee Representative Designation",
+    "type": "text",
+    "hint": "Enter designation such as Director, Partner, or Authorized Signatory",
+    "required": false,
+    "show_if": "assignee_type == 'Company'"
+  },
+  {
+    "name": "assignee_llp_representative_name",
+    "label": "Assignee LLP Representative Name",
+    "type": "text",
+    "hint": "Enter the name of the partner or authorized signatory for the assignee LLP",
+    "required": false,
+    "show_if": "assignee_type == 'LLP'"
+  },
+  {
+    "name": "assignee_llp_representative_designation",
+    "label": "Assignee LLP Representative Designation",
+    "type": "text",
+    "hint": "Enter designation such as Designated Partner or Authorized Signatory",
+    "required": false,
+    "show_if": "assignee_type == 'LLP'"
+  },
+  {
+    "name": "assignee_pan",
+    "label": "Assignee PAN",
+    "type": "text",
+    "hint": "Enter PAN of the assignee, if applicable",
+    "required": false
+  },
+  {
+    "name": "assignee_gst",
+    "label": "Assignee GST",
+    "type": "text",
+    "hint": "Enter GST number of the assignee, if applicable",
+    "required": false
+  },
+  {
     "name": "agreement_title",
     "label": "Agreement Title",
     "type": "text",
     "hint": "Enter title of agreement (e.g., IP Assignment Agreement)",
     "required": false
+  },
+  {
+    "name": "assignment_type",
+    "label": "Assignment Type",
+    "type": "dropdown",
+    "options": [
+      "General Assignment",
+      "IP Assignment",
+      "Asset Assignment",
+      "Contractual Rights Assignment",
+      "Debt / Receivables Assignment",
+      "Other"
+    ],
+    "hint": "Select the primary type of assignment",
+    "required": true
   },
   {
     "name": "assigned_rights",
@@ -72,11 +179,42 @@
     "required": true
   },
   {
+    "name": "schedule_of_assets_ip",
+    "label": "Schedule of Assets / Intellectual Property",
+    "type": "textarea",
+    "hint": "Provide a detailed schedule of the property, assets, or IP being assigned",
+    "required": false
+  },
+  {
     "name": "assignment_scope",
     "label": "Scope of Assignment",
     "type": "textarea",
     "hint": "Specify scope, limitations, or conditions of assignment",
     "required": false
+  },
+  {
+    "name": "registration_numbers",
+    "label": "Registration Numbers",
+    "type": "textarea",
+    "hint": "Enter patent, trademark, copyright, or other registration/application numbers",
+    "required": false,
+    "show_if": "assignment_type == 'IP Assignment'"
+  },
+  {
+    "name": "moral_rights_waiver",
+    "label": "Moral Rights Waiver",
+    "type": "textarea",
+    "hint": "State whether the author or creator waives moral rights to the extent permitted by law",
+    "required": false,
+    "show_if": "assignment_type == 'IP Assignment'"
+  },
+  {
+    "name": "further_assurance",
+    "label": "Further Assurance",
+    "type": "textarea",
+    "hint": "State that the assignor will execute future documents needed to perfect title",
+    "required": false,
+    "show_if": "assignment_type == 'IP Assignment'"
   },
   {
     "name": "consideration_amount",
@@ -91,6 +229,37 @@
     "type": "textarea",
     "hint": "Describe payment terms (lump sum, installments, etc.)",
     "required": false
+  },
+  {
+    "name": "payment_timeline",
+    "label": "Payment Timeline",
+    "type": "dropdown",
+    "options": [
+      "Advance",
+      "Milestone-based",
+      "Post-completion",
+      "Installments",
+      "Custom"
+    ],
+    "hint": "Select when the consideration will be paid",
+    "required": false,
+    "show_if": "consideration_amount > 0"
+  },
+  {
+    "name": "mode_of_payment",
+    "label": "Mode of Payment",
+    "type": "dropdown",
+    "options": [
+      "Cheque",
+      "Wire Transfer",
+      "UPI",
+      "Demand Draft",
+      "Cash",
+      "Other"
+    ],
+    "hint": "Select the mode of payment",
+    "required": false,
+    "show_if": "consideration_amount > 0"
   },
   {
     "name": "effective_from",
@@ -119,6 +288,44 @@
     "type": "textarea",
     "hint": "Specify indemnity obligations, if any",
     "required": false
+  },
+  {
+    "name": "notice_details",
+    "label": "Notice Details",
+    "type": "textarea",
+    "hint": "Enter email addresses and physical addresses for service of legal notices",
+    "required": false
+  },
+  {
+    "name": "dispute_resolution",
+    "label": "Dispute Resolution Method",
+    "type": "dropdown",
+    "options": [
+      "Litigation",
+      "Arbitration"
+    ],
+    "hint": "Select whether disputes will be resolved through litigation or arbitration",
+    "required": true
+  },
+  {
+    "name": "number_of_arbitrators",
+    "label": "Number of Arbitrators",
+    "type": "dropdown",
+    "options": [
+      "Sole Arbitrator",
+      "Panel of Three Arbitrators"
+    ],
+    "hint": "Select the arbitral tribunal structure",
+    "required": false,
+    "show_if": "dispute_resolution == 'Arbitration'"
+  },
+  {
+    "name": "seat_of_arbitration",
+    "label": "Seat of Arbitration",
+    "type": "text",
+    "hint": "Enter the legal seat of arbitration (city)",
+    "required": false,
+    "show_if": "dispute_resolution == 'Arbitration'"
   },
   {
     "name": "governing_law",

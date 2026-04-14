@@ -340,30 +340,6 @@
     "required": true
   },
   {
-    "name": "signatures",
-    "label": "Party Signatures",
-    "type": "group",
-    "repeatable": true,
-    "min": 1,
-    "required": true,
-    "fields": [
-      {
-        "name": "party_name",
-        "label": "Party Name",
-        "type": "text",
-        "required": true,
-        "hint": "Enter name"
-      },
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "text",
-        "required": true,
-        "hint": "Enter name as signature"
-      }
-    ]
-  },
-  {
     "name": "witness_details",
     "label": "Witness Details",
     "type": "group",

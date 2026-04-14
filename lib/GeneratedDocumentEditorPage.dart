@@ -125,6 +125,11 @@ class _GeneratedDocumentEditorPageState
       final plainPages = _buildPlainTextPages(htmlPages, plainText);
 
       if (!mounted) return;
+      final resolvedFontFamily = _resolveFontFamily(
+        (payload['font_family'] ?? '').toString(),
+      );
+      final resolvedFontSize = _resolveFontSize(payload['font_size']);
+      final resolvedLineSpacing = _resolveLineSpacing(payload['line_spacing']);
       setState(() {
         _pageHtml
           ..clear()
@@ -133,6 +138,9 @@ class _GeneratedDocumentEditorPageState
           ..clear()
           ..addAll(plainPages);
         _currentPage = 0;
+        _fontFamily = resolvedFontFamily;
+        _fontSize = resolvedFontSize;
+        _lineSpacing = resolvedLineSpacing;
         _isLoading = false;
       });
     } catch (e) {
@@ -286,6 +294,45 @@ class _GeneratedDocumentEditorPageState
     if (size <= 18) return '5';
     if (size <= 24) return '6';
     return '7';
+  }
+
+  String _resolveFontFamily(String fontFamily) {
+    if (_fontFamilies.contains(fontFamily)) {
+      return fontFamily;
+    }
+    return _fontFamilies.first;
+  }
+
+  double _resolveFontSize(dynamic value) {
+    if (value is num) {
+      return value.toDouble().clamp(8.0, 72.0).toDouble();
+    }
+    final parsed = double.tryParse((value ?? '').toString());
+    if (parsed != null) {
+      return parsed.clamp(8.0, 72.0).toDouble();
+    }
+    return _fontSize;
+  }
+
+  double _resolveLineSpacing(dynamic value) {
+    final normalized = (value ?? '').toString().trim().toLowerCase();
+    for (final option in _lineSpacingOptions) {
+      if (option.key.toLowerCase() == normalized) {
+        return option.value;
+      }
+      if (option.value.toString() == normalized) {
+        return option.value;
+      }
+    }
+    final parsed = double.tryParse(normalized);
+    if (parsed != null) {
+      for (final option in _lineSpacingOptions) {
+        if ((option.value - parsed).abs() < 0.001) {
+          return option.value;
+        }
+      }
+    }
+    return _lineSpacing;
   }
 
   String get _lineSpacingLabel {

@@ -36,6 +36,22 @@
     "required": true
   },
   {
+    "name": "party_a_authorized_signatory_name",
+    "label": "Party A Authorized Signatory Name",
+    "type": "text",
+    "hint": "Enter the name of the person signing on behalf of Party A",
+    "required": false,
+    "show_if": "party_a_type != 'Individual'"
+  },
+  {
+    "name": "party_a_authorized_signatory_designation",
+    "label": "Party A Authorized Signatory Designation",
+    "type": "text",
+    "hint": "Enter designation of Party A's signatory",
+    "required": false,
+    "show_if": "party_a_type != 'Individual'"
+  },
+  {
     "name": "party_b_name",
     "label": "Party B Name",
     "type": "text",
@@ -55,6 +71,30 @@
     "type": "dropdown",
     "options": ["Individual", "Company", "LLP", "Partnership"],
     "hint": "Select type of Party B",
+    "required": true
+  },
+  {
+    "name": "party_b_authorized_signatory_name",
+    "label": "Party B Authorized Signatory Name",
+    "type": "text",
+    "hint": "Enter the name of the person signing on behalf of Party B",
+    "required": false,
+    "show_if": "party_b_type != 'Individual'"
+  },
+  {
+    "name": "party_b_authorized_signatory_designation",
+    "label": "Party B Authorized Signatory Designation",
+    "type": "text",
+    "hint": "Enter designation of Party B's signatory",
+    "required": false,
+    "show_if": "party_b_type != 'Individual'"
+  },
+  {
+    "name": "jv_type_structural",
+    "label": "Joint Venture Type (Structural)",
+    "type": "dropdown",
+    "options": ["Incorporated", "Unincorporated"],
+    "hint": "Select whether the JV operates as a separate incorporated entity",
     "required": true
   },
   {
@@ -86,29 +126,75 @@
     "required": true
   },
   {
+    "name": "representations_and_warranties",
+    "label": "Representations & Warranties",
+    "type": "textarea",
+    "hint": "Record each party's promises regarding title, authority, and ownership of contributed assets",
+    "required": false
+  },
+  {
     "name": "ownership_percentage",
     "label": "Ownership Percentage",
     "type": "text",
-    "hint": "Enter ownership share of each party",
+    "hint": "Enter ownership share of each party, e.g. Party A 60%, Party B 40%",
     "required": true
+  },
+  {
+    "name": "share_capital_details",
+    "label": "Share Capital",
+    "type": "textarea",
+    "hint": "Specify authorized, issued, and subscribed share capital of the JV",
+    "required": false,
+    "show_if": "jv_type_structural == 'Incorporated' || party_a_type == 'Company' || party_b_type == 'Company'"
+  },
+  {
+    "name": "par_value_per_share",
+    "label": "Par Value Per Share",
+    "type": "text",
+    "hint": "Enter par or face value per share, if applicable",
+    "required": false,
+    "show_if": "jv_type_structural == 'Incorporated' || party_a_type == 'Company' || party_b_type == 'Company'"
   },
   {
     "name": "profit_sharing_ratio",
     "label": "Profit Sharing Ratio",
     "type": "text",
     "hint": "Enter agreed profit sharing ratio",
-    "required": true
+    "required": true,
+    "show_if": "jv_type_structural == 'Unincorporated'"
   },
   {
     "name": "loss_sharing_ratio",
     "label": "Loss Sharing Ratio",
     "type": "text",
     "hint": "Enter loss sharing ratio",
+    "required": true,
+    "show_if": "jv_type_structural == 'Unincorporated'"
+  },
+  {
+    "name": "funding_triggers",
+    "label": "Funding Triggers (Capital Calls)",
+    "type": "textarea",
+    "hint": "Describe how additional funding is requested if the initial contribution becomes insufficient",
+    "required": false
+  },
+  {
+    "name": "management_model",
+    "label": "Management Model",
+    "type": "dropdown",
+    "options": [
+      "Joint Management",
+      "Board Managed",
+      "Managing Partner / Lead Party",
+      "CEO / Manager Led",
+      "Custom"
+    ],
+    "hint": "Select the broad management structure",
     "required": true
   },
   {
     "name": "management_structure",
-    "label": "Management Structure",
+    "label": "Management Structure Details",
     "type": "textarea",
     "hint": "Define roles, responsibilities, and decision-making authority",
     "required": true
@@ -117,8 +203,16 @@
     "name": "board_composition",
     "label": "Board / Committee Composition",
     "type": "textarea",
-    "hint": "Specify board members and representation",
+    "hint": "Specify board members, committees, and representation",
     "required": false
+  },
+  {
+    "name": "board_nomination_rights",
+    "label": "Board Nomination Rights",
+    "type": "textarea",
+    "hint": "State who can nominate directors or committee members once ownership thresholds are met",
+    "required": false,
+    "show_if": "ownership_percentage > 10"
   },
   {
     "name": "decision_making_process",
@@ -128,11 +222,49 @@
     "required": true
   },
   {
+    "name": "deadlock_resolution",
+    "label": "Deadlock Resolution",
+    "type": "dropdown",
+    "options": [
+      "Casting Vote",
+      "Escalation to Senior Management",
+      "Third-Party Mediator",
+      "Shotgun / Russian Roulette",
+      "Custom"
+    ],
+    "hint": "Choose how deadlocks are handled",
+    "required": false
+  },
+  {
+    "name": "casting_vote_holder",
+    "label": "Casting Vote Holder",
+    "type": "text",
+    "hint": "State who holds the tie-breaking vote in case of a deadlock",
+    "required": false,
+    "show_if": "management_model == 'Joint Management'"
+  },
+  {
+    "name": "deadlock_resolution_details",
+    "label": "Deadlock Resolution Details",
+    "type": "textarea",
+    "hint": "Add procedural details for the chosen deadlock resolution mechanism",
+    "required": false,
+    "show_if": "deadlock_resolution == 'Third-Party Mediator' || deadlock_resolution == 'Shotgun / Russian Roulette' || deadlock_resolution == 'Custom'"
+  },
+  {
     "name": "bank_account_details",
     "label": "Banking & Finance",
     "type": "textarea",
     "hint": "Specify bank account operation and financial control",
     "required": false
+  },
+  {
+    "name": "dividend_policy",
+    "label": "Dividend Policy",
+    "type": "textarea",
+    "hint": "Specify how much profit is retained in the business and how much is distributed",
+    "required": false,
+    "show_if": "jv_type_structural == 'Incorporated'"
   },
   {
     "name": "term_duration",
@@ -156,11 +288,34 @@
     "required": false
   },
   {
+    "name": "non_solicitation_period",
+    "label": "Non-Solicitation Period",
+    "type": "textarea",
+    "hint": "If non-compete obligations apply, state the employee/client non-solicitation period",
+    "required": false,
+    "show_if": "non_compete_clause != ''"
+  },
+  {
     "name": "intellectual_property_rights",
     "label": "Intellectual Property Rights",
     "type": "textarea",
     "hint": "Define ownership of IP created",
     "required": false
+  },
+  {
+    "name": "transfer_restrictions_applicable",
+    "label": "Transfer Restrictions Apply",
+    "type": "boolean",
+    "hint": "Enable if a party must first offer its stake to the other party before selling externally",
+    "required": false
+  },
+  {
+    "name": "transfer_restrictions_details",
+    "label": "Transfer Restrictions (Right of First Refusal)",
+    "type": "textarea",
+    "hint": "Describe ROFR, lock-in, tag-along, drag-along, or consent requirements",
+    "required": false,
+    "show_if": "transfer_restrictions_applicable == true"
   },
   {
     "name": "dispute_resolution",
@@ -184,6 +339,22 @@
     "required": true
   },
   {
+    "name": "buyout_valuation_method",
+    "label": "Buyout Valuation Method",
+    "type": "dropdown",
+    "options": [
+      "Fair Market Value",
+      "Book Value",
+      "Independent Valuer",
+      "Pre-Agreed Formula",
+      "Mutual Negotiation",
+      "Custom"
+    ],
+    "hint": "Choose how the exit or buyout price will be calculated",
+    "required": false,
+    "show_if": "exit_clause != ''"
+  },
+  {
     "name": "force_majeure",
     "label": "Force Majeure Clause",
     "type": "textarea",
@@ -205,26 +376,11 @@
     "required": true
   },
   {
-    "name": "party_a_signature",
-    "label": "Party A Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
-  },
-  {
-    "name": "party_b_signature",
-    "label": "Party B Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
-  },
-  {
     "name": "witness_details",
     "label": "Witness Details",
     "type": "group",
     "repeatable": true,
-    "min": 2,
-    "max": 2,
+    "min": 1,
     "required": true,
     "fields": [
       {

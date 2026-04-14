@@ -7,13 +7,19 @@
     "required": true
   },
   {
+    "name": "effective_date",
+    "label": "Effective Date",
+    "type": "date",
+    "hint": "Select the date from which settlement obligations become effective",
+    "required": false
+  },
+  {
     "name": "execution_place",
     "label": "Execution Place",
     "type": "text",
     "hint": "Enter city and state of execution",
     "required": true
   },
-
   {
     "name": "party_a_details",
     "label": "Party A Details",
@@ -44,7 +50,6 @@
       }
     ]
   },
-
   {
     "name": "party_b_details",
     "label": "Party B Details",
@@ -75,22 +80,29 @@
       }
     ]
   },
-
+  {
+    "name": "is_pending_litigation",
+    "label": "Is There Active Litigation?",
+    "type": "boolean",
+    "hint": "Enable if the dispute is already before a court or tribunal",
+    "required": false
+  },
   {
     "name": "case_reference",
     "label": "Case / Dispute Reference",
     "type": "text",
     "hint": "Enter case number, FIR, or reference ID",
-    "required": false
+    "required": false,
+    "show_if": "is_pending_litigation == true"
   },
   {
     "name": "court_name",
-    "label": "Court Name (if applicable)",
+    "label": "Court Name",
     "type": "text",
-    "hint": "Enter court name",
-    "required": false
+    "hint": "Enter court or tribunal name",
+    "required": false,
+    "show_if": "is_pending_litigation == true"
   },
-
   {
     "name": "dispute_summary",
     "label": "Dispute Background",
@@ -98,7 +110,6 @@
     "hint": "Describe dispute facts",
     "required": true
   },
-
   {
     "name": "settlement_type",
     "label": "Settlement Type",
@@ -113,7 +124,6 @@
     "hint": "Select type of settlement",
     "required": true
   },
-
   {
     "name": "settlement_terms",
     "label": "Settlement Terms",
@@ -121,13 +131,13 @@
     "hint": "Enter agreed obligations",
     "required": true
   },
-
   {
     "name": "payment_terms",
     "label": "Payment Terms",
     "type": "group",
     "repeatable": true,
     "required": false,
+    "show_if": "settlement_type == 'Monetary Settlement' || settlement_type == 'Full and Final Settlement'",
     "fields": [
       {
         "name": "amount",
@@ -155,10 +165,133 @@
         "type": "date",
         "required": false,
         "hint": "Select due date"
+      },
+      {
+        "name": "interest_rate",
+        "label": "Interest Rate on Late Payment",
+        "type": "text",
+        "required": false,
+        "hint": "Enter monthly or annual interest rate applicable on delayed payments",
+        "show_if": "amount > 0"
       }
     ]
   },
-
+  {
+    "name": "tax_responsibility",
+    "label": "Tax Responsibility",
+    "type": "textarea",
+    "hint": "Specify who is responsible for TDS or any other taxes arising from the settlement",
+    "required": false,
+    "show_if": "settlement_type == 'Monetary Settlement' || settlement_type == 'Full and Final Settlement'"
+  },
+  {
+    "name": "tax_liabilities",
+    "label": "Tax Liabilities",
+    "type": "textarea",
+    "hint": "Describe tax deductions, reimbursements, or compliance obligations linked to the settlement payment",
+    "required": false,
+    "show_if": "settlement_type == 'Monetary Settlement'"
+  },
+  {
+    "name": "property_details",
+    "label": "Property Details",
+    "type": "group",
+    "repeatable": false,
+    "required": false,
+    "show_if": "settlement_type == 'Property Settlement'",
+    "fields": [
+      {
+        "name": "property_schedule",
+        "label": "Property Schedule",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter survey number, boundaries, address, title description, and any schedule details"
+      },
+      {
+        "name": "registration_costs",
+        "label": "Registration Costs",
+        "type": "textarea",
+        "required": false,
+        "hint": "State who bears stamp duty, registration charges, and related costs"
+      },
+      {
+        "name": "transfer_deadline",
+        "label": "Transfer Deadline",
+        "type": "date",
+        "required": false,
+        "hint": "Select deadline for transfer or execution of conveyance documents"
+      }
+    ]
+  },
+  {
+    "name": "employment_terms",
+    "label": "Employment Settlement Terms",
+    "type": "group",
+    "repeatable": false,
+    "required": false,
+    "show_if": "settlement_type == 'Employment Settlement' || settlement_type == 'Full and Final Settlement'",
+    "fields": [
+      {
+        "name": "non_compete_clause",
+        "label": "Non-Compete Clause",
+        "type": "textarea",
+        "required": false,
+        "hint": "Specify post-employment non-compete restrictions, if any"
+      },
+      {
+        "name": "return_of_company_property",
+        "label": "Return of Company Property",
+        "type": "textarea",
+        "required": false,
+        "hint": "List laptops, cards, documents, devices, or other company assets to be returned"
+      },
+      {
+        "name": "reference_letter_terms",
+        "label": "Reference Letter Terms",
+        "type": "textarea",
+        "required": false,
+        "hint": "State whether an experience or reference letter will be issued and on what terms"
+      }
+    ]
+  },
+  {
+    "name": "family_terms",
+    "label": "Family Settlement Terms",
+    "type": "group",
+    "repeatable": false,
+    "required": false,
+    "show_if": "settlement_type == 'Family Settlement'",
+    "fields": [
+      {
+        "name": "custody_terms",
+        "label": "Custody Terms",
+        "type": "textarea",
+        "required": false,
+        "hint": "Describe custody arrangement for children, if applicable"
+      },
+      {
+        "name": "visitation_rights",
+        "label": "Visitation Rights",
+        "type": "textarea",
+        "required": false,
+        "hint": "Describe visitation schedule and conditions"
+      },
+      {
+        "name": "alimony_duration",
+        "label": "Alimony Duration",
+        "type": "text",
+        "required": false,
+        "hint": "Specify duration or end date of alimony or maintenance"
+      }
+    ]
+  },
+  {
+    "name": "representations_warranties",
+    "label": "Representations & Warranties",
+    "type": "textarea",
+    "hint": "Confirm that each party has authority to sign and has not assigned the claim or rights to any third party",
+    "required": false
+  },
   {
     "name": "release_clause",
     "label": "Release Clause",
@@ -166,15 +299,14 @@
     "hint": "Full and final settlement clause",
     "required": true
   },
-
   {
     "name": "withdrawal_of_cases",
     "label": "Withdrawal of Cases",
     "type": "textarea",
-    "hint": "Mention withdrawal of pending cases",
-    "required": false
+    "hint": "Mention withdrawal or disposal of pending cases",
+    "required": false,
+    "show_if": "is_pending_litigation == true"
   },
-
   {
     "name": "confidentiality_clause",
     "label": "Confidentiality Clause",
@@ -182,7 +314,6 @@
     "hint": "Confidentiality obligations",
     "required": false
   },
-
   {
     "name": "non_disparagement_clause",
     "label": "Non-Disparagement Clause",
@@ -190,7 +321,6 @@
     "hint": "Prevent parties from defamation",
     "required": false
   },
-
   {
     "name": "default_clause",
     "label": "Default Clause",
@@ -198,7 +328,13 @@
     "hint": "Consequences of breach",
     "required": false
   },
-
+  {
+    "name": "notice_details",
+    "label": "Notice Period / Contact for Breach",
+    "type": "textarea",
+    "hint": "Enter the notice period and the email/physical address where breach notices must be sent",
+    "required": false
+  },
   {
     "name": "indemnity_clause",
     "label": "Indemnity Clause",
@@ -206,7 +342,6 @@
     "hint": "Indemnification terms",
     "required": false
   },
-
   {
     "name": "force_majeure",
     "label": "Force Majeure",
@@ -214,15 +349,38 @@
     "hint": "Unforeseen circumstances clause",
     "required": false
   },
-
   {
     "name": "dispute_resolution",
-    "label": "Dispute Resolution",
-    "type": "textarea",
-    "hint": "Arbitration/mediation details",
+    "label": "Dispute Resolution Method",
+    "type": "dropdown",
+    "options": [
+      "Litigation",
+      "Arbitration",
+      "Mediation"
+    ],
+    "hint": "Select how disputes arising from the settlement will be resolved",
     "required": false
   },
-
+  {
+    "name": "number_of_arbitrators",
+    "label": "Number of Arbitrators",
+    "type": "dropdown",
+    "options": [
+      "Sole Arbitrator",
+      "Panel of Three Arbitrators"
+    ],
+    "hint": "Select the arbitral tribunal structure",
+    "required": false,
+    "show_if": "dispute_resolution == 'Arbitration'"
+  },
+  {
+    "name": "seat_of_arbitration",
+    "label": "Seat of Arbitration",
+    "type": "text",
+    "hint": "Enter the legal seat of arbitration (city)",
+    "required": false,
+    "show_if": "dispute_resolution == 'Arbitration'"
+  },
   {
     "name": "governing_law",
     "label": "Governing Law",
@@ -237,31 +395,29 @@
     "hint": "Enter court jurisdiction",
     "required": true
   },
-
   {
-    "name": "signatures",
-    "label": "Party Signatures",
+    "name": "annexures_exhibits",
+    "label": "Annexures / Exhibits",
     "type": "group",
     "repeatable": true,
-    "required": true,
+    "required": false,
     "fields": [
       {
-        "name": "party_name",
-        "label": "Party Name",
+        "name": "document_title",
+        "label": "Document Title",
         "type": "text",
         "required": true,
-        "hint": "Enter name"
+        "hint": "Enter title of annexure or exhibit"
       },
       {
-        "name": "signature",
-        "label": "Signature",
-        "type": "text",
-        "required": true,
-        "hint": "Enter name as signature"
+        "name": "document_description",
+        "label": "Description",
+        "type": "textarea",
+        "required": false,
+        "hint": "Describe the supporting document, order, ID copy, or schedule attached"
       }
     ]
   },
-
   {
     "name": "witness_details",
     "label": "Witness Details",

@@ -233,6 +233,19 @@ def normalize_line_spacing(line_spacing):
     return supported_spacing.get(requested, 1.0)
 
 
+def line_spacing_label(line_spacing):
+    spacing = normalize_line_spacing(line_spacing)
+    if spacing == 1.0:
+        return "Single"
+    if spacing == 1.15:
+        return "1.15"
+    if spacing == 1.5:
+        return "1.5"
+    if spacing == 2.0:
+        return "Double"
+    return "Single"
+
+
 def normalize_margin_size(margin_size):
     requested = str(margin_size or "").strip().lower()
     supported_margins = {
@@ -1253,10 +1266,16 @@ def generate_document():
         generated_metadata[output_filename] = {
             "owner_username": username,
             "timestamp": timestamp_iso,
+            "font_family": font_family,
+            "font_size": font_size,
+            "line_spacing": line_spacing,
         }
         generated_metadata[pdf_filename] = {
             "owner_username": username,
             "timestamp": timestamp_iso,
+            "font_family": font_family,
+            "font_size": font_size,
+            "line_spacing": line_spacing,
         }
         save_generated_metadata(generated_metadata)
     except Exception as e:
@@ -1358,11 +1377,25 @@ def get_generated_document_content(filename):
         if content is None:
             return jsonify({"error": "Failed to extract content"}), 500
 
+        resolved_info = metadata.get(resolved_filename, info)
+        stored_font_family = normalize_font_family(
+            resolved_info.get("font_family", SUPPORTED_FONT_FAMILIES[0])
+        )
+        stored_font_size = normalize_font_size(
+            resolved_info.get("font_size", DEFAULT_FONT_SIZE)
+        )
+        stored_line_spacing = normalize_line_spacing(
+            resolved_info.get("line_spacing", 1.0)
+        )
+
         return jsonify(
             {
                 "content": content,
                 "html": html_content,
                 "source_filename": resolved_filename,
+                "font_family": stored_font_family,
+                "font_size": stored_font_size,
+                "line_spacing": line_spacing_label(stored_line_spacing),
             }
         )
     except Exception as e:
@@ -1429,11 +1462,26 @@ def update_generated_document_content(filename):
             **metadata.get(editable_filename, {}),
             "owner_username": username or metadata.get(filename, {}).get("owner_username") or "admin",
             "timestamp": timestamp_iso,
+            "font_family": font_family,
+            "font_size": font_size,
+            "line_spacing": line_spacing,
         }
         metadata[pdf_filename] = {
             **metadata.get(pdf_filename, {}),
             "owner_username": username or metadata.get(pdf_filename, {}).get("owner_username") or "admin",
             "timestamp": timestamp_iso,
+            "font_family": font_family,
+            "font_size": font_size,
+            "line_spacing": line_spacing,
+        }
+        html_filename = os.path.splitext(editable_filename)[0] + ".editor.html"
+        metadata[html_filename] = {
+            **metadata.get(html_filename, {}),
+            "owner_username": username or metadata.get(html_filename, {}).get("owner_username") or "admin",
+            "timestamp": timestamp_iso,
+            "font_family": font_family,
+            "font_size": font_size,
+            "line_spacing": line_spacing,
         }
         save_generated_metadata(metadata)
 

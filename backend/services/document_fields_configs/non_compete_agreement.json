@@ -50,6 +50,22 @@
     "required": true
   },
   {
+    "name": "restricted_party_authorized_signatory_name",
+    "label": "Restricted Party Authorized Signatory Name",
+    "type": "text",
+    "hint": "Enter authorized signatory name",
+    "required": true,
+    "show_if": "restricted_party_type == 'Company' || restricted_party_type == 'LLP'"
+  },
+  {
+    "name": "restricted_party_authorized_signatory_designation",
+    "label": "Restricted Party Authorized Signatory Designation",
+    "type": "text",
+    "hint": "Enter designation, e.g. Director, CEO, Partner",
+    "required": true,
+    "show_if": "restricted_party_type == 'Company' || restricted_party_type == 'LLP'"
+  },
+  {
     "name": "beneficiary_party_name",
     "label": "Beneficiary Party Name",
     "type": "text",
@@ -72,11 +88,59 @@
     "required": true
   },
   {
+    "name": "beneficiary_party_authorized_signatory_name",
+    "label": "Beneficiary Party Authorized Signatory Name",
+    "type": "text",
+    "hint": "Enter authorized signatory name",
+    "required": true,
+    "show_if": "beneficiary_party_type == 'Company' || beneficiary_party_type == 'LLP'"
+  },
+  {
+    "name": "beneficiary_party_authorized_signatory_designation",
+    "label": "Beneficiary Party Authorized Signatory Designation",
+    "type": "text",
+    "hint": "Enter designation, e.g. Director, CEO, Partner",
+    "required": true,
+    "show_if": "beneficiary_party_type == 'Company' || beneficiary_party_type == 'LLP'"
+  },
+  {
     "name": "business_description",
     "label": "Business Description",
     "type": "textarea",
     "hint": "Describe nature of business being protected",
     "required": true
+  },
+  {
+    "name": "employee_id_or_role",
+    "label": "Employee ID / Role",
+    "type": "text",
+    "hint": "Enter employee ID, designation, or role tied to the restriction",
+    "required": true,
+    "show_if": "agreement_context == 'Employment'"
+  },
+  {
+    "name": "post_termination_obligations",
+    "label": "Post-Termination Obligations",
+    "type": "textarea",
+    "hint": "Specify return of company property, data, devices, access cards, and related obligations",
+    "required": true,
+    "show_if": "agreement_context == 'Employment'"
+  },
+  {
+    "name": "goodwill_valuation",
+    "label": "Goodwill Valuation",
+    "type": "text",
+    "hint": "Enter goodwill or business value relevant to the sale transaction",
+    "required": true,
+    "show_if": "agreement_context == 'Business Sale'"
+  },
+  {
+    "name": "transaction_reference",
+    "label": "Transaction Reference",
+    "type": "text",
+    "hint": "Reference the main sale agreement, asset purchase agreement, or transaction document",
+    "required": true,
+    "show_if": "agreement_context == 'Business Sale'"
   },
   {
     "name": "restricted_activities",
@@ -90,14 +154,37 @@
     "label": "Restricted Industry",
     "type": "text",
     "hint": "Specify industry or sector",
-    "required": false
+    "required": false,
+    "show_if": "agreement_context == 'Business Sale' || agreement_context == 'Consulting'"
   },
   {
     "name": "restricted_territory",
     "label": "Restricted Territory",
-    "type": "text",
-    "hint": "Enter geographic limitation (city/state/country)",
+    "type": "dropdown",
+    "options": [
+      "City",
+      "State",
+      "Country",
+      "Global",
+      "Custom"
+    ],
+    "hint": "Select the geographic scope of the restriction",
     "required": true
+  },
+  {
+    "name": "restricted_territory_details",
+    "label": "Restricted Territory Details",
+    "type": "text",
+    "hint": "Describe the exact city, state, country, office, or market covered",
+    "required": false
+  },
+  {
+    "name": "radius_kilometers",
+    "label": "Radius / Kilometers",
+    "type": "number",
+    "hint": "Enter the distance from a specified office or location",
+    "required": true,
+    "show_if": "restricted_territory == 'Custom'"
   },
   {
     "name": "restriction_period_months",
@@ -130,15 +217,47 @@
     "name": "consideration_details",
     "label": "Consideration Details",
     "type": "textarea",
-    "hint": "Describe compensation (salary, payout, etc.)",
+    "hint": "Describe compensation, benefit, or payout supporting the restriction",
+    "required": true,
+    "show_if": "consideration_provided == true"
+  },
+  {
+    "name": "payment_mode",
+    "label": "Payment Mode",
+    "type": "dropdown",
+    "options": [
+      "Lump Sum",
+      "Monthly",
+      "Quarterly",
+      "Milestone-Based",
+      "Other"
+    ],
+    "hint": "Select how consideration will be paid",
+    "required": true,
+    "show_if": "consideration_provided == true"
+  },
+  {
+    "name": "tax_identification_number",
+    "label": "Tax Identification Number",
+    "type": "text",
+    "hint": "Enter PAN, EIN, GSTIN, or other tax number for withholding/compliance",
+    "required": true,
+    "show_if": "consideration_provided == true"
+  },
+  {
+    "name": "include_non_solicitation",
+    "label": "Include Non-Solicitation",
+    "type": "boolean",
+    "hint": "Tick if client, customer, employee, or vendor solicitation should also be restricted",
     "required": false
   },
   {
-    "name": "non_solicitation_clause",
-    "label": "Non-Solicitation Clause",
+    "name": "non_solicitation_details",
+    "label": "Non-Solicitation Details",
     "type": "textarea",
-    "hint": "Restrictions on soliciting clients/employees",
-    "required": false
+    "hint": "Describe who cannot be solicited, for how long, and under what exceptions",
+    "required": true,
+    "show_if": "include_non_solicitation == true"
   },
   {
     "name": "confidentiality_clause",
@@ -159,6 +278,14 @@
     "label": "Penalty Clause",
     "type": "textarea",
     "hint": "Penalty in case of breach",
+    "required": false,
+    "show_if": "consideration_provided == true"
+  },
+  {
+    "name": "indemnification_clause",
+    "label": "Indemnification Clause",
+    "type": "textarea",
+    "hint": "State whether the restricted party must cover losses, legal costs, or damages caused by breach",
     "required": false
   },
   {
@@ -183,6 +310,21 @@
     "required": false
   },
   {
+    "name": "notice_period_days",
+    "label": "Notice Period (Days)",
+    "type": "number",
+    "hint": "Enter notice period for termination where relevant outside employment contracts",
+    "required": false,
+    "show_if": "agreement_context != 'Employment'"
+  },
+  {
+    "name": "survival_clause",
+    "label": "Survival Clause",
+    "type": "textarea",
+    "hint": "Specify which obligations survive the restriction period, such as confidentiality, indemnity, notice, or dispute resolution",
+    "required": false
+  },
+  {
     "name": "governing_law",
     "label": "Governing Law",
     "type": "text",
@@ -197,18 +339,11 @@
     "required": true
   },
   {
-    "name": "restricted_party_signature",
-    "label": "Restricted Party Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
-  },
-  {
-    "name": "beneficiary_party_signature",
-    "label": "Beneficiary Party Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
+    "name": "include_review_sign_details",
+    "label": "Review & Sign Details",
+    "type": "boolean",
+    "hint": "Tick when you are ready to capture execution details like witness information",
+    "required": false
   },
   {
     "name": "witness_details",
@@ -218,6 +353,7 @@
     "min": 2,
     "max": 2,
     "required": true,
+    "show_if": "include_review_sign_details == true",
     "fields": [
       {
         "name": "name",

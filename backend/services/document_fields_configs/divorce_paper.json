@@ -408,22 +408,7 @@
     "hint": "Enter place of verification",
     "required": true
   },
-  {
-    "name": "husband_signature",
-    "label": "Husband Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true,
-    "show_if": "divorce_type == 'Mutual Consent'"
-  },
-  {
-    "name": "wife_signature",
-    "label": "Wife Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true,
-    "show_if": "divorce_type == 'Mutual Consent'"
-  },
+
   {
     "name": "advocate_name",
     "label": "Advocate Name",

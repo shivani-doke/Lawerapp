@@ -45,11 +45,10 @@
   },
   "Client_power_of_attorney_20260326_161951_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-04-09T17:37:47.199385"
-  },
-  "Client_rental_agreement_20260327_114329_generated.pdf": {
-    "owner_username": "admin",
-    "timestamp": "2026-03-27T11:43:49.500760"
+    "timestamp": "2026-04-12T21:28:29.923487",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
   },
   "Client_adoption_papers_20260402_151308_generated.docx": {
     "owner_username": "admin",
@@ -97,11 +96,10 @@
   },
   "Client_power_of_attorney_20260326_161951_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-04-09T17:37:47.199385"
-  },
-  "Client_rental_agreement_20260327_114329_generated.docx": {
-    "owner_username": "admin",
-    "timestamp": "2026-03-27T11:43:29.911731"
+    "timestamp": "2026-04-12T21:28:29.923487",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
   },
   "generated_metadata.json": {
     "owner_username": "admin",
@@ -109,11 +107,17 @@
   },
   "Client_mortgage_deed_20260408_113050_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-04-08T15:34:29.134580"
+    "timestamp": "2026-04-12T21:24:42.919936",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
   },
   "Client_mortgage_deed_20260408_113050_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-04-08T15:34:29.134580"
+    "timestamp": "2026-04-12T21:24:42.919936",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
   },
   "Client_offer_letter_20260408_115016_generated.editor.html": {
     "owner_username": "admin",
@@ -121,7 +125,10 @@
   },
   "Client_mortgage_deed_20260408_113050_generated.editor.html": {
     "owner_username": "admin",
-    "timestamp": "2026-04-08T13:58:28.530752"
+    "timestamp": "2026-04-12T21:24:42.919936",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
   },
   "Client_patent_filing_documents_20260408_155556_generated.editor.html": {
     "owner_username": "admin",
@@ -133,6 +140,16 @@
   },
   "Client_power_of_attorney_20260326_161951_generated.editor.html": {
     "owner_username": "admin",
-    "timestamp": "2026-04-09T17:37:42.243689"
+    "timestamp": "2026-04-12T21:28:29.923487",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
+  },
+  "Client_rental_agreement_20260327_114329_generated.editor.html": {
+    "owner_username": "admin",
+    "timestamp": "2026-04-12T21:26:39.622046",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
   }
 }

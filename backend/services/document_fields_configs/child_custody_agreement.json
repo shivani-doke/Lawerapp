@@ -324,20 +324,6 @@
     "required": true
   },
   {
-    "name": "parent1_signature",
-    "label": "Parent 1 Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
-  },
-  {
-    "name": "parent2_signature",
-    "label": "Parent 2 Signature",
-    "type": "text",
-    "hint": "Enter name as signature",
-    "required": true
-  },
-  {
     "name": "witness_details",
     "label": "Witness Details",
     "type": "group",

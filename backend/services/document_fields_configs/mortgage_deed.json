@@ -333,14 +333,7 @@
     "required": true,
     "show_if": "has_guarantor == true"
   },
-  {
-    "name": "guarantor_signature",
-    "label": "Guarantor Signature",
-    "type": "text",
-    "hint": "Enter guarantor name as signature",
-    "required": true,
-    "show_if": "has_guarantor == true"
-  },
+
   {
     "name": "signed_through_poa",
     "label": "Signed Through Power of Attorney",
@@ -444,37 +437,7 @@
     "hint": "Enter court jurisdiction",
     "required": true
   },
-  {
-    "name": "mortgagor_signatures",
-    "label": "Mortgagor Signatures",
-    "type": "group",
-    "repeatable": true,
-    "required": true,
-    "min": 1,
-    "fields": [
-      {
-        "name": "name",
-        "label": "Mortgagor Name",
-        "type": "text",
-        "required": true,
-        "hint": "Enter mortgagor name"
-      },
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "text",
-        "required": true,
-        "hint": "Enter name as signature"
-      }
-    ]
-  },
-  {
-    "name": "mortgagee_signature",
-    "label": "Mortgagee Signature",
-    "type": "text",
-    "hint": "Enter mortgagee name as signature",
-    "required": true
-  },
+  
   {
     "name": "witness_details",
     "label": "Witness Details",

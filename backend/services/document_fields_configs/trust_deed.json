@@ -21,13 +21,31 @@
     "required": true
   },
   {
+    "name": "trust_type",
+    "label": "Trust Type",
+    "type": "dropdown",
+    "options": [
+      "Public Charitable",
+      "Private",
+      "Religious"
+    ],
+    "hint": "Select the category of trust",
+    "required": true
+  },
+  {
     "name": "trust_address",
     "label": "Registered Office Address",
     "type": "textarea",
     "hint": "Enter complete address of the trust",
     "required": true
   },
-
+  {
+    "name": "financial_year",
+    "label": "Accounting / Financial Year",
+    "type": "text",
+    "hint": "Example: 1 April to 31 March",
+    "required": true
+  },
   {
     "name": "settlor_name",
     "label": "Settlor Name",
@@ -56,12 +74,18 @@
     "hint": "Enter occupation of settlor",
     "required": true
   },
-
   {
-    "name": "trustee_details",
-    "label": "Trustee Details",
-    "type": "textarea",
-    "hint": "Enter names, addresses, age, occupation of trustees",
+    "name": "settlor_pan",
+    "label": "Settlor PAN",
+    "type": "text",
+    "hint": "Enter PAN number of settlor",
+    "required": true
+  },
+  {
+    "name": "settlor_aadhaar",
+    "label": "Settlor Aadhaar",
+    "type": "text",
+    "hint": "Enter Aadhaar number of settlor",
     "required": true
   },
   {
@@ -73,12 +97,71 @@
   },
   {
     "name": "managing_trustee",
-    "label": "Managing Trustee",
+    "label": "Managing Trustee Name",
     "type": "text",
-    "hint": "Enter name of managing/chief trustee",
-    "required": false
+    "hint": "Enter name of managing or chief trustee",
+    "required": false,
+    "show_if": "number_of_trustees > 1"
   },
-
+  {
+    "name": "trustees",
+    "label": "Trustee Details",
+    "type": "group",
+    "repeatable": true,
+    "min": 1,
+    "required": true,
+    "fields": [
+      {
+        "name": "name",
+        "label": "Trustee Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full name of trustee"
+      },
+      {
+        "name": "address",
+        "label": "Address",
+        "type": "textarea",
+        "required": true,
+        "hint": "Enter residential address"
+      },
+      {
+        "name": "age",
+        "label": "Age",
+        "type": "number",
+        "required": true,
+        "hint": "Enter age of trustee"
+      },
+      {
+        "name": "occupation",
+        "label": "Occupation",
+        "type": "text",
+        "required": true,
+        "hint": "Enter occupation of trustee"
+      },
+      {
+        "name": "pan",
+        "label": "PAN",
+        "type": "text",
+        "required": true,
+        "hint": "Enter trustee PAN number"
+      },
+      {
+        "name": "aadhaar",
+        "label": "Aadhaar",
+        "type": "text",
+        "required": true,
+        "hint": "Enter trustee Aadhaar number"
+      },
+      {
+        "name": "designation",
+        "label": "Designation",
+        "type": "text",
+        "required": false,
+        "hint": "Example: Trustee, Managing Trustee, Chairperson"
+      }
+    ]
+  },
   {
     "name": "beneficiary_details",
     "label": "Beneficiary Details",
@@ -86,28 +169,115 @@
     "hint": "Enter beneficiaries or class of beneficiaries",
     "required": true
   },
-
   {
-    "name": "trust_property_details",
-    "label": "Initial Trust Property (Corpus)",
-    "type": "textarea",
-    "hint": "Enter amount/property settled in trust (e.g., Rs. 1,000)",
+    "name": "property_type",
+    "label": "Trust Property Type",
+    "type": "dropdown",
+    "options": [
+      "Cash",
+      "Immovable",
+      "Movable",
+      "Other"
+    ],
+    "hint": "Select the form of initial trust corpus",
     "required": true
   },
-
+  {
+    "name": "trust_property_amount",
+    "label": "Initial Trust Property Amount",
+    "type": "number",
+    "hint": "Enter amount settled in trust, e.g. 1000",
+    "required": true,
+    "show_if": "property_type == 'Cash'"
+  },
+  {
+    "name": "trust_property_description",
+    "label": "Trust Property Description",
+    "type": "textarea",
+    "hint": "Describe movable property, securities, articles, or other corpus details",
+    "required": true,
+    "show_if": "property_type != 'Cash'"
+  },
+  {
+    "name": "immovable_property_schedule",
+    "label": "Schedule of Property",
+    "type": "textarea",
+    "hint": "Enter survey number, area, and full schedule details of the immovable property",
+    "required": true,
+    "show_if": "property_type == 'Immovable'"
+  },
+  {
+    "name": "property_boundaries",
+    "label": "Property Boundaries",
+    "type": "group",
+    "required": true,
+    "show_if": "property_type == 'Immovable'",
+    "fields": [
+      {
+        "name": "north",
+        "label": "North Boundary",
+        "type": "text",
+        "required": true,
+        "hint": "Enter northern boundary"
+      },
+      {
+        "name": "south",
+        "label": "South Boundary",
+        "type": "text",
+        "required": true,
+        "hint": "Enter southern boundary"
+      },
+      {
+        "name": "east",
+        "label": "East Boundary",
+        "type": "text",
+        "required": true,
+        "hint": "Enter eastern boundary"
+      },
+      {
+        "name": "west",
+        "label": "West Boundary",
+        "type": "text",
+        "required": true,
+        "hint": "Enter western boundary"
+      }
+    ]
+  },
   {
     "name": "trust_purpose",
     "label": "Objectives of Trust",
     "type": "textarea",
-    "hint": "Mention charitable/religious/educational purposes",
+    "hint": "Mention charitable, religious, educational, or family purposes",
     "required": true
   },
-
+  {
+    "name": "tax_registration_intent",
+    "label": "Apply for 12A / 80G Registration",
+    "type": "boolean",
+    "hint": "Tick if the trust intends to apply for income tax exemption registration",
+    "required": false
+  },
+  {
+    "name": "tax_exemption_clause_details",
+    "label": "Tax Exemption / Non-Profit Clauses",
+    "type": "textarea",
+    "hint": "Specify no-profit motive, charitable application of income, and exemption-related wording",
+    "required": true,
+    "show_if": "tax_registration_intent == true"
+  },
+  {
+    "name": "income_tax_exemption_clause",
+    "label": "Income Tax Exemption Clause",
+    "type": "textarea",
+    "hint": "Enter specific exemption-related clause for public charitable trusts",
+    "required": true,
+    "show_if": "trust_type == 'Public Charitable'"
+  },
   {
     "name": "powers_of_trustees",
     "label": "Powers of Trustees",
     "type": "textarea",
-    "hint": "Define powers like investment, bank operations, etc.",
+    "hint": "Define powers like investment, administration, and bank operations",
     "required": true
   },
   {
@@ -117,39 +287,135 @@
     "hint": "Define responsibilities of trustees",
     "required": true
   },
-
+  {
+    "name": "include_bank_operation_details",
+    "label": "Add Custom Bank Operation Details",
+    "type": "boolean",
+    "hint": "Tick if the trust needs a custom bank operation clause",
+    "required": false
+  },
   {
     "name": "bank_account_details",
-    "label": "Bank Account Clause",
+    "label": "Bank Operation Details",
     "type": "textarea",
-    "hint": "Specify how bank accounts will be operated",
-    "required": false
+    "hint": "Specify how bank accounts will be opened and operated",
+    "required": true,
+    "show_if": "include_bank_operation_details == true"
   },
-
   {
-    "name": "appointment_removal_trustees",
-    "label": "Appointment/Removal of Trustees",
-    "type": "textarea",
-    "hint": "Mention procedure for adding/removing trustees",
+    "name": "appointment_removal_mode",
+    "label": "Appointment / Removal Procedure",
+    "type": "dropdown",
+    "options": [
+      "Standard Procedure",
+      "Custom Procedure"
+    ],
+    "hint": "Choose whether to use a standard or custom procedure",
     "required": true
   },
-
+  {
+    "name": "appointment_removal_trustees",
+    "label": "Custom Appointment / Removal of Trustees",
+    "type": "textarea",
+    "hint": "Mention custom procedure for adding or removing trustees",
+    "required": true,
+    "show_if": "appointment_removal_mode == 'Custom Procedure'"
+  },
+  {
+    "name": "succession_plan_mode",
+    "label": "Successor Trustee Appointment Method",
+    "type": "dropdown",
+    "options": [
+      "By Surviving Trustees",
+      "By Settlor Heirs",
+      "Custom Procedure"
+    ],
+    "hint": "Select how a successor trustee is appointed on death or vacancy",
+    "required": true
+  },
+  {
+    "name": "succession_procedure",
+    "label": "Custom Succession Procedure",
+    "type": "textarea",
+    "hint": "Describe the custom succession procedure for replacement trustees",
+    "required": true,
+    "show_if": "succession_plan_mode == 'Custom Procedure'"
+  },
   {
     "name": "meeting_rules",
-    "label": "Meetings & Quorum",
+    "label": "Meetings",
     "type": "textarea",
-    "hint": "Define meeting frequency and quorum rules",
+    "hint": "Define meeting frequency and notice rules",
     "required": false
   },
-
+  {
+    "name": "quorum_requirements",
+    "label": "Quorum Requirements",
+    "type": "textarea",
+    "hint": "Specify quorum needed for trustee meetings",
+    "required": false,
+    "show_if": "number_of_trustees > 2"
+  },
   {
     "name": "accounts_audit",
     "label": "Accounts & Audit",
     "type": "textarea",
-    "hint": "Mention accounting and auditing process",
+    "hint": "Mention accounting, bookkeeping, and auditing process",
     "required": true
   },
-
+  {
+    "name": "include_indemnity_clause",
+    "label": "Include Trustee Indemnity Clause",
+    "type": "boolean",
+    "hint": "Tick to include indemnity protection for honest acts or omissions",
+    "required": false
+  },
+  {
+    "name": "indemnity_clause",
+    "label": "Trustee Indemnity Clause",
+    "type": "textarea",
+    "hint": "Describe indemnity protection for trustees acting in good faith",
+    "required": true,
+    "show_if": "include_indemnity_clause == true"
+  },
+  {
+    "name": "include_advisory_board",
+    "label": "Include Advisory Board",
+    "type": "boolean",
+    "hint": "Tick if the trust wants to appoint subject matter experts or advisors",
+    "required": false
+  },
+  {
+    "name": "advisory_board",
+    "label": "Advisory Board Members",
+    "type": "group",
+    "repeatable": true,
+    "required": false,
+    "show_if": "include_advisory_board == true",
+    "fields": [
+      {
+        "name": "name",
+        "label": "Advisor Name",
+        "type": "text",
+        "required": true,
+        "hint": "Enter full name of advisor"
+      },
+      {
+        "name": "expertise",
+        "label": "Area of Expertise",
+        "type": "text",
+        "required": true,
+        "hint": "Example: Finance, Education, Healthcare"
+      },
+      {
+        "name": "role",
+        "label": "Advisory Role",
+        "type": "textarea",
+        "required": false,
+        "hint": "Describe advisory scope or committee role"
+      }
+    ]
+  },
   {
     "name": "amendment_clause",
     "label": "Amendment Clause",
@@ -157,15 +423,29 @@
     "hint": "Conditions to modify trust deed",
     "required": true
   },
-
+  {
+    "name": "termination_date",
+    "label": "Termination Date",
+    "type": "date",
+    "hint": "Select termination date if the private trust has a defined end date",
+    "required": false,
+    "show_if": "trust_type == 'Private'"
+  },
   {
     "name": "dissolution_clause",
     "label": "Dissolution Clause",
     "type": "textarea",
-    "hint": "What happens when trust is dissolved",
+    "hint": "Explain how the trust may be dissolved and the process to follow",
     "required": true
   },
-
+  {
+    "name": "dissolution_recipient",
+    "label": "Dissolution Recipient",
+    "type": "textarea",
+    "hint": "State whether assets move to a similar charity or revert to beneficiaries, as applicable",
+    "required": true,
+    "show_if": "trust_type == 'Public Charitable'"
+  },
   {
     "name": "irrevocability_clause",
     "label": "Irrevocability Clause",
@@ -173,15 +453,13 @@
     "hint": "Declare whether trust is irrevocable",
     "required": true
   },
-
   {
     "name": "governing_law",
     "label": "Governing Law",
     "type": "text",
-    "hint": "Applicable law (e.g., Indian Trusts Act, 1882)",
+    "hint": "Applicable law, e.g. Indian Trusts Act, 1882 and local registration law",
     "required": true
   },
-
   {
     "name": "witness_details",
     "label": "Witness Details",
