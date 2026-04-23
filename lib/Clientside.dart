@@ -165,24 +165,33 @@ class _ClientsPageState extends State<ClientsPage> {
   List<Map<String, dynamic>> clients = [];
   List<Map<String, dynamic>> filteredClients = [];
   bool isLoading = true;
+  bool _canManageBilling = false;
 
   final String baseUrl = AppConfig.backendBaseUrl;
 
   Future<Map<String, String>> _authHeaders() async {
     final username = await SessionService.getLoggedInUsername();
-    return {'X-Username': username};
+    final firmName = await SessionService.getFirmName();
+    return {'X-Username': username, 'X-Firm-Name': firmName};
   }
 
   Future<Uri> _authorizedUri(String path) async {
     final username = await SessionService.getLoggedInUsername();
+    final firmName = await SessionService.getFirmName();
     return Uri.parse("$baseUrl$path").replace(
-      queryParameters: {'username': username},
+      queryParameters: {'username': username, 'firm_name': firmName},
     );
   }
 
   @override
   void initState() {
     super.initState();
+    SessionService.canManageBilling().then((value) {
+      if (!mounted) return;
+      setState(() {
+        _canManageBilling = value;
+      });
+    });
     fetchClients();
   }
 
@@ -435,7 +444,7 @@ class _ClientsPageState extends State<ClientsPage> {
                         border: Border(
                             bottom: BorderSide(color: Color(0xffEEEEEE))),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Expanded(
                               flex: 2,
@@ -457,14 +466,15 @@ class _ClientsPageState extends State<ClientsPage> {
                               child: Text("Status",
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold))),
-                          Expanded(
-                              flex: 2,
-                              child: Align(
-                                alignment: Alignment.center,
-                                child: Text("Payments",
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                              )),
+                          if (_canManageBilling)
+                            const Expanded(
+                                flex: 2,
+                                child: Align(
+                                  alignment: Alignment.center,
+                                  child: Text("Payments",
+                                      style:
+                                          TextStyle(fontWeight: FontWeight.bold)),
+                                )),
                           Expanded(
                               flex: 2,
                               child: Align(
@@ -641,34 +651,37 @@ class _ClientsPageState extends State<ClientsPage> {
           ),
 
           /// Action
-          Expanded(
-            flex: 2,
-            child: Align(
-              alignment: Alignment.center,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black87,
-                  side: const BorderSide(color: Color(0xffE0A800)),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  visualDensity: VisualDensity.compact,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+          if (_canManageBilling)
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.center,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.black87,
+                    side: const BorderSide(color: Color(0xffE0A800)),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => ClientPaymentsDialog(client: client),
+                    ).then((_) => fetchClients());
+                  },
+                  icon: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 18,
+                  ),
+                  label: const Text("Payments"),
                 ),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => ClientPaymentsDialog(client: client),
-                  ).then((_) => fetchClients());
-                },
-                icon:
-                    const Icon(Icons.account_balance_wallet_outlined, size: 18),
-                label: const Text("Payments"),
               ),
             ),
-          ),
           Expanded(
             flex: 2,
             child: Align(
@@ -865,12 +878,14 @@ class _EditClientDialogState extends State<EditClientDialog> {
 
     try {
       final username = await SessionService.getLoggedInUsername();
+      final firmName = await SessionService.getFirmName();
       final response = await http.put(
         Uri.parse("$baseUrl/clients/${widget.client["id"]}")
-            .replace(queryParameters: {'username': username}),
+            .replace(queryParameters: {'username': username, 'firm_name': firmName}),
         headers: {
           "Content-Type": "application/json",
           "X-Username": username,
+          "X-Firm-Name": firmName,
         },
         body: jsonEncode(buildClientPayload(
           name: _nameController.text,
@@ -1421,12 +1436,14 @@ class _AddClientDialogState extends State<AddClientDialog> {
 
                       final username =
                           await SessionService.getLoggedInUsername();
+                      final firmName = await SessionService.getFirmName();
                       final response = await http.post(
                         Uri.parse("${AppConfig.backendBaseUrl}/clients/")
-                            .replace(queryParameters: {'username': username}),
+                            .replace(queryParameters: {'username': username, 'firm_name': firmName}),
                         headers: {
                           "Content-Type": "application/json",
                           "X-Username": username,
+                          "X-Firm-Name": firmName,
                         },
                         body: jsonEncode(buildClientPayload(
                           name: nameController.text,
@@ -1478,13 +1495,15 @@ class _ClientPaymentsDialogState extends State<ClientPaymentsDialog> {
 
   Future<Map<String, String>> _authHeaders() async {
     final username = await SessionService.getLoggedInUsername();
-    return {'X-Username': username};
+    final firmName = await SessionService.getFirmName();
+    return {'X-Username': username, 'X-Firm-Name': firmName};
   }
 
   Future<Uri> _authorizedUri(String path) async {
     final username = await SessionService.getLoggedInUsername();
+    final firmName = await SessionService.getFirmName();
     return Uri.parse("$baseUrl$path").replace(
-      queryParameters: {'username': username},
+      queryParameters: {'username': username, 'firm_name': firmName},
     );
   }
 
@@ -1947,13 +1966,15 @@ class _AddPaymentDialogState extends State<AddPaymentDialog> {
     setState(() => isSaving = true);
     try {
       final username = await SessionService.getLoggedInUsername();
+      final firmName = await SessionService.getFirmName();
       final response = await http.post(
         Uri.parse("${AppConfig.backendBaseUrl}/payments/").replace(
-          queryParameters: {'username': username},
+          queryParameters: {'username': username, 'firm_name': firmName},
         ),
         headers: {
           "Content-Type": "application/json",
           "X-Username": username,
+          "X-Firm-Name": firmName,
         },
         body: jsonEncode({
           "client_id": widget.clientId,

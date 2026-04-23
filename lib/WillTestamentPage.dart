@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -445,7 +445,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
                                   title: Text(clientName),
                                   subtitle: subtitleParts.isEmpty
                                       ? null
-                                      : Text(subtitleParts.join(' â€¢ ')),
+                                      : Text(subtitleParts.join(' • ')),
                                   trailing: isAssignedElsewhere
                                       ? const Icon(Icons.block, color: Colors.grey)
                                       : const Icon(Icons.chevron_right),
@@ -1242,6 +1242,7 @@ class _WillTestamentPageState extends State<WillTestamentPage> {
         final uploadResult = await ApiService().uploadReference(
           _referenceFile!,
           'will_and_testament',
+          extractedFields: extractedFields,
         );
         final newId = uploadResult['document_id'];
 

@@ -6,6 +6,7 @@ load_dotenv()
 
 class Config:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    ECOURTS_API_KEY = os.getenv("ECOURTS_API_KEY")
     SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
     FROM_EMAIL = os.getenv("FROM_EMAIL")
     SQLALCHEMY_DATABASE_URI = "sqlite:///database.db"

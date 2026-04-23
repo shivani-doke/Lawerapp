@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -367,7 +367,7 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
                                   title: Text(clientName),
                                   subtitle: subtitleParts.isEmpty
                                       ? null
-                                      : Text(subtitleParts.join(' • ')),
+                                      : Text(subtitleParts.join(' � ')),
                                   trailing: isAssignedElsewhere
                                       ? const Icon(Icons.block, color: Colors.grey)
                                       : const Icon(Icons.chevron_right),
@@ -1074,6 +1074,7 @@ class _LoanAgreementPageState extends State<LoanAgreementPage> {
         final uploadResult = await ApiService().uploadReference(
           _referenceFile!,
           'loan_agreement',
+          extractedFields: extractedFields,
         );
         final newId = uploadResult['document_id'];
 

@@ -20,6 +20,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Map<String, dynamic>? data;
   bool isLoading = true;
   bool showAllDocuments = false;
+  bool _canManageBilling = false;
 
   String? _editableFilenameFor(String? filename) {
     if (filename == null || filename.isEmpty) {
@@ -69,6 +70,12 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    SessionService.canManageBilling().then((value) {
+      if (!mounted) return;
+      setState(() {
+        _canManageBilling = value;
+      });
+    });
     loadData();
   }
 
@@ -219,12 +226,13 @@ class _DashboardPageState extends State<DashboardPage> {
                     "Cases Active",
                     data?["stats"]["active_cases"].toString() ?? "0",
                     Icons.trending_up),
-                _StatCard(
-                  "Finance",
-                  _formatCurrency(data?["stats"]["total_received"] ?? 0),
-                  Icons.account_balance_wallet_outlined,
-                  onTap: _showFinanceReportDialog,
-                ),
+                if (_canManageBilling)
+                  _StatCard(
+                    "Finance",
+                    _formatCurrency(data?["stats"]["total_received"] ?? 0),
+                    Icons.account_balance_wallet_outlined,
+                    onTap: _showFinanceReportDialog,
+                  ),
               ],
             ),
 
@@ -306,8 +314,10 @@ class _DashboardPageState extends State<DashboardPage> {
                               } else if (value == "download") {
                                 final username =
                                     await SessionService.getLoggedInUsername();
+                                final firmName =
+                                    await SessionService.getFirmName();
                                 final url =
-                                    "${AppConfig.backendBaseUrl}/dashboard/download/$filename?username=$username";
+                                    "${AppConfig.backendBaseUrl}/dashboard/download/$filename?username=$username&firm_name=$firmName";
 
                                 final uri = Uri.parse(url);
 
@@ -349,8 +359,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
                         final username =
                             await SessionService.getLoggedInUsername();
+                        final firmName = await SessionService.getFirmName();
                         final url =
-                            "${AppConfig.backendBaseUrl}/view/$filename?username=$username";
+                            "${AppConfig.backendBaseUrl}/view/$filename?username=$username&firm_name=$firmName";
                         final uri = Uri.parse(url);
 
                         if (await canLaunchUrl(uri)) {
@@ -435,7 +446,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Colors.grey.shade200,
             Colors.black,
             () {
-              widget.onNavigate?.call(35);
+              widget.onNavigate?.call(36);
             },
           ),
         ],
@@ -444,6 +455,9 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _showFinanceReportDialog() async {
+    if (!_canManageBilling) {
+      return;
+    }
     showDialog(
       context: context,
       builder: (context) {

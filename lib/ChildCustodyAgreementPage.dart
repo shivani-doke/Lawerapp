@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -330,7 +330,7 @@ class _ChildCustodyAgreementPageState extends State<ChildCustodyAgreementPage> {
                                 ];
                                 return ListTile(
                                   title: Text(clientName),
-                                  subtitle: subtitleParts.isEmpty ? null : Text(subtitleParts.join(' â€¢ ')),
+                                  subtitle: subtitleParts.isEmpty ? null : Text(subtitleParts.join(' • ')),
                                   trailing: isAssignedElsewhere ? const Icon(Icons.block, color: Colors.grey) : const Icon(Icons.chevron_right),
                                   enabled: !isAssignedElsewhere,
                                   onTap: isAssignedElsewhere ? null : () => Navigator.of(dialogContext).pop(client),
@@ -1017,6 +1017,7 @@ class _ChildCustodyAgreementPageState extends State<ChildCustodyAgreementPage> {
         final uploadResult = await ApiService().uploadReference(
           _referenceFile!,
           'child_custody_agreement',
+          extractedFields: extractedFields,
         );
         final newId = uploadResult['document_id'];
 

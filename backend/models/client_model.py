@@ -6,7 +6,9 @@ class Client(db.Model):
     __tablename__ = "clients"
 
     id = db.Column(db.Integer, primary_key=True)
+    firm_id = db.Column(db.Integer, db.ForeignKey("firms.id"), nullable=True, index=True)
     owner_username = db.Column(db.String(120), nullable=False, default="admin")
+    firm_name = db.Column(db.String(200), nullable=False, default="Default Firm")
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
@@ -23,7 +25,9 @@ class Client(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
+            "firm_id": self.firm_id,
             "owner_username": self.owner_username,
+            "firm_name": self.firm_name,
             "name": self.name,
             "email": self.email,
             "phone": self.phone,

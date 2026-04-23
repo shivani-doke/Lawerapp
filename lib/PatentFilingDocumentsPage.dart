@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -416,7 +416,7 @@ class _PatentFilingDocumentsPageState extends State<PatentFilingDocumentsPage> {
                                           ]
                                             .where(
                                                 (value) => value.trim().isNotEmpty)
-                                            .join(' â€¢ '),
+                                            .join(' • '),
                                   ),
                                   onTap: isAssignedElsewhere
                                       ? null
@@ -1102,6 +1102,7 @@ class _PatentFilingDocumentsPageState extends State<PatentFilingDocumentsPage> {
         final uploadResult = await ApiService().uploadReference(
           _referenceFile!,
           'patent_filing_documents',
+          extractedFields: extractedFields,
         );
         final newId = uploadResult['document_id'];
 

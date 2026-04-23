@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -22,8 +23,10 @@ class ApiService {
     Map<String, String>? extra,
   }) async {
     final username = await SessionService.getLoggedInUsername();
+    final firmName = await SessionService.getFirmName();
     return {
       'X-Username': username,
+      'X-Firm-Name': firmName,
       ...?extra,
     };
   }
@@ -33,10 +36,12 @@ class ApiService {
     Map<String, String>? queryParameters,
   }) async {
     final username = await SessionService.getLoggedInUsername();
+    final firmName = await SessionService.getFirmName();
     return Uri.parse('$baseUrl$path').replace(
       queryParameters: {
         ...?queryParameters,
         'username': username,
+        'firm_name': firmName,
       },
     );
   }
@@ -187,7 +192,9 @@ class ApiService {
   /// Download a generated document (PDF or DOCX).
   Future<void> downloadGeneratedDocument(String filename) async {
     final username = await SessionService.getLoggedInUsername();
-    final url = '$baseUrl/download/$filename?username=$username';
+    final firmName = await SessionService.getFirmName();
+    final url =
+        '$baseUrl/download/$filename?username=$username&firm_name=$firmName';
 
     if (kIsWeb) {
       html.AnchorElement anchor = html.AnchorElement(href: url);
@@ -254,8 +261,8 @@ class ApiService {
     String documentType, {
     String? subtype,
     String? language,
-  }
-  ) async {
+    List<dynamic>? extractedFields,
+  }) async {
     var uri = await _authorizedUri('/upload_reference');
     var request = http.MultipartRequest('POST', uri);
     request.headers.addAll(await _authHeaders());
@@ -280,6 +287,9 @@ class ApiService {
 
     request.fields['document_type'] = documentType;
     request.fields['language'] = language ?? _fieldLanguage;
+    if (extractedFields != null) {
+      request.fields['extracted_fields'] = jsonEncode(extractedFields);
+    }
     if (subtype != null && subtype.isNotEmpty) {
       request.fields['subtype'] = subtype;
     }
@@ -296,8 +306,9 @@ class ApiService {
   /// List all saved references, optionally filtered by document type.
   Future<List<Map<String, dynamic>>> listReferences(
       {String? documentType}) async {
-    final uri = await _authorizedUri('/list_references', queryParameters:
-          documentType != null ? {'document_type': documentType} : {});
+    final uri = await _authorizedUri('/list_references',
+        queryParameters:
+            documentType != null ? {'document_type': documentType} : {});
     final response = await http.get(uri, headers: await _authHeaders());
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
@@ -354,15 +365,36 @@ class ApiService {
         .toList();
   }
 
+  Future<Map<String, dynamic>> masterLogin({
+    required String email,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/master-login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(data['error'] ?? 'Master login failed');
+    }
+
+    return Map<String, dynamic>.from(data);
+  }
+
   Future<Map<String, dynamic>> login({
-    required String username,
+    required String email,
     required String password,
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'username': username,
+        'email': email,
         'password': password,
       }),
     );
@@ -375,16 +407,118 @@ class ApiService {
     return Map<String, dynamic>.from(data);
   }
 
+  Future<List<Map<String, dynamic>>> getFirms() async {
+    final response = await http.get(
+      await _authorizedUri('/auth/firms'),
+      headers: await _authHeaders(),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load firms: ${response.body}');
+    }
+
+    final data = jsonDecode(response.body);
+    if (data is! List) {
+      return [];
+    }
+
+    return data
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> createFirm({
+    required String firmName,
+    required String adminFullName,
+    required String adminEmail,
+    required String adminPassword,
+    required int maxTeamMembers,
+    String? adminUsername,
+  }) async {
+    final response = await http.post(
+      await _authorizedUri('/auth/firms'),
+      headers: await _authHeaders(
+        extra: {'Content-Type': 'application/json'},
+      ),
+      body: jsonEncode({
+        'firm_name': firmName,
+        'admin_full_name': adminFullName,
+        'admin_email': adminEmail,
+        'admin_password': adminPassword,
+        'max_team_members': maxTeamMembers,
+        if (adminUsername != null && adminUsername.trim().isNotEmpty)
+          'admin_username': adminUsername.trim(),
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode != 201) {
+      throw Exception(
+        (data is Map && data['error'] != null)
+            ? data['error'].toString()
+            : 'Failed to create firm',
+      );
+    }
+
+    return Map<String, dynamic>.from(data);
+  }
+
+  Future<Map<String, dynamic>> updateFirm({
+    required int firmId,
+    required int maxTeamMembers,
+  }) async {
+    final response = await http.put(
+      await _authorizedUri('/auth/firms/$firmId'),
+      headers: await _authHeaders(
+        extra: {'Content-Type': 'application/json'},
+      ),
+      body: jsonEncode({
+        'max_team_members': maxTeamMembers,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(
+        (data is Map && data['error'] != null)
+            ? data['error'].toString()
+            : 'Failed to update firm',
+      );
+    }
+
+    return Map<String, dynamic>.from(data);
+  }
+
+  Future<void> deleteFirm(int firmId) async {
+    final response = await http.delete(
+      await _authorizedUri('/auth/firms/$firmId'),
+      headers: await _authHeaders(),
+    );
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body);
+      throw Exception(
+        (data is Map && data['error'] != null)
+            ? data['error'].toString()
+            : 'Failed to delete firm',
+      );
+    }
+  }
+
   Future<Map<String, dynamic>> signup({
-    required String username,
+    required String fullName,
+    required String email,
     required String password,
+    required String firmName,
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/signup'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'username': username,
+        'full_name': fullName,
+        'email': email,
         'password': password,
+        'firm_name': firmName,
       }),
     );
 
@@ -408,10 +542,53 @@ class ApiService {
     return Map<String, dynamic>.from(jsonDecode(response.body));
   }
 
+  Future<Map<String, dynamic>> getFirmBranding() async {
+    final response = await http.get(
+      await _authorizedUri('/auth/firm-branding'),
+      headers: await _authHeaders(),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load app branding: ${response.body}');
+    }
+    return Map<String, dynamic>.from(jsonDecode(response.body));
+  }
+
+  Future<Map<String, dynamic>> updateFirmBranding({
+    required String appDisplayName,
+    String? appLogoData,
+    bool clearLogo = false,
+  }) async {
+    final response = await http.put(
+      await _authorizedUri('/auth/firm-branding'),
+      headers: await _authHeaders(
+        extra: {'Content-Type': 'application/json'},
+      ),
+      body: jsonEncode({
+        'app_display_name': appDisplayName,
+        if (appLogoData != null) 'app_logo_data': appLogoData,
+        'clear_logo': clearLogo,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(
+        (data is Map && data['error'] != null)
+            ? data['error'].toString()
+            : 'Failed to update app branding',
+      );
+    }
+
+    return Map<String, dynamic>.from(data);
+  }
+
   Future<Map<String, dynamic>> updateAuthSettings({
     required String currentUsername,
+    required String currentEmail,
     required String currentPassword,
     required String newUsername,
+    required String newEmail,
+    required String newFullName,
     required String newPassword,
   }) async {
     final response = await http.put(
@@ -421,8 +598,11 @@ class ApiService {
       ),
       body: jsonEncode({
         'current_username': currentUsername,
+        'current_email': currentEmail,
         'current_password': currentPassword,
         'new_username': newUsername,
+        'new_email': newEmail,
+        'new_full_name': newFullName,
         'new_password': newPassword,
       }),
     );
@@ -437,6 +617,305 @@ class ApiService {
     }
 
     return Map<String, dynamic>.from(data);
+  }
+
+  Future<List<Map<String, dynamic>>> getTeamUsers() async {
+    final response = await http.get(
+      await _authorizedUri('/auth/team'),
+      headers: await _authHeaders(),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load team members: ${response.body}');
+    }
+
+    final data = jsonDecode(response.body);
+    if (data is! List) {
+      return [];
+    }
+
+    return data
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> getTeamSummary() async {
+    final response = await http.get(
+      await _authorizedUri('/auth/team/summary'),
+      headers: await _authHeaders(),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(
+        (data is Map && data['error'] != null)
+            ? data['error'].toString()
+            : 'Failed to load team summary',
+      );
+    }
+
+    return Map<String, dynamic>.from(data);
+  }
+
+  Future<Map<String, dynamic>> createTeamUser({
+    required String fullName,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    final response = await http.post(
+      await _authorizedUri('/auth/team'),
+      headers: await _authHeaders(
+        extra: {'Content-Type': 'application/json'},
+      ),
+      body: jsonEncode({
+        'full_name': fullName,
+        'email': email,
+        'password': password,
+        'role': role,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode != 201) {
+      throw Exception(
+        (data is Map && data['error'] != null)
+            ? data['error'].toString()
+            : 'Failed to create team member',
+      );
+    }
+
+    return Map<String, dynamic>.from(data);
+  }
+
+  Future<void> deleteTeamUser(int userId) async {
+    final response = await http.delete(
+      await _authorizedUri('/auth/team/$userId'),
+      headers: await _authHeaders(),
+    );
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body);
+      throw Exception(
+        (data is Map && data['error'] != null)
+            ? data['error'].toString()
+            : 'Failed to delete team member',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchCasesByAdvocate({
+    required String advocates,
+    String? courtCodes,
+    String? filingDateFrom,
+    String? filingDateTo,
+    String? caseStatus,
+    String? caseType,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final queryParameters = <String, String>{
+      'advocates': advocates.trim(),
+      'page': page.toString(),
+      'pageSize': pageSize.toString(),
+    };
+
+    void addIfPresent(String key, String? value) {
+      final normalized = (value ?? '').trim();
+      if (normalized.isNotEmpty) {
+        queryParameters[key] = normalized;
+      }
+    }
+
+    addIfPresent('courtCodes', courtCodes);
+    addIfPresent('filingDateFrom', filingDateFrom);
+    addIfPresent('filingDateTo', filingDateTo);
+    addIfPresent('caseStatus', caseStatus);
+    addIfPresent('caseType', caseType);
+
+    final response = await http.get(
+      await _authorizedUri(
+        '/ecourts/cases-by-advocate',
+        queryParameters: queryParameters,
+      ),
+      headers: await _authHeaders(),
+    );
+
+    final data = _decodeJsonObject(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(
+        (data['error'] ?? data['message'] ?? 'Failed to fetch cases')
+            .toString(),
+      );
+    }
+
+    return data;
+  }
+
+  Future<Map<String, dynamic>> fetchCaseByCnr(String cnr) async {
+    final response = await http.get(
+      await _authorizedUri('/ecourts/case/${Uri.encodeComponent(cnr.trim())}'),
+      headers: await _authHeaders(),
+    );
+
+    final data = _decodeJsonObject(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(
+        (data['error'] ?? data['message'] ?? 'Failed to fetch case detail')
+            .toString(),
+      );
+    }
+
+    return data;
+  }
+
+  Map<String, dynamic> _decodeJsonObject(String responseBody) {
+    if (responseBody.trim().isEmpty) {
+      return <String, dynamic>{};
+    }
+    final decoded = jsonDecode(responseBody);
+    if (decoded is Map<String, dynamic>) {
+      return decoded;
+    }
+    if (decoded is Map) {
+      return Map<String, dynamic>.from(decoded);
+    }
+    throw Exception('Unexpected response format');
+  }
+
+  Future<Map<String, dynamic>> uploadSmartLegalDocument(
+    PlatformFile file,
+  ) async {
+    final uri =
+        Uri.parse('${AppConfig.smartLegalBaseUrl}/api/documents/upload');
+    final request = http.MultipartRequest('POST', uri);
+
+    if (kIsWeb) {
+      final bytes = file.bytes;
+      if (bytes == null) {
+        throw Exception('Unable to read the selected file');
+      }
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'document',
+          bytes,
+          filename: file.name,
+        ),
+      );
+    } else {
+      final filePath = file.path;
+      if (filePath == null || filePath.isEmpty) {
+        throw Exception('Unable to read the selected file');
+      }
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'document',
+          filePath,
+          filename: file.name,
+        ),
+      );
+    }
+
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+    final data = _decodeJsonObject(responseBody);
+
+    if (response.statusCode != 201) {
+      throw Exception(
+        (data['error'] ?? data['message'] ?? 'Failed to upload document')
+            .toString(),
+      );
+    }
+
+    return data;
+  }
+
+  Future<Map<String, dynamic>> getSmartLegalWordDraft(String documentId) async {
+    final response = await http.get(
+      Uri.parse(
+        '${AppConfig.smartLegalBaseUrl}/api/documents/$documentId/word-draft',
+      ),
+    );
+    final data = _decodeJsonObject(response.body);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        (data['error'] ?? data['message'] ?? 'Failed to extract text')
+            .toString(),
+      );
+    }
+
+    return data;
+  }
+
+  Future<Map<String, dynamic>> generateSmartLegalPdf(
+    String documentId, {
+    required String html,
+    List<Map<String, dynamic>>? pageSizes,
+    String? fontFamily,
+    double? fontSize,
+    double? lineSpacing,
+  }) async {
+    final Map<String, dynamic> body = {'html': html};
+    if (pageSizes != null && pageSizes.isNotEmpty) {
+      body['pageSizes'] = pageSizes;
+    }
+    if (fontFamily != null && fontFamily.trim().isNotEmpty) {
+      body['fontFamily'] = fontFamily.trim();
+    }
+    if (fontSize != null) {
+      body['fontSize'] = fontSize;
+    }
+    if (lineSpacing != null) {
+      body['lineSpacing'] = lineSpacing;
+    }
+    final response = await http.post(
+      Uri.parse(
+        '${AppConfig.smartLegalBaseUrl}/api/documents/$documentId/generate-word-pdf',
+      ),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+    final data = _decodeJsonObject(response.body);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        (data['error'] ?? data['message'] ?? 'Failed to generate PDF')
+            .toString(),
+      );
+    }
+
+    return data;
+  }
+
+  Future<String> getSmartLegalSourceUrl(String documentId) async {
+    final username = await SessionService.getLoggedInUsername();
+    final firmName = await SessionService.getFirmName();
+    return Uri.parse(
+      '${AppConfig.smartLegalBaseUrl}/api/documents/$documentId/source',
+    ).replace(
+      queryParameters: {
+        'username': username,
+        'firm_name': firmName,
+      },
+    ).toString();
+  }
+
+  Future<void> downloadPdfBytes(String filename, Uint8List bytes) async {
+    if (kIsWeb) {
+      final blob = html.Blob(<dynamic>[bytes], 'application/pdf');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..download = filename
+        ..click();
+      anchor.remove();
+      html.Url.revokeObjectUrl(url);
+      return;
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$filename');
+    await file.writeAsBytes(bytes, flush: true);
   }
 
   /// Retrieve the fields for a specific saved reference.
@@ -462,6 +941,7 @@ class ApiService {
   /// This can be used to open the document in a new browser tab.
   Future<String> getReferencePreviewUrl(String documentId) async {
     final username = await SessionService.getLoggedInUsername();
-    return '$baseUrl/references/$documentId/view?username=$username';
+    final firmName = await SessionService.getFirmName();
+    return '$baseUrl/references/$documentId/view?username=$username&firm_name=$firmName';
   }
 }

@@ -33,5 +33,15 @@
     "document_type": "will_and_testament",
     "subtype": "",
     "timestamp": "2026-04-01T12:28:14.008977"
+  },
+  "9ea75228-a689-4c2f-ab34-2d9c4dc9aaba": {
+    "original_name": "Bodekar POWER OF ATTORNEY.docx",
+    "filename": "9ea75228-a689-4c2f-ab34-2d9c4dc9aaba.docx",
+    "document_type": "power_of_attorney",
+    "subtype": "general_poa",
+    "owner_username": "abc",
+    "firm_id": 2,
+    "firm_name": "ABCD",
+    "timestamp": "2026-04-15T13:31:48.106940"
   }
 }

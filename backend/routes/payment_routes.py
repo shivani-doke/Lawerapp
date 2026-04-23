@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 from database import db
 from models.client_model import Client
 from models.payment_model import Payment
-from services.auth_context import get_request_username
+from services.auth_context import get_current_user
 
 payment_bp = Blueprint("payment_bp", __name__, url_prefix="/payments")
 
@@ -27,15 +27,18 @@ def _serialize_client_finance(client, payments):
 
 @payment_bp.route("/client/<int:client_id>", methods=["GET"])
 def get_client_payments(client_id):
-    username = get_request_username()
-    client = Client.query.filter_by(id=client_id, owner_username=username).first()
+    user = get_current_user()
+    if not user.can_manage_billing:
+        return jsonify({"error": "Billing access is required"}), 403
+    client = Client.query.filter_by(id=client_id, firm_id=user.firm_id).first()
 
     if not client:
         return jsonify({"error": "Client not found"}), 404
 
     payments = Payment.query.filter_by(
         client_id=client_id,
-        owner_username=username,
+        firm_id=user.firm_id,
+        firm_name=user.firm_name,
     ).order_by(Payment.payment_date.desc(), Payment.id.desc()).all()
 
     return jsonify(_serialize_client_finance(client, payments))
@@ -43,7 +46,9 @@ def get_client_payments(client_id):
 
 @payment_bp.route("/", methods=["POST"])
 def add_payment():
-    username = get_request_username()
+    user = get_current_user()
+    if not user.can_manage_billing:
+        return jsonify({"error": "Billing access is required"}), 403
     data = request.get_json() or {}
 
     client_id = data.get("client_id")
@@ -62,13 +67,15 @@ def add_payment():
     if amount <= 0:
         return jsonify({"error": "Payment amount must be greater than zero"}), 400
 
-    client = Client.query.filter_by(id=client_id, owner_username=username).first()
+    client = Client.query.filter_by(id=client_id, firm_id=user.firm_id).first()
     if not client:
         return jsonify({"error": "Client not found"}), 404
 
     payment = Payment(
         client_id=client_id,
-        owner_username=username,
+        owner_username=user.username,
+        firm_id=user.firm_id,
+        firm_name=user.firm_name,
         amount=amount,
         payment_mode=(data.get("payment_mode") or "").strip() or None,
         payment_date=payment_date,
@@ -85,8 +92,10 @@ def add_payment():
 
 @payment_bp.route("/<int:payment_id>", methods=["DELETE"])
 def delete_payment(payment_id):
-    username = get_request_username()
-    payment = Payment.query.filter_by(id=payment_id, owner_username=username).first()
+    user = get_current_user()
+    if not user.can_manage_billing:
+        return jsonify({"error": "Billing access is required"}), 403
+    payment = Payment.query.filter_by(id=payment_id, firm_id=user.firm_id).first()
 
     if not payment:
         return jsonify({"error": "Payment not found"}), 404
@@ -99,14 +108,16 @@ def delete_payment(payment_id):
 
 @payment_bp.route("/report", methods=["GET"])
 def get_payment_report():
-    username = get_request_username()
-    clients = Client.query.filter_by(owner_username=username).order_by(Client.name.asc()).all()
+    user = get_current_user()
+    if not user.can_manage_billing:
+        return jsonify({"error": "Billing access is required"}), 403
+    clients = Client.query.filter_by(firm_id=user.firm_id).order_by(Client.name.asc()).all()
     client_ids = [client.id for client in clients]
 
     payments = []
     if client_ids:
         payments = Payment.query.filter(
-            Payment.owner_username == username,
+            Payment.firm_id == user.firm_id,
             Payment.client_id.in_(client_ids),
         ).order_by(Payment.payment_date.desc(), Payment.id.desc()).all()
 

@@ -8,7 +8,8 @@ from database import db
 from datetime import datetime
 import os
 import json
-from services.auth_context import get_request_username
+from models.app_user_model import AppUser
+from services.auth_context import get_current_user
 
 dashboard_bp = Blueprint("dashboard_bp", __name__, url_prefix="/dashboard")
 GENERATED_METADATA_FILE = os.path.join(GENERATED_FOLDER, "generated_metadata.json")
@@ -19,6 +20,15 @@ def load_generated_metadata():
         with open(GENERATED_METADATA_FILE, "r") as f:
             return json.load(f)
     return {}
+
+
+def resolve_firm_name(owner_username):
+    if not owner_username:
+        return "Default Firm"
+    user = AppUser.query.filter_by(username=owner_username).first()
+    if user and (user.firm_name or "").strip():
+        return user.firm_name.strip()
+    return "Default Firm"
 
 
 def save_generated_metadata(metadata):
@@ -40,14 +50,21 @@ def ensure_generated_metadata_defaults():
             if filename not in metadata:
                 metadata[filename] = {
                     "owner_username": "admin",
+                    "firm_name": "Default Firm",
                     "timestamp": datetime.fromtimestamp(
                         os.path.getctime(full_path)
                     ).isoformat(),
                 }
                 changed = True
-            elif not metadata[filename].get("owner_username"):
-                metadata[filename]["owner_username"] = "admin"
-                changed = True
+            else:
+                if not metadata[filename].get("owner_username"):
+                    metadata[filename]["owner_username"] = "admin"
+                    changed = True
+                if not metadata[filename].get("firm_name"):
+                    metadata[filename]["firm_name"] = resolve_firm_name(
+                        metadata[filename].get("owner_username")
+                    )
+                    changed = True
 
     if changed:
         save_generated_metadata(metadata)
@@ -62,9 +79,9 @@ def get_matching_docx_name(pdf_filename):
 
 @dashboard_bp.route("/stats", methods=["GET"])
 def get_dashboard_stats():
-    username = get_request_username()
+    user = get_current_user()
     # Clients count
-    clients_count = Client.query.filter_by(owner_username=username).count()
+    clients_count = Client.query.filter_by(firm_id=user.firm_id).count()
 
     # Documents count (from generated folder)
     ensure_generated_metadata_defaults()
@@ -75,17 +92,18 @@ def get_dashboard_stats():
         documents_count = len([
             f for f in os.listdir(documents_folder)
             if f.lower().endswith(".pdf")
-            and (generated_metadata.get(f, {}).get("owner_username") or "admin") == username
+            and (generated_metadata.get(f, {}).get("firm_name") or "Default Firm") == user.firm_name
+            and not generated_metadata.get(f, {}).get("hidden_from_dashboard")
         ])
 
     # Active cases (based on status)
     active_cases = Client.query.filter_by(
         status="Active",
-        owner_username=username,
+        firm_id=user.firm_id,
     ).count()
 
     total_received = db.session.query(db.func.coalesce(db.func.sum(Payment.amount), 0.0)).filter(
-        Payment.owner_username == username
+        Payment.firm_id == user.firm_id
     ).scalar() or 0.0
 
     # Chats (dummy for now OR you can store later)
@@ -100,7 +118,8 @@ def get_dashboard_stats():
         files = [
             f for f in os.listdir(documents_folder)
             if f.lower().endswith(".pdf")
-            and (generated_metadata.get(f, {}).get("owner_username") or "admin") == username
+            and (generated_metadata.get(f, {}).get("firm_name") or "Default Firm") == user.firm_name
+            and not generated_metadata.get(f, {}).get("hidden_from_dashboard")
         ]
         limit = request.args.get("limit", 4)
         files = sorted(
@@ -136,7 +155,8 @@ def get_dashboard_stats():
             "documents": documents_count,
             "active_cases": active_cases,
             "chats": chats_count,
-            "total_received": float(total_received),
+            "total_received": float(total_received) if user.can_manage_billing else 0.0,
+            "can_manage_billing": user.can_manage_billing,
         },
         "recent_documents": recent_docs
     })
@@ -144,7 +164,7 @@ def get_dashboard_stats():
 @dashboard_bp.route("/rename", methods=["POST"])
 def rename_document():
     data = request.json
-    username = get_request_username()
+    user = get_current_user()
 
     old_name = data.get("old_name")
     new_name = data.get("new_name")
@@ -165,7 +185,7 @@ def rename_document():
     ensure_generated_metadata_defaults()
     metadata = load_generated_metadata()
     info = metadata.get(old_name)
-    if not info or (info.get("owner_username") or "admin") != username:
+    if not info or (info.get("firm_name") or "Default Firm") != user.firm_name:
         return jsonify({"error": "File not found"}), 404
 
     if os.path.exists(new_path):
@@ -202,13 +222,13 @@ def rename_document():
 def delete_document():
     data = request.get_json()
     filename = data.get("filename")
-    username = get_request_username()
+    user = get_current_user()
 
     file_path = os.path.join(GENERATED_FOLDER, filename)
     ensure_generated_metadata_defaults()
     metadata = load_generated_metadata()
     info = metadata.get(filename)
-    if not info or (info.get("owner_username") or "admin") != username:
+    if not info or (info.get("firm_name") or "Default Firm") != user.firm_name:
         return jsonify({"error": "File not found"}), 404
 
     if os.path.exists(file_path):
@@ -231,11 +251,11 @@ from flask import send_from_directory
 @dashboard_bp.route("/download/<filename>", methods=["GET"])
 def download_document(filename):
     try:
-        username = get_request_username()
+        user = get_current_user()
         ensure_generated_metadata_defaults()
         metadata = load_generated_metadata()
         info = metadata.get(filename)
-        if not info or (info.get("owner_username") or "admin") != username:
+        if not info or (info.get("firm_name") or "Default Firm") != user.firm_name:
             return jsonify({"error": "File not found"}), 404
         return send_from_directory(
             GENERATED_FOLDER,

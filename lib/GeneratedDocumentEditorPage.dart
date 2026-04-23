@@ -255,18 +255,31 @@ class _GeneratedDocumentEditorPageState
     }
   }
 
+  Future<void> _syncCurrentPage() async {
+    _updateCurrentPage(
+      await _editorController.getHtml(),
+      _editorController.getPlainText(),
+    );
+  }
+
   void _goToPage(int index) {
     if (index < 0 || index >= _pageHtml.length) return;
-    setState(() {
-      _currentPage = index;
+    _syncCurrentPage().then((_) {
+      if (!mounted) return;
+      setState(() {
+        _currentPage = index;
+      });
     });
   }
 
   void _addPage() {
-    setState(() {
-      _pageHtml.add('<p></p>');
-      _pagePlainText.add('');
-      _currentPage = _pageHtml.length - 1;
+    _syncCurrentPage().then((_) {
+      if (!mounted) return;
+      setState(() {
+        _pageHtml.add('<p></p>');
+        _pagePlainText.add('');
+        _currentPage = _pageHtml.length - 1;
+      });
     });
   }
 
@@ -434,9 +447,7 @@ class _GeneratedDocumentEditorPageState
     });
 
     try {
-      final currentHtml = await _editorController.getHtml();
-      final currentPlain = _editorController.getPlainText();
-      _updateCurrentPage(currentHtml, currentPlain);
+      await _syncCurrentPage();
 
       final mergedHtml = _pageHtml
           .map((page) => page.trim())

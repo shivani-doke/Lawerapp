@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -328,7 +328,7 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
                                   title: Text(clientName),
                                   subtitle: subtitleParts.isEmpty
                                       ? null
-                                      : Text(subtitleParts.join(' â€¢ ')),
+                                      : Text(subtitleParts.join(' • ')),
                                   trailing: const Icon(Icons.chevron_right),
                                   onTap: () => Navigator.of(dialogContext).pop(client),
                                 );
@@ -1144,6 +1144,7 @@ class _BailApplicationPageState extends State<BailApplicationPage> {
         final uploadResult = await ApiService().uploadReference(
           _referenceFile!,
           'bail_application',
+          extractedFields: extractedFields,
         );
         final newId = uploadResult['document_id'];
 

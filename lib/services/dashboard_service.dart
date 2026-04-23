@@ -8,7 +8,8 @@ class DashboardService {
 
   static Future<Map<String, String>> _authHeaders() async {
     final username = await SessionService.getLoggedInUsername();
-    return {'X-Username': username};
+    final firmName = await SessionService.getFirmName();
+    return {'X-Username': username, 'X-Firm-Name': firmName};
   }
 
   static Future<Uri> _authorizedUri(
@@ -16,10 +17,12 @@ class DashboardService {
     Map<String, String>? queryParameters,
   }) async {
     final username = await SessionService.getLoggedInUsername();
+    final firmName = await SessionService.getFirmName();
     return Uri.parse('$baseUrl$path').replace(
       queryParameters: {
         ...?queryParameters,
         'username': username,
+        'firm_name': firmName,
       },
     );
   }
@@ -42,9 +45,10 @@ class DashboardService {
 
   static Future<Map<String, dynamic>> fetchFinanceReport() async {
     final username = await SessionService.getLoggedInUsername();
+    final firmName = await SessionService.getFirmName();
     final response = await http.get(
       Uri.parse("${AppConfig.backendBaseUrl}/payments/report")
-          .replace(queryParameters: {'username': username}),
+          .replace(queryParameters: {'username': username, 'firm_name': firmName}),
       headers: await _authHeaders(),
     );
 

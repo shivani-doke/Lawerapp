@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -937,6 +937,7 @@ class _OfferLetterPageState extends State<OfferLetterPage> {
   }
 
   Future<void> _loadDefaultFields() async {
+    setState(() => _isExtracting = true);
     try {
       final fieldsJson = await ApiService().getFieldsByDocumentType(
         documentType: 'offer_letter',
@@ -946,9 +947,11 @@ class _OfferLetterPageState extends State<OfferLetterPage> {
       if (!mounted) return;
       setState(() {
         _fields = fields;
+        _isExtracting = false;
       });
       _rebuildControllers();
     } catch (_) {
+      setState(() => _isExtracting = false);
       // Silent fallback: user can still upload/select reference.
     }
   }
@@ -1034,6 +1037,7 @@ class _OfferLetterPageState extends State<OfferLetterPage> {
         final uploadResult = await ApiService().uploadReference(
           _referenceFile!,
           'offer_letter',
+          extractedFields: extractedFields,
         );
         final newId = uploadResult['document_id'];
 
@@ -1237,6 +1241,27 @@ class _OfferLetterPageState extends State<OfferLetterPage> {
               ),
             ),
           ),
+          if (_isExtracting || _isUploading) ...[
+            const SizedBox(height: 8),
+            const Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Reloading fields...',
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -1373,27 +1398,34 @@ class _OfferLetterPageState extends State<OfferLetterPage> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey.shade200),
               ),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'DOCUMENT',
-                      style: TextStyle(
-                        color: accentColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Offer Letter',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+              child: AbsorbPointer(
+                absorbing: _isExtracting || _isUploading,
+                child: Opacity(
+                  opacity:
+                      (_isExtracting || _isUploading) && _fields.isNotEmpty
+                          ? 0.6
+                          : 1,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'DOCUMENT',
+                          style: TextStyle(
+                            color: accentColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Offer Letter',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                     if (_isLoadingReferences)
                       const Center(child: CircularProgressIndicator())
                     else if (_savedReferences.isNotEmpty)
@@ -1478,7 +1510,7 @@ class _OfferLetterPageState extends State<OfferLetterPage> {
                         ),
                       ),
                     ],
-                    if (_isExtracting || _isUploading)
+                    if ((_isExtracting || _isUploading) && _fields.isEmpty)
                       const Center(
                         child: Padding(
                           padding: EdgeInsets.all(20),
@@ -1615,7 +1647,9 @@ class _OfferLetterPageState extends State<OfferLetterPage> {
                         ),
                       ),
                     ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

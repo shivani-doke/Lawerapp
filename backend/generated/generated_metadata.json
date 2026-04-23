@@ -1,123 +1,177 @@
 {
   "Client_adoption_papers_20260402_151308_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-04-02T15:13:31.504689"
+    "timestamp": "2026-04-02T15:13:31.504689",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260329_210426_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-03-29T21:04:31.468848"
+    "timestamp": "2026-03-29T21:04:31.468848",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260331_095155_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-03-31T09:52:21.801709"
+    "timestamp": "2026-03-31T09:52:21.801709",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260401_133359_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-04-01T13:34:11.311408"
+    "timestamp": "2026-04-01T13:34:11.311408",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260401_134025_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-04-01T13:40:28.231438"
+    "timestamp": "2026-04-01T13:40:28.231438",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260401_134305_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-04-01T13:43:07.157406"
+    "timestamp": "2026-04-01T13:43:07.157406",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260401_142759_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-04-01T14:28:04.827264"
+    "timestamp": "2026-04-01T14:28:04.827264",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260401_144726_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-04-01T14:47:30.624405"
+    "timestamp": "2026-04-01T14:47:30.624405",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-04-01T11:57:40.201127"
+    "timestamp": "2026-04-01T11:57:40.201127",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_gift_deed_20260329_202937_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-03-29T20:29:41.473851"
+    "timestamp": "2026-03-29T20:29:41.473851",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_power_of_attorney_20260320_170642_generated.pdf": {
     "owner_username": "admin",
-    "timestamp": "2026-04-09T17:36:02.564052"
+    "timestamp": "2026-04-09T17:36:02.564052",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_power_of_attorney_20260326_161951_generated.pdf": {
     "owner_username": "admin",
     "timestamp": "2026-04-12T21:28:29.923487",
     "font_family": "Times New Roman",
     "font_size": 14,
-    "line_spacing": 1.0
+    "line_spacing": 1.0,
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_adoption_papers_20260402_151308_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-04-02T15:13:08.678040"
+    "timestamp": "2026-04-02T15:13:08.678040",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260329_210426_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-03-29T21:04:26.558852"
+    "timestamp": "2026-03-29T21:04:26.558852",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260331_095155_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-03-31T09:51:56.184722"
+    "timestamp": "2026-03-31T09:51:56.184722",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260401_133359_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-04-01T13:33:59.713562"
+    "timestamp": "2026-04-01T13:33:59.713562",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260401_134025_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-04-01T13:40:25.586766"
+    "timestamp": "2026-04-01T13:40:25.586766",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260401_134305_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-04-01T13:43:05.437656"
+    "timestamp": "2026-04-01T13:43:05.437656",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260401_142759_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-04-01T14:27:59.918198"
+    "timestamp": "2026-04-01T14:27:59.918198",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_divorce_paper_20260401_144726_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-04-01T14:47:26.681002"
+    "timestamp": "2026-04-01T14:47:26.681002",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-03-05T17:03:40.137605"
+    "timestamp": "2026-03-05T17:03:40.137605",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_gift_deed_20260329_202937_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-03-29T20:29:37.174757"
+    "timestamp": "2026-03-29T20:29:37.174757",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_power_of_attorney_20260320_170642_generated.docx": {
     "owner_username": "admin",
-    "timestamp": "2026-04-09T17:36:02.564052"
+    "timestamp": "2026-04-09T17:36:02.564052",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_power_of_attorney_20260326_161951_generated.docx": {
     "owner_username": "admin",
     "timestamp": "2026-04-12T21:28:29.923487",
     "font_family": "Times New Roman",
     "font_size": 14,
-    "line_spacing": 1.0
+    "line_spacing": 1.0,
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "generated_metadata.json": {
     "owner_username": "admin",
-    "timestamp": "2026-04-06T16:23:23.791484"
+    "timestamp": "2026-04-06T16:23:23.791484",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_mortgage_deed_20260408_113050_generated.docx": {
     "owner_username": "admin",
     "timestamp": "2026-04-12T21:24:42.919936",
     "font_family": "Times New Roman",
     "font_size": 14,
-    "line_spacing": 1.0
+    "line_spacing": 1.0,
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_mortgage_deed_20260408_113050_generated.pdf": {
     "owner_username": "admin",
     "timestamp": "2026-04-12T21:24:42.919936",
     "font_family": "Times New Roman",
     "font_size": 14,
-    "line_spacing": 1.0
+    "line_spacing": 1.0,
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_offer_letter_20260408_115016_generated.editor.html": {
     "owner_username": "admin",
@@ -128,28 +182,1343 @@
     "timestamp": "2026-04-12T21:24:42.919936",
     "font_family": "Times New Roman",
     "font_size": 14,
-    "line_spacing": 1.0
+    "line_spacing": 1.0,
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_patent_filing_documents_20260408_155556_generated.editor.html": {
     "owner_username": "admin",
-    "timestamp": "2026-04-08T15:56:39.636071"
+    "timestamp": "2026-04-08T15:56:39.636071",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_power_of_attorney_20260320_170642_generated.editor.html": {
     "owner_username": "admin",
-    "timestamp": "2026-04-09T17:35:41.674718"
+    "timestamp": "2026-04-09T17:35:41.674718",
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_power_of_attorney_20260326_161951_generated.editor.html": {
     "owner_username": "admin",
     "timestamp": "2026-04-12T21:28:29.923487",
     "font_family": "Times New Roman",
     "font_size": 14,
-    "line_spacing": 1.0
+    "line_spacing": 1.0,
+    "firm_name": "Default Firm",
+    "firm_id": 1
   },
   "Client_rental_agreement_20260327_114329_generated.editor.html": {
     "owner_username": "admin",
     "timestamp": "2026-04-12T21:26:39.622046",
     "font_family": "Times New Roman",
     "font_size": 14,
+    "line_spacing": 1.0,
+    "firm_name": "Default Firm",
+    "firm_id": 1
+  },
+  "Client_gift_deed_20260415_124553_generated.docx": {
+    "owner_username": "abc",
+    "firm_id": 2,
+    "firm_name": "ABCD",
+    "timestamp": "2026-04-15T12:46:14.120743",
+    "font_family": "Times New Roman",
+    "font_size": 14,
     "line_spacing": 1.0
+  },
+  "Client_gift_deed_20260415_124553_generated.pdf": {
+    "owner_username": "abc",
+    "firm_id": 2,
+    "firm_name": "ABCD",
+    "timestamp": "2026-04-15T12:46:14.120743",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
+  },
+  "Client_offer_letter_20260415_134424_generated.docx": {
+    "owner_username": "xyz",
+    "firm_id": 3,
+    "firm_name": "XYZ",
+    "timestamp": "2026-04-15T13:44:29.374019",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
+  },
+  "Client_offer_letter_20260415_134424_generated.pdf": {
+    "owner_username": "xyz",
+    "firm_id": 3,
+    "firm_name": "XYZ",
+    "timestamp": "2026-04-15T13:44:29.374019",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
+  },
+  "Client_offer_letter_20260415_134608_generated.docx": {
+    "owner_username": "xyz",
+    "firm_id": 3,
+    "firm_name": "XYZ",
+    "timestamp": "2026-04-15T13:46:11.850796",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
+  },
+  "Client_offer_letter_20260415_134608_generated.pdf": {
+    "owner_username": "xyz",
+    "firm_id": 3,
+    "firm_name": "XYZ",
+    "timestamp": "2026-04-15T13:46:11.850796",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
+  },
+  "Client_offer_letter_20260415_152542_generated_4a4ffdef.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T12:50:55.858416",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15
+  },
+  "rent_cad4bebc.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T13:00:29.623746",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15
+  },
+  "Client_rental_agreement_20260327_114329_generated_08d56cc0.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T13:31:56.236389",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_rental_agreement_20260327_114329_generated_08d56cc0.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T13:31:56.236389",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_rental_agreement_20260327_114329_generated_08d56cc0.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T13:31:56.236389",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_dbbbf12a.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T15:57:21.594253",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_dbbbf12a.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T15:57:21.594253",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_dbbbf12a.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T15:57:21.594253",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_b4872eff.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:01:28.644339",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_b4872eff.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:01:28.644339",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_b4872eff.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:01:28.644339",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_0877a0d1.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:04:58.130525",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_0877a0d1.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:04:58.130525",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_0877a0d1.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:04:58.130525",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_3be69eb2.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:08:45.558276",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_3be69eb2.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:08:45.558276",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_3be69eb2.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:08:45.558276",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_294b8d09.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:25:22.034550",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_294b8d09.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:25:22.034550",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_294b8d09.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:25:22.034550",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_0dcb8fe9.docx": {
+    "owner_username": "admin",
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T18:35:16.016496",
+    "firm_id": 1
+  },
+  "Client_mortgage_deed_20260408_113050_generated_a90b2083.docx": {
+    "owner_username": "admin",
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T19:07:28.129169",
+    "firm_id": 1
+  },
+  "Client_mortgage_deed_20260408_113050_generated_27542ccc.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T19:23:49.211017",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_27542ccc.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T19:23:49.211017",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_27542ccc.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T19:23:49.211017",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_e0c00ce5.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T19:51:12.746866",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_e0c00ce5.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T19:51:12.746866",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_e0c00ce5.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T19:51:12.746866",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_64e3ffcb.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T20:54:40.067741",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_64e3ffcb.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T20:54:40.067741",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_64e3ffcb.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T20:54:40.067741",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_07577e62.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T22:27:28.810462",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_07577e62.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T22:27:28.810462",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_07577e62.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-16T22:27:28.810462",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_cc4e9467.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T00:06:38.765949",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_cc4e9467.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T00:06:38.765949",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_cc4e9467.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T00:06:38.765949",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_6d90404b.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T00:41:53.192691",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_6d90404b.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T00:41:53.192691",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_6d90404b.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T00:41:53.192691",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_3fcc23f3.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:05:44.829563",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_3fcc23f3.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:05:44.829563",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_3fcc23f3.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:05:44.829563",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_7f0ee7c5.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:21:14.100487",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_7f0ee7c5.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:21:14.100487",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_7f0ee7c5.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:21:14.100487",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_78402a12.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:23:03.724479",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_78402a12.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:23:03.724479",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_78402a12.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:23:03.724479",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_bb0496ac.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:23:46.136369",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_bb0496ac.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:23:46.136369",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_bb0496ac.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:23:46.136369",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_2e8daccc.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:25:19.273898",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_2e8daccc.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:25:19.273898",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_2e8daccc.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:25:19.273898",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_ad0ae5e4.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:28:15.157307",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_ad0ae5e4.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:28:15.157307",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_ad0ae5e4.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:28:15.157307",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_5ca7ddc8.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:34:19.715027",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_5ca7ddc8.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:34:19.715027",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_5ca7ddc8.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:34:19.715027",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_90eda57d.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:44:27.944304",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_90eda57d.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:44:27.944304",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_90eda57d.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:44:27.944304",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_c1c82341.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:49:55.701168",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_c1c82341.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:49:55.701168",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_c1c82341.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T10:49:55.701168",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_42b08dad.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T11:47:12.552692",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_42b08dad.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T11:47:12.552692",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_42b08dad.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T11:47:12.552692",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_6d36de1f.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T13:19:41.696026",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_6d36de1f.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T13:19:41.696026",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_6d36de1f.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T13:19:41.696026",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_97e0121d.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T13:39:07.274084",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_97e0121d.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T13:39:07.274084",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_97e0121d.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T13:39:07.274084",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_57343752.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T14:43:38.908111",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_57343752.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T14:43:38.908111",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_57343752.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T14:43:38.908111",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_1e34def7.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T14:49:29.024436",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_1e34def7.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T14:49:29.024436",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_1e34def7.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T14:49:29.024436",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_af5104ab.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T14:55:41.033881",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_af5104ab.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T14:55:41.033881",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_af5104ab.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T14:55:41.033881",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_cb2b5175.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T15:14:02.970205",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_cb2b5175.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T15:14:02.970205",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_cb2b5175.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T15:14:02.970205",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_62ac34cc.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T15:45:21.956054",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_62ac34cc.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T15:45:21.956054",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_62ac34cc.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T15:45:21.956054",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_60e2433b.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T16:14:02.240190",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_60e2433b.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T16:14:02.240190",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_60e2433b.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T16:14:02.240190",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_1dffa970.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T17:07:14.212131",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_1dffa970.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T17:07:14.212131",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_1dffa970.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-17T17:07:14.212131",
+    "font_family": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_power_of_attorney_generated_0c0dfb6e.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-19T21:47:11.486537",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_power_of_attorney_generated_0c0dfb6e.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-19T21:47:11.486537",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_power_of_attorney_generated_0c0dfb6e.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-19T21:47:11.486537",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_1eaeb6cc.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-19T22:23:58.926860",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_1eaeb6cc.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-19T22:23:58.926860",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_1eaeb6cc.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-19T22:23:58.926860",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.15,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_b69e7c3b.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-19T22:36:25.703277",
+    "font_family": "Corbel",
+    "font_size": 20,
+    "line_spacing": 1.5,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_b69e7c3b.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-19T22:36:25.703277",
+    "font_family": "Corbel",
+    "font_size": 20,
+    "line_spacing": 1.5,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_b69e7c3b.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-19T22:36:25.703277",
+    "font_family": "Corbel",
+    "font_size": 20,
+    "line_spacing": 1.5,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_power_of_attorney_generated_2_bc8919eb.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-22T19:05:54.611487",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_power_of_attorney_generated_2_bc8919eb.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-22T19:05:54.611487",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_power_of_attorney_generated_2_bc8919eb.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-22T19:05:54.611487",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_power_of_attorney_generated_2_231010d8.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-22T22:08:11.221751",
+    "font_family": "Cambria",
+    "font_size": 14,
+    "line_spacing": 1.5,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_power_of_attorney_generated_2_231010d8.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-22T22:08:11.221751",
+    "font_family": "Cambria",
+    "font_size": 14,
+    "line_spacing": 1.5,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_power_of_attorney_generated_2_231010d8.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-22T22:08:11.221751",
+    "font_family": "Cambria",
+    "font_size": 14,
+    "line_spacing": 1.5,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_7c6d22cb.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-22T22:18:54.436060",
+    "font_family": "Candara",
+    "font_size": 14,
+    "line_spacing": 1.5,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_7c6d22cb.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-22T22:18:54.436060",
+    "font_family": "Candara",
+    "font_size": 14,
+    "line_spacing": 1.5,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_mortgage_deed_20260408_113050_generated_7c6d22cb.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-22T22:18:54.436060",
+    "font_family": "Candara",
+    "font_size": 14,
+    "line_spacing": 1.5,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
   }
 }

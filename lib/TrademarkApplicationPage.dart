@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -414,7 +414,7 @@ class _TrademarkApplicationPageState extends State<TrademarkApplicationPage> {
                                           ]
                                             .where(
                                                 (value) => value.trim().isNotEmpty)
-                                            .join(' â€¢ '),
+                                            .join(' • '),
                                   ),
                                   onTap: isAssignedElsewhere
                                       ? null
@@ -1100,6 +1100,7 @@ class _TrademarkApplicationPageState extends State<TrademarkApplicationPage> {
         final uploadResult = await ApiService().uploadReference(
           _referenceFile!,
           'trademark_application',
+          extractedFields: extractedFields,
         );
         final newId = uploadResult['document_id'];
 
