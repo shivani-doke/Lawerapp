@@ -135,7 +135,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Use one login page for master admin, firm admin, and lawyer accounts.',
+                            'Sign in with your email ID and password.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.blueGrey.shade700,
