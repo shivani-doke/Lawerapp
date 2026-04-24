@@ -2,19 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'services/api_service.dart';
 
-enum LoginMode { master, user }
-
 class LoginPage extends StatefulWidget {
   const LoginPage({
     super.key,
     required this.onLoginSuccess,
-    required this.mode,
-    required this.onBack,
   });
 
   final Future<void> Function(Map<String, dynamic> session) onLoginSuccess;
-  final LoginMode mode;
-  final VoidCallback onBack;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -26,8 +20,6 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isSubmitting = false;
-
-  bool get _isMasterMode => widget.mode == LoginMode.master;
 
   @override
   void dispose() {
@@ -43,16 +35,10 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _isSubmitting = true);
     try {
-      final api = ApiService();
-      final result = _isMasterMode
-          ? await api.masterLogin(
-              email: _emailController.text.trim(),
-              password: _passwordController.text,
-            )
-          : await api.login(
-              email: _emailController.text.trim(),
-              password: _passwordController.text,
-            );
+      final result = await ApiService().login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
       await widget.onLoginSuccess(result);
     } catch (e) {
       if (!mounted) return;
@@ -88,11 +74,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _isMasterMode ? 'Master Login' : 'User Login';
-    final subtitle = _isMasterMode
-        ? 'Use the master account to access current app data and create firm credentials.'
-        : 'Firm admins and lawyers sign in here to access their firm workspace.';
-
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -104,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
         child: Stack(
           children: [
-            Positioned(
+            const Positioned(
               top: -100,
               right: -120,
               child: _BackgroundGlow(
@@ -112,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                 color: Color(0x33f59e0b),
               ),
             ),
-            Positioned(
+            const Positioned(
               bottom: -160,
               left: -120,
               child: _BackgroundGlow(
@@ -124,7 +105,7 @@ class _LoginPageState extends State<LoginPage> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
+                  constraints: const BoxConstraints(maxWidth: 440),
                   child: Card(
                     elevation: 0,
                     color: const Color(0xfff8fafc),
@@ -143,10 +124,10 @@ class _LoginPageState extends State<LoginPage> {
                             color: Color(0xffE0A800),
                           ),
                           const SizedBox(height: 16),
-                          Text(
-                            title,
+                          const Text(
+                            'LegalAI Login',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
                               color: Color(0xff0f172a),
@@ -154,7 +135,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            subtitle,
+                            'Use one login page for master admin, firm admin, and lawyer accounts.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.blueGrey.shade700,
@@ -231,20 +212,14 @@ class _LoginPageState extends State<LoginPage> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : Text(
-                                      title,
-                                      style: const TextStyle(
+                                  : const Text(
+                                      'Login',
+                                      style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextButton.icon(
-                            onPressed: _isSubmitting ? null : widget.onBack,
-                            icon: const Icon(Icons.arrow_back),
-                            label: const Text('Back'),
                           ),
                         ],
                       ),

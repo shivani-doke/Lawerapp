@@ -1,6 +1,3 @@
-import json
-from pathlib import Path
-
 from flask import Blueprint, current_app, jsonify, request
 import requests
 
@@ -639,17 +636,6 @@ def case_by_cnr(cnr):
     if not normalized_cnr:
         return jsonify({"error": "CNR is required."}), 400
 
-    debug_dir = Path(current_app.root_path) / "debug"
-    debug_dir.mkdir(parents=True, exist_ok=True)
-    debug_file = debug_dir / f"ecourts_case_{normalized_cnr}.json"
-
-    if debug_file.exists():
-        try:
-            payload = json.loads(debug_file.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as exc:
-            return jsonify({"error": f"Unable to read cached case file: {exc}"}), 500
-        return jsonify(_normalize_case_detail(payload))
-
     try:
         response = requests.get(
             f"{ECOURTS_CASE_DETAIL_URL}/{normalized_cnr}",
@@ -665,11 +651,6 @@ def case_by_cnr(cnr):
         payload = response.json()
     except ValueError:
         return jsonify({"error": "eCourts API returned an invalid response."}), 502
-
-    debug_file.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
 
     if response.status_code >= 400:
         return (

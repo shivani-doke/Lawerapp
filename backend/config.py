@@ -9,5 +9,6 @@ class Config:
     ECOURTS_API_KEY = os.getenv("ECOURTS_API_KEY")
     SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
     FROM_EMAIL = os.getenv("FROM_EMAIL")
+    LIBREOFFICE_PATH = os.getenv("LIBREOFFICE_PATH", "soffice")
     SQLALCHEMY_DATABASE_URI = "sqlite:///database.db"
     SQLALCHEMY_TRACK_MODIFICATIONS = False

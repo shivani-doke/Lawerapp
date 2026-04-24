@@ -145,9 +145,6 @@ def login():
     if not user or not user.verify_password(password):
         return jsonify({"error": "Invalid email or password"}), 401
 
-    if user.is_platform_admin:
-        return jsonify({"error": "Use master login for this account"}), 403
-
     return jsonify({
         "message": "Login successful",
         **serialize_user_session(user),
