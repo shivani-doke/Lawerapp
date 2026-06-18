@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import 'config/app_config.dart';
 import 'services/session_service.dart';
 
@@ -109,6 +111,53 @@ const List<String> kClientCaseTypes = [
   "W.C.N.F.A. Case - Workmen Compensation not involving Fatal Accident",
 ];
 
+const double _kClientCompactBreakpoint = 600;
+
+bool _isCompactClientLayout(BuildContext context,
+        [double breakpoint = _kClientCompactBreakpoint]) =>
+    MediaQuery.sizeOf(context).width < breakpoint;
+
+Widget _buildResponsiveFieldsRow(
+  BuildContext context, {
+  required Widget first,
+  required Widget second,
+  double spacing = 12,
+}) {
+  final isCompact = _isCompactClientLayout(context);
+  return Flex(
+    direction: isCompact ? Axis.vertical : Axis.horizontal,
+    crossAxisAlignment:
+        isCompact ? CrossAxisAlignment.stretch : CrossAxisAlignment.start,
+    children: [
+      if (isCompact) first else Expanded(child: first),
+      SizedBox(width: isCompact ? 0 : spacing, height: isCompact ? spacing : 0),
+      if (isCompact) second else Expanded(child: second),
+    ],
+  );
+}
+
+Widget _buildResponsiveActionRow(
+  BuildContext context, {
+  required List<Widget> children,
+  MainAxisAlignment mainAxisAlignment = MainAxisAlignment.end,
+  double spacing = 12,
+}) {
+  final isCompact = _isCompactClientLayout(context);
+  return Flex(
+    direction: isCompact ? Axis.vertical : Axis.horizontal,
+    crossAxisAlignment:
+        isCompact ? CrossAxisAlignment.stretch : CrossAxisAlignment.center,
+    mainAxisAlignment: isCompact ? MainAxisAlignment.start : mainAxisAlignment,
+    children: [
+      for (var i = 0; i < children.length; i++) ...[
+        if (isCompact) SizedBox(width: double.infinity, child: children[i]) else children[i],
+        if (i != children.length - 1)
+          SizedBox(width: isCompact ? 0 : spacing, height: isCompact ? spacing : 0),
+      ],
+    ],
+  );
+}
+
 Map<String, dynamic> buildClientPayload({
   required String name,
   required String email,
@@ -166,8 +215,15 @@ class _ClientsPageState extends State<ClientsPage> {
   List<Map<String, dynamic>> filteredClients = [];
   bool isLoading = true;
   bool _canManageBilling = false;
+  String? _loadError;
 
   final String baseUrl = AppConfig.backendBaseUrl;
+
+  bool _isCompactWidth(double width) => width < 760;
+
+  bool _isDesktopTableWidth(double width) => width >= 1180;
+
+  double get _mobileTableWidth => _canManageBilling ? 1240 : 1080;
 
   Future<Map<String, String>> _authHeaders() async {
     final username = await SessionService.getLoggedInUsername();
@@ -195,7 +251,20 @@ class _ClientsPageState extends State<ClientsPage> {
     fetchClients();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> fetchClients() async {
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+        _loadError = null;
+      });
+    }
+
     try {
       final response = await http.get(
         await _authorizedUri("/clients/"),
@@ -228,9 +297,19 @@ class _ClientsPageState extends State<ClientsPage> {
           filteredClients = clients;
           isLoading = false;
         });
+      } else {
+        setState(() {
+          isLoading = false;
+          _loadError = 'Failed to load clients (${response.statusCode}).';
+        });
       }
     } catch (e) {
       print("Error fetching clients: $e");
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        _loadError = 'Unable to load clients. Please check your connection.';
+      });
     }
   }
 
@@ -259,6 +338,52 @@ class _ClientsPageState extends State<ClientsPage> {
     );
   }
 
+  Widget _buildWhatsappIcon() {
+    return SvgPicture.asset(
+      'assets/icons/whatsapp.svg',
+      width: 40,
+      height: 40,
+      fit: BoxFit.contain,
+    );
+  }
+
+  String _normalizeWhatsappNumber(String value) {
+    final digitsOnly = value.replaceAll(RegExp(r'\D'), '');
+    if (digitsOnly.isEmpty) {
+      return '';
+    }
+    if (digitsOnly.length == 10) {
+      return '91$digitsOnly';
+    }
+    if (digitsOnly.length == 12 && digitsOnly.startsWith('91')) {
+      return digitsOnly;
+    }
+    if (digitsOnly.length == 13 && digitsOnly.startsWith('091')) {
+      return digitsOnly.substring(1);
+    }
+    return digitsOnly;
+  }
+
+  Future<void> _openWhatsappChat(Map<String, dynamic> client) async {
+    final phone = _normalizeWhatsappNumber((client['phone'] ?? '').toString());
+    if (phone.isEmpty) {
+      _showErrorSnackBar('No phone number available for this client.');
+      return;
+    }
+
+    final name = (client['name'] ?? 'Client').toString().trim();
+    final message = Uri.encodeComponent('Hello $name,');
+    final uri = Uri.parse('https://wa.me/$phone?text=$message');
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+
+    if (!mounted) return;
+    _showErrorSnackBar('Could not open WhatsApp chat.');
+  }
+
   void _showNotesDialog(Map<String, dynamic> client) {
     // Create a local copy of the client to avoid modifying original until save
     Map<String, dynamic> editableClient = Map.from(client);
@@ -274,7 +399,9 @@ class _ClientsPageState extends State<ClientsPage> {
             return AlertDialog(
               title: Text("Notes for ${client["name"]}"),
               content: Container(
-                width: 400,
+                width: _isCompactClientLayout(context)
+                    ? MediaQuery.sizeOf(context).width - 72
+                    : 400,
                 constraints: const BoxConstraints(maxHeight: 300),
                 child: TextField(
                   controller: notesController,
@@ -301,8 +428,8 @@ class _ClientsPageState extends State<ClientsPage> {
                           setState(() => isSaving = true);
                           try {
                             // Update only the notes field via PUT
-                            final url =
-                                await _authorizedUri("/clients/${client["id"]}");
+                            final url = await _authorizedUri(
+                                "/clients/${client["id"]}");
                             final response = await http.put(
                               url,
                               headers: {
@@ -360,13 +487,26 @@ class _ClientsPageState extends State<ClientsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 760;
+    final topInset = MediaQuery.paddingOf(context).top;
+    final mobileOverlayOffset = isMobile ? topInset + 76.0 : 0.0;
+
     return Scaffold(
       backgroundColor: const Color(0xffF5F6FA),
-      body: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SafeArea(
+        top: false,
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            isMobile ? 16 : 30,
+            (isMobile ? 16 : 30) + mobileOverlayOffset,
+            isMobile ? 16 : 30,
+            isMobile ? 16 : 30,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             /// Title
             const Text(
               "Clients",
@@ -380,34 +520,86 @@ class _ClientsPageState extends State<ClientsPage> {
             const SizedBox(height: 20),
 
             /// Search + Add
-            Row(
+            Flex(
+              direction: isMobile ? Axis.vertical : Axis.horizontal,
+              crossAxisAlignment:
+                  isMobile ? CrossAxisAlignment.stretch : CrossAxisAlignment.center,
               children: [
-                Expanded(
-                  child: TextField(
+                if (isMobile)
+                  TextField(
                     controller: _searchController,
                     onChanged: _searchClient,
                     decoration: InputDecoration(
                       hintText: "Search clients...",
-                      prefixIcon: const Icon(Icons.search),
+                      hintStyle: const TextStyle(color: Color(0xff9CA3AF)),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Color(0xff4B5563),
+                      ),
                       filled: true,
                       fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 18),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
                         borderSide: BorderSide.none,
                       ),
                     ),
+                  )
+                else
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _searchClient,
+                      decoration: InputDecoration(
+                        hintText: "Search clients...",
+                        hintStyle: const TextStyle(color: Color(0xff9CA3AF)),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xff4B5563),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 18),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xffE0A800),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
-                  ),
-                  onPressed: () async {
+                SizedBox(width: isMobile ? 0 : 16, height: isMobile ? 12 : 0),
+                SizedBox(
+                  width: isMobile ? double.infinity : null,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xffE0A800),
+                      foregroundColor: Colors.black,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 18,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    onPressed: () async {
                     final result = await showDialog(
                       context: context,
                       builder: (_) => const AddClientDialog(),
@@ -417,11 +609,15 @@ class _ClientsPageState extends State<ClientsPage> {
                       fetchClients(); // 🔥 Refresh from database
                     }
                   },
-                  child: const Text(
-                    "+ Add Client",
-                    style: TextStyle(color: Colors.black),
+                    child: const Text(
+                      "+ Add Client",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                )
+                ),
               ],
             ),
 
@@ -432,126 +628,252 @@ class _ClientsPageState extends State<ClientsPage> {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    /// Header
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                            bottom: BorderSide(color: Color(0xffEEEEEE))),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                              flex: 2,
-                              child: Text("Name",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold))),
-                          Expanded(
-                              flex: 2,
-                              child: Text("Contact",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold))),
-                          Expanded(
-                              flex: 3,
-                              child: Text("Case Type",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold))),
-                          Expanded(
-                              flex: 1,
-                              child: Text("Status",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold))),
-                          if (_canManageBilling)
-                            const Expanded(
-                                flex: 2,
-                                child: Align(
-                                  alignment: Alignment.center,
-                                  child: Text("Payments",
-                                      style:
-                                          TextStyle(fontWeight: FontWeight.bold)),
-                                )),
-                          Expanded(
-                              flex: 2,
-                              child: Align(
-                                alignment: Alignment.center,
-                                child: Text("Actions",
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                              )),
-                        ],
-                      ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x0D111827),
+                      blurRadius: 24,
+                      offset: Offset(0, 10),
                     ),
-
-                    /// Rows
-                    Expanded(
-                      child: ListView(
-                        children: filteredClients.map((c) {
-                          return clientRow(c);
-                        }).toList(),
-                      ),
-                    )
                   ],
                 ),
+                child: _buildClientContent(isMobile: isMobile),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget clientRow(Map<String, dynamic> client) {
+  Widget _buildClientContent({required bool isMobile}) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_loadError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.cloud_off_outlined,
+                size: 42,
+                color: Color(0xff94A3B8),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _loadError!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xff64748B),
+                  fontSize: 15,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: fetchClients,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return isMobile ? _buildMobileClientTable() : _buildDesktopClientList();
+  }
+
+  Widget _buildDesktopClientList() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 18,
+          ),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xffEEEEEE))),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                  flex: 2,
+                  child:
+                      Text("Name", style: TextStyle(fontWeight: FontWeight.bold))),
+              Expanded(
+                  flex: 2,
+                  child: Text("Contact",
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              Expanded(
+                  flex: 3,
+                  child: Text("Case Type",
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              Expanded(
+                  flex: 1,
+                  child: Text("Status",
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              if (_canManageBilling)
+                const Expanded(
+                    flex: 2,
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text("Payments",
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    )),
+              Expanded(
+                  flex: 3,
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Text("Actions",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  )),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            itemCount: filteredClients.length,
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1, color: Color(0xffF1F5F9)),
+            itemBuilder: (context, index) {
+              return clientRow(filteredClients[index], isMobile: false);
+            },
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildMobileClientList() {
+    if (filteredClients.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            "No clients found",
+            style: TextStyle(color: Color(0xff6B7280), fontSize: 16),
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(14),
+      itemCount: filteredClients.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        return clientRow(filteredClients[index], isMobile: true);
+      },
+    );
+  }
+
+  Widget _buildMobileClientTable() {
+    if (filteredClients.isEmpty) {
+      return _buildMobileClientList();
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Scrollbar(
+          thumbVisibility: true,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.all(14),
+            child: SizedBox(
+              width: _mobileTableWidth,
+              height: constraints.maxHeight - 28,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(color: Colors.white),
+                  child: _buildDesktopClientList(),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget clientRow(Map<String, dynamic> client, {required bool isMobile}) {
+    if (isMobile) {
+      return _buildMobileClientCard(client);
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xffEEEEEE))),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Name
           Expanded(
             flex: 2,
-            child: Text(
-              client["name"]!,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                client["name"]!,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  color: Color(0xff111827),
+                ),
+              ),
             ),
           ),
 
           /// Contact
           Expanded(
             flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  client["email"]!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                Text(
-                  client["phone"]!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    client["email"]!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xff6B7280),
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    client["phone"]!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xff9CA3AF),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
           /// Case Type
           Expanded(
             flex: 3,
-            child: Text(
-              client["caseType"]!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.grey),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2, right: 12),
+              child: Text(
+                client["caseType"]!,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xff6B7280),
+                  fontSize: 14,
+                  height: 1.45,
+                ),
+              ),
             ),
           ),
 
@@ -632,7 +954,7 @@ class _ClientsPageState extends State<ClientsPage> {
                 ],
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                     color: statusColor(client["status"]!).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
@@ -659,13 +981,14 @@ class _ClientsPageState extends State<ClientsPage> {
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.black87,
-                    side: const BorderSide(color: Color(0xffE0A800)),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    side: const BorderSide(color: Color(0xffEAB308)),
+                    backgroundColor: const Color(0xffFFFBEB),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
                     visualDensity: VisualDensity.compact,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   onPressed: () {
@@ -683,96 +1006,424 @@ class _ClientsPageState extends State<ClientsPage> {
               ),
             ),
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Align(
               alignment: Alignment.centerRight,
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                alignment: WrapAlignment.end,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xffE0A800),
-                    foregroundColor: Colors.black,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    visualDensity: VisualDensity.compact,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                  Flexible(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xffE0A800),
+                        foregroundColor: Colors.black,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => SendUpdateDialog(
+                            clientName: client["name"]!,
+                            clientEmail: client["email"]!,
+                          ),
+                        );
+                      },
+                      icon:
+                          const Icon(Icons.send, color: Colors.black, size: 18),
+                      label: const Text(
+                        "Send Update",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                   ),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => SendUpdateDialog(
-                        clientName: client["name"]!,
-                        clientEmail: client["email"]!,
+                  const SizedBox(width: 12),
+                  Tooltip(
+                    message: 'Open WhatsApp',
+                    child: Material(
+                      color: Colors.transparent,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => _openWhatsappChat(client),
+                        child: Container(
+                          width: 42,
+                          height: 42,
+                          alignment: Alignment.center,
+                          child: _buildWhatsappIcon(),
+                        ),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.send, color: Colors.black, size: 18),
-                  label: const Text("Send Update",
-                      style: TextStyle(color: Colors.black)),
-                ),
-
-                /// More Options
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Colors.grey),
-                  onSelected: (value) async {
-                    if (value == "edit") {
-                      final result = await showDialog(
-                        context: context,
-                        builder: (_) => EditClientDialog(client: client),
-                      );
-                      if (result == true) {
-                        fetchClients(); // Refresh after edit
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  PopupMenuButton<String>(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(
+                      Icons.more_vert_rounded,
+                      color: Color(0xff6B7280),
+                    ),
+                    onSelected: (value) async {
+                      if (value == "edit") {
+                        final result = await showDialog(
+                          context: context,
+                          builder: (_) => EditClientDialog(client: client),
+                        );
+                        if (result == true) {
+                          fetchClients(); // Refresh after edit
+                        }
+                      } else if (value == "delete") {
+                        _deleteClient(client);
+                      } else if (value == "notes") {
+                        _showNotesDialog(client);
                       }
-                    } else if (value == "delete") {
-                      _deleteClient(client);
-                    } else if (value == "notes") {
-                      _showNotesDialog(client);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: "edit",
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit, color: Colors.blue),
-                          SizedBox(width: 12),
-                          Text("Edit Client"),
-                        ],
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: "edit",
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, color: Colors.blue),
+                            SizedBox(width: 12),
+                            Text("Edit Client"),
+                          ],
+                        ),
                       ),
-                    ),
-                    const PopupMenuItem(
-                      value: "delete",
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, color: Colors.red),
-                          SizedBox(width: 12),
-                          Text("Delete Client"),
-                        ],
+                      const PopupMenuItem(
+                        value: "delete",
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, color: Colors.red),
+                            SizedBox(width: 12),
+                            Text("Delete Client"),
+                          ],
+                        ),
                       ),
-                    ),
-                    const PopupMenuItem(
-                      value: "notes",
-                      child: Row(
-                        children: [
-                          Icon(Icons.note, color: Colors.blue),
-                          SizedBox(width: 12),
-                          Text("View Notes"),
-                        ],
+                      const PopupMenuItem(
+                        value: "notes",
+                        child: Row(
+                          children: [
+                            Icon(Icons.note, color: Colors.blue),
+                            SizedBox(width: 12),
+                            Text("View Notes"),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 ],
               ),
             ),
           )
         ],
+      ),
+    );
+  }
+
+  Widget _buildMobileClientCard(Map<String, dynamic> client) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xffE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      client["name"]!,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Color(0xff111827),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      client["email"]!,
+                      style: const TextStyle(
+                        color: Color(0xff6B7280),
+                        fontSize: 14,
+                      ),
+                    ),
+                    if ((client["phone"] ?? "").toString().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        client["phone"]!,
+                        style: const TextStyle(
+                          color: Color(0xff9CA3AF),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              PopupMenuButton<String>(
+                padding: EdgeInsets.zero,
+                icon: const Icon(
+                  Icons.more_vert_rounded,
+                  color: Color(0xff6B7280),
+                ),
+                onSelected: (value) async {
+                  if (value == "edit") {
+                      final result = await showDialog(
+                      context: context,
+                      builder: (_) => EditClientDialog(client: client),
+                    );
+                    if (result == true) {
+                      fetchClients();
+                    }
+                  } else if (value == "delete") {
+                    _deleteClient(client);
+                  } else if (value == "notes") {
+                    _showNotesDialog(client);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: "edit",
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, color: Colors.blue),
+                        SizedBox(width: 12),
+                        Text("Edit Client"),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: "delete",
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, color: Colors.red),
+                        SizedBox(width: 12),
+                        Text("Delete Client"),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: "notes",
+                    child: Row(
+                      children: [
+                        Icon(Icons.note, color: Colors.blue),
+                        SizedBox(width: 12),
+                        Text("View Notes"),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            client["caseType"]!,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xff6B7280),
+              fontSize: 14,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _buildStatusChip(client),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xffE0A800),
+                  foregroundColor: Colors.black,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => SendUpdateDialog(
+                      clientName: client["name"]!,
+                      clientEmail: client["email"]!,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.send, color: Colors.black, size: 18),
+                label: const Text(
+                  "Send Update",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (_canManageBilling)
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.black87,
+                    side: const BorderSide(color: Color(0xffEAB308)),
+                    backgroundColor: const Color(0xffFFFBEB),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => ClientPaymentsDialog(client: client),
+                    ).then((_) => fetchClients());
+                  },
+                  icon: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 18,
+                  ),
+                  label: const Text("Payments"),
+                ),
+              Tooltip(
+                message: 'Open WhatsApp',
+                child: Material(
+                  color: Colors.transparent,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => _openWhatsappChat(client),
+                    child: SizedBox(
+                      width: 42,
+                      height: 42,
+                      child: Center(child: _buildWhatsappIcon()),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(Map<String, dynamic> client) {
+    return PopupMenuButton<String>(
+      onSelected: (newStatus) async {
+        final clientId = client["id"];
+        final url = await _authorizedUri("/clients/$clientId");
+
+        try {
+          final response = await http.put(
+            url,
+            headers: {
+              ...await _authHeaders(),
+              "Content-Type": "application/json",
+            },
+            body: jsonEncode(buildClientPayload(
+              name: client["name"],
+              email: client["email"],
+              phone: client["phone"],
+              age: client["age"] ?? "",
+              occupation: client["occupation"] ?? "",
+              address: client["address"] ?? "",
+              panNumber: client["panNumber"] ?? "",
+              aadharNumber: client["aadharNumber"] ?? "",
+              feeAmount: (client["feeAmount"] ?? 0).toString(),
+              caseType: client["caseType"],
+              status: newStatus,
+              notes: client["notes"] ?? "",
+            )),
+          );
+
+          if (response.statusCode == 200) {
+            fetchClients();
+          } else {
+            _showErrorSnackBar("Failed to update status");
+          }
+        } catch (e) {
+          _showErrorSnackBar("Error: $e");
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: "Active",
+          child: Row(
+            children: [
+              Icon(Icons.circle, color: Colors.green, size: 16),
+              SizedBox(width: 8),
+              Text("Active"),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: "Pending",
+          child: Row(
+            children: [
+              Icon(Icons.circle, color: Colors.orange, size: 16),
+              SizedBox(width: 8),
+              Text("Pending"),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: "Closed",
+          child: Row(
+            children: [
+              Icon(Icons.circle, color: Colors.grey, size: 16),
+              SizedBox(width: 8),
+              Text("Closed"),
+            ],
+          ),
+        ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: statusColor(client["status"]!).withOpacity(0.15),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          client["status"]!,
+          style: TextStyle(
+            color: statusColor(client["status"]!),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }
@@ -880,8 +1531,8 @@ class _EditClientDialogState extends State<EditClientDialog> {
       final username = await SessionService.getLoggedInUsername();
       final firmName = await SessionService.getFirmName();
       final response = await http.put(
-        Uri.parse("$baseUrl/clients/${widget.client["id"]}")
-            .replace(queryParameters: {'username': username, 'firm_name': firmName}),
+        Uri.parse("$baseUrl/clients/${widget.client["id"]}").replace(
+            queryParameters: {'username': username, 'firm_name': firmName}),
         headers: {
           "Content-Type": "application/json",
           "X-Username": username,
@@ -921,10 +1572,14 @@ class _EditClientDialogState extends State<EditClientDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final dialogWidth = MediaQuery.of(context).size.width < 600
+        ? MediaQuery.of(context).size.width - 32
+        : 520.0;
+    final isCompact = _isCompactClientLayout(context);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        width: 520,
+        width: dialogWidth,
         padding: const EdgeInsets.all(24),
         child: SingleChildScrollView(
           child: Form(
@@ -933,7 +1588,11 @@ class _EditClientDialogState extends State<EditClientDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header with title and close button
-                Row(
+                Flex(
+                  direction: isCompact ? Axis.vertical : Axis.horizontal,
+                  crossAxisAlignment: isCompact
+                      ? CrossAxisAlignment.start
+                      : CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
@@ -941,9 +1600,18 @@ class _EditClientDialogState extends State<EditClientDialog> {
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
+                    SizedBox(
+                      width: isCompact ? 0 : 12,
+                      height: isCompact ? 8 : 0,
+                    ),
+                    Align(
+                      alignment: isCompact
+                          ? Alignment.centerRight
+                          : Alignment.center,
+                      child: IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
                     ),
                   ],
                 ),
@@ -971,37 +1639,31 @@ class _EditClientDialogState extends State<EditClientDialog> {
                 const SizedBox(height: 12),
 
                 // Email and Phone (side by side)
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          labelText: "Email",
-                          hintText: "email@example.com",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        validator: (value) => value == null || value.isEmpty
-                            ? "Email is required"
-                            : null,
+                _buildResponsiveFieldsRow(
+                  context,
+                  first: TextFormField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: "Email",
+                      hintText: "email@example.com",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _phoneController,
-                        decoration: InputDecoration(
-                          labelText: "Phone",
-                          hintText: "+91 98765 43210",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
+                    validator: (value) => value == null || value.isEmpty
+                        ? "Email is required"
+                        : null,
+                  ),
+                  second: TextFormField(
+                    controller: _phoneController,
+                    decoration: InputDecoration(
+                      labelText: "Phone",
+                      hintText: "+91 98765 43210",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                  ],
+                  ),
                 ),
                 const SizedBox(height: 12),
 
@@ -1043,34 +1705,28 @@ class _EditClientDialogState extends State<EditClientDialog> {
                 ),
                 const SizedBox(height: 12),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _panNumberController,
-                        decoration: InputDecoration(
-                          labelText: "PAN Number",
-                          hintText: "e.g. ABCDE1234F",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
+                _buildResponsiveFieldsRow(
+                  context,
+                  first: TextFormField(
+                    controller: _panNumberController,
+                    decoration: InputDecoration(
+                      labelText: "PAN Number",
+                      hintText: "e.g. ABCDE1234F",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _aadharNumberController,
-                        decoration: InputDecoration(
-                          labelText: "Aadhar Number",
-                          hintText: "Enter Aadhar number",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
+                  ),
+                  second: TextFormField(
+                    controller: _aadharNumberController,
+                    decoration: InputDecoration(
+                      labelText: "Aadhar Number",
+                      hintText: "Enter Aadhar number",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                  ],
+                  ),
                 ),
                 const SizedBox(height: 12),
 
@@ -1152,14 +1808,13 @@ class _EditClientDialogState extends State<EditClientDialog> {
                 const SizedBox(height: 20),
 
                 // Action buttons (Cancel / Save)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                _buildResponsiveActionRow(
+                  context,
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
                       child: const Text("Cancel"),
                     ),
-                    const SizedBox(width: 12),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xffE0A800),
@@ -1222,25 +1877,39 @@ class _AddClientDialogState extends State<AddClientDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final dialogWidth = MediaQuery.of(context).size.width < 600
+        ? MediaQuery.of(context).size.width - 32
+        : 520.0;
+    final isCompact = _isCompactClientLayout(context);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        width: 520,
+        width: dialogWidth,
         padding: const EdgeInsets.all(24),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               /// Header
-              Row(
+              Flex(
+                direction: isCompact ? Axis.vertical : Axis.horizontal,
+                crossAxisAlignment: isCompact
+                    ? CrossAxisAlignment.start
+                    : CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text("Add New Client",
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close))
+                  SizedBox(width: isCompact ? 0 : 12, height: isCompact ? 8 : 0),
+                  Align(
+                    alignment: isCompact
+                        ? Alignment.centerRight
+                        : Alignment.center,
+                    child: IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close)),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
@@ -1265,32 +1934,26 @@ class _AddClientDialogState extends State<AddClientDialog> {
               const SizedBox(height: 12),
 
               /// Email + Phone
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: emailController,
-                      decoration: InputDecoration(
-                        labelText: "Email",
-                        hintText: "email@example.com",
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
+              _buildResponsiveFieldsRow(
+                context,
+                first: TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    labelText: "Email",
+                    hintText: "email@example.com",
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: phoneController,
-                      decoration: InputDecoration(
-                        labelText: "Phone",
-                        hintText: "+91 98765 43210",
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
+                ),
+                second: TextField(
+                  controller: phoneController,
+                  decoration: InputDecoration(
+                    labelText: "Phone",
+                    hintText: "+91 98765 43210",
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                ],
+                ),
               ),
 
               const SizedBox(height: 12),
@@ -1333,32 +1996,26 @@ class _AddClientDialogState extends State<AddClientDialog> {
 
               const SizedBox(height: 12),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: panNumberController,
-                      decoration: InputDecoration(
-                        labelText: "PAN Number",
-                        hintText: "e.g. ABCDE1234F",
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
+              _buildResponsiveFieldsRow(
+                context,
+                first: TextField(
+                  controller: panNumberController,
+                  decoration: InputDecoration(
+                    labelText: "PAN Number",
+                    hintText: "e.g. ABCDE1234F",
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: aadharNumberController,
-                      decoration: InputDecoration(
-                        labelText: "Aadhar Number",
-                        hintText: "Enter Aadhar number",
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
+                ),
+                second: TextField(
+                  controller: aadharNumberController,
+                  decoration: InputDecoration(
+                    labelText: "Aadhar Number",
+                    hintText: "Enter Aadhar number",
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                ],
+                ),
               ),
 
               const SizedBox(height: 12),
@@ -1411,13 +2068,12 @@ class _AddClientDialogState extends State<AddClientDialog> {
               const SizedBox(height: 20),
 
               /// Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              _buildResponsiveActionRow(
+                context,
                 children: [
                   TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text("Cancel")),
-                  const SizedBox(width: 12),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xffE0A800),
@@ -1439,7 +2095,10 @@ class _AddClientDialogState extends State<AddClientDialog> {
                       final firmName = await SessionService.getFirmName();
                       final response = await http.post(
                         Uri.parse("${AppConfig.backendBaseUrl}/clients/")
-                            .replace(queryParameters: {'username': username, 'firm_name': firmName}),
+                            .replace(queryParameters: {
+                          'username': username,
+                          'firm_name': firmName
+                        }),
                         headers: {
                           "Content-Type": "application/json",
                           "X-Username": username,
@@ -1577,7 +2236,9 @@ class _ClientPaymentsDialogState extends State<ClientPaymentsDialog> {
               ),
               title: const Text("Edit Total Fee"),
               content: SizedBox(
-                width: 360,
+                width: _isCompactClientLayout(context)
+                    ? MediaQuery.sizeOf(context).width - 72
+                    : 360,
                 child: TextField(
                   controller: controller,
                   autofocus: true,
@@ -1732,11 +2393,18 @@ class _ClientPaymentsDialogState extends State<ClientPaymentsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final dialogWidth = MediaQuery.of(context).size.width < 900
+        ? MediaQuery.of(context).size.width - 24
+        : 820.0;
+    final dialogHeight = MediaQuery.of(context).size.height < 700
+        ? MediaQuery.of(context).size.height - 24
+        : 620.0;
+    final isCompact = _isCompactClientLayout(context, 760);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        width: 820,
-        height: 620,
+        width: dialogWidth,
+        height: dialogHeight,
         padding: const EdgeInsets.all(24),
         child: isLoading
             ? const SizedBox(
@@ -1746,76 +2414,90 @@ class _ClientPaymentsDialogState extends State<ClientPaymentsDialog> {
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Stack(
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Payments - ${widget.client["name"]}",
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                      Padding(
+                        padding: const EdgeInsets.only(right: 40),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Payments - ${widget.client["name"]}",
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "Track fee amount, received payments, and pending balance.",
-                            style: TextStyle(color: Colors.grey.shade600),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xffE0A800),
-                              foregroundColor: Colors.black,
+                            const SizedBox(height: 4),
+                            Text(
+                              "Track fee amount, received payments, and pending balance.",
+                              style: TextStyle(color: Colors.grey.shade600),
                             ),
-                            onPressed: () async {
-                              final result = await showDialog(
-                                context: context,
-                                builder: (_) => AddPaymentDialog(
-                                  clientId: widget.client["id"],
-                                  clientName: widget.client["name"],
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: isCompact ? double.infinity : null,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xffE0A800),
+                                  foregroundColor: Colors.black,
                                 ),
-                              );
+                                onPressed: () async {
+                                  final result = await showDialog(
+                                    context: context,
+                                    builder: (_) => AddPaymentDialog(
+                                      clientId: widget.client["id"],
+                                      clientName: widget.client["name"],
+                                    ),
+                                  );
 
-                              if (result == true) {
-                                await _loadPayments();
-                              }
-                            },
-                            icon: const Icon(Icons.add),
-                            label: const Text("Add Payment"),
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close),
-                          ),
-                        ],
+                                  if (result == true) {
+                                    await _loadPayments();
+                                  }
+                                },
+                                icon: const Icon(Icons.add),
+                                label: const Text("Add Payment"),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
                     children: [
-                      _summaryTile(
-                        "Total Fee",
-                        _currentTotalFee(),
-                        onEdit: isUpdatingFee ? null : _editTotalFee,
-                        showProgress: isUpdatingFee,
+                      SizedBox(
+                        width: isCompact ? dialogWidth - 48 : (dialogWidth - 72) / 3,
+                        child: _summaryTile(
+                          "Total Fee",
+                          _currentTotalFee(),
+                          onEdit: isUpdatingFee ? null : _editTotalFee,
+                          showProgress: isUpdatingFee,
+                        ),
                       ),
-                      const SizedBox(width: 12),
-                      _summaryTile(
-                        "Received",
-                        data?["summary"]?["total_received"] ?? 0,
+                      SizedBox(
+                        width: isCompact ? dialogWidth - 48 : (dialogWidth - 72) / 3,
+                        child: _summaryTile(
+                          "Received",
+                          data?["summary"]?["total_received"] ?? 0,
+                        ),
                       ),
-                      const SizedBox(width: 12),
-                      _summaryTile(
-                        "Pending",
-                        data?["summary"]?["pending_amount"] ?? 0,
+                      SizedBox(
+                        width: isCompact ? dialogWidth - 48 : (dialogWidth - 72) / 3,
+                        child: _summaryTile(
+                          "Pending",
+                          data?["summary"]?["pending_amount"] ?? 0,
+                        ),
                       ),
                     ],
                   ),
@@ -1849,11 +2531,102 @@ class _ClientPaymentsDialogState extends State<ClientPaymentsDialog> {
                         return ListView.separated(
                           shrinkWrap: true,
                           itemCount: payments.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          separatorBuilder: (_, __) =>
+                              isCompact
+                                  ? const SizedBox(height: 10)
+                                  : const Divider(height: 1),
                           itemBuilder: (context, index) {
                             final payment = Map<String, dynamic>.from(
                               payments[index],
                             );
+                            final mobileDetails = [
+                              payment["payment_date"] ?? "",
+                              payment["payment_mode"] ?? "",
+                              payment["notes"] ?? "",
+                            ]
+                                .where(
+                                  (item) => item.toString().trim().isNotEmpty,
+                                )
+                                .join("  •  ");
+
+                            if (isCompact) {
+                              return Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(0xffE5E7EB),
+                                  ),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: const Color(
+                                        0xffE0A800,
+                                      ).withOpacity(0.18),
+                                      child: const Icon(
+                                        Icons.payments_outlined,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            _formatCurrency(payment["amount"]),
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          if (mobileDetails.isNotEmpty) ...[
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              mobileDetails,
+                                              style: const TextStyle(
+                                                color: Color(0xff475569),
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      tooltip: "Delete payment",
+                                      onPressed: () async {
+                                        try {
+                                          await _deletePayment(
+                                            payment["id"] as int,
+                                          );
+                                        } catch (e) {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  "Unable to delete payment: $e",
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
                             return ListTile(
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -1873,7 +2646,10 @@ class _ClientPaymentsDialogState extends State<ClientPaymentsDialog> {
                                   payment["payment_date"] ?? "",
                                   payment["payment_mode"] ?? "",
                                   payment["notes"] ?? "",
-                                ].where((item) => item.toString().trim().isNotEmpty).join("  •  "),
+                                ]
+                                    .where((item) =>
+                                        item.toString().trim().isNotEmpty)
+                                    .join("  •  "),
                               ),
                               trailing: IconButton(
                                 tooltip: "Delete payment",
@@ -1882,10 +2658,11 @@ class _ClientPaymentsDialogState extends State<ClientPaymentsDialog> {
                                     await _deletePayment(payment["id"] as int);
                                   } catch (e) {
                                     if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         SnackBar(
-                                          content:
-                                              Text("Unable to delete payment: $e"),
+                                          content: Text(
+                                              "Unable to delete payment: $e"),
                                         ),
                                       );
                                     }
@@ -2011,10 +2788,14 @@ class _AddPaymentDialogState extends State<AddPaymentDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final dialogWidth = MediaQuery.of(context).size.width < 560
+        ? MediaQuery.of(context).size.width - 32
+        : 480.0;
+    final isCompact = _isCompactClientLayout(context);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        width: 480,
+        width: dialogWidth,
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -2038,10 +2819,14 @@ class _AddPaymentDialogState extends State<AddPaymentDialog> {
               ),
             ),
             const SizedBox(height: 12),
-            Row(
+            Flex(
+              direction: isCompact ? Axis.vertical : Axis.horizontal,
+              crossAxisAlignment: isCompact
+                  ? CrossAxisAlignment.stretch
+                  : CrossAxisAlignment.center,
               children: [
-                Expanded(
-                  child: TextField(
+                if (isCompact)
+                  TextField(
                     controller: dateController,
                     readOnly: true,
                     decoration: InputDecoration(
@@ -2050,9 +2835,21 @@ class _AddPaymentDialogState extends State<AddPaymentDialog> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
+                  )
+                else
+                  Expanded(
+                    child: TextField(
+                      controller: dateController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: "Payment Date",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
+                SizedBox(width: isCompact ? 0 : 12, height: isCompact ? 12 : 0),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey.shade200,
@@ -2097,14 +2894,13 @@ class _AddPaymentDialogState extends State<AddPaymentDialog> {
               ),
             ),
             const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            _buildResponsiveActionRow(
+              context,
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text("Cancel"),
                 ),
-                const SizedBox(width: 12),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xffE0A800),
@@ -2144,6 +2940,13 @@ class _SendUpdateDialogState extends State<SendUpdateDialog> {
   final subjectController = TextEditingController();
   final messageController = TextEditingController();
 
+  @override
+  void dispose() {
+    subjectController.dispose();
+    messageController.dispose();
+    super.dispose();
+  }
+
   Future<void> sendUpdate() async {
     if (subjectController.text.isEmpty || messageController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2155,57 +2958,74 @@ class _SendUpdateDialogState extends State<SendUpdateDialog> {
     setState(() => isLoading = true);
 
     try {
-      final response = await http.post(
-        Uri.parse("${AppConfig.backendBaseUrl}/send-update"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": widget.clientEmail,
-          "subject": subjectController.text,
-          "message": messageController.text,
-        }),
+      final mailUri = Uri(
+        scheme: 'mailto',
+        path: widget.clientEmail,
+        queryParameters: {
+          'subject': subjectController.text.trim(),
+          'body': messageController.text.trim(),
+        },
+      );
+      final launched = await launchUrl(
+        mailUri,
+        mode: LaunchMode.externalApplication,
       );
 
+      if (!mounted) return;
       setState(() => isLoading = false);
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Email sent successfully")),
-        );
+      if (launched) {
         Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Server error: ${response.body}")),
+          const SnackBar(
+            content: Text("No email app was available to open this draft."),
+          ),
         );
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to send email: $e")),
+        SnackBar(content: Text("Failed to open email draft: $e")),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final dialogWidth = MediaQuery.of(context).size.width < 580
+        ? MediaQuery.of(context).size.width - 32
+        : 500.0;
+    final isCompact = _isCompactClientLayout(context);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        width: 500,
+        width: dialogWidth,
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// Header
-            Row(
+            Flex(
+              direction: isCompact ? Axis.vertical : Axis.horizontal,
+              crossAxisAlignment: isCompact
+                  ? CrossAxisAlignment.start
+                  : CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text("Send Update to ${widget.clientName}",
                     style: const TextStyle(
                         fontSize: 20, fontWeight: FontWeight.bold)),
-                IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close))
+                SizedBox(width: isCompact ? 0 : 12, height: isCompact ? 8 : 0),
+                Align(
+                  alignment:
+                      isCompact ? Alignment.centerRight : Alignment.center,
+                  child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close)),
+                ),
               ],
             ),
 
@@ -2251,13 +3071,12 @@ class _SendUpdateDialogState extends State<SendUpdateDialog> {
             const SizedBox(height: 24),
 
             /// Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            _buildResponsiveActionRow(
+              context,
               children: [
                 TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text("Cancel")),
-                const SizedBox(width: 12),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xffE0A800),

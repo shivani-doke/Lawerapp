@@ -192,6 +192,8 @@ class DynamicDocumentForm extends StatelessWidget {
 
   bool _usesChoiceState(String type) => type == 'dropdown' || type == 'radio';
 
+  static const double _compactFormBreakpoint = 640;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -227,6 +229,7 @@ class DynamicDocumentForm extends StatelessWidget {
             ? currentValue
             : (items.isNotEmpty ? items.first.value : null);
         input = DropdownButtonFormField<String>(
+          isExpanded: true,
           value: value,
           items: items,
           onChanged: (selected) {
@@ -432,6 +435,7 @@ class DynamicDocumentForm extends StatelessWidget {
               ? currentValue
               : (items.isNotEmpty ? items.first.value : null);
           input = DropdownButtonFormField<String>(
+            isExpanded: true,
             value: value,
             items: items,
             onChanged: (selected) {
@@ -612,95 +616,159 @@ class DynamicDocumentForm extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xfffcfcfd),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    field.required ? '${field.label} *' : field.label,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                if (field.repeatable)
-                  TextButton.icon(
-                    onPressed: field.maxItems != null &&
-                            controllerRows.length >= field.maxItems!
-                        ? null
-                        : () => onAddGroupRow(field),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add'),
-                  ),
-              ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < _compactFormBreakpoint;
+
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xfffcfcfd),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade300),
             ),
-            const SizedBox(height: 12),
-            ...List.generate(controllerRows.length, (rowIndex) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Flex(
+                  direction: isCompact ? Axis.vertical : Axis.horizontal,
+                  crossAxisAlignment: isCompact
+                      ? CrossAxisAlignment.stretch
+                      : CrossAxisAlignment.center,
                   children: [
-                    if (field.repeatable || controllerRows.length > 1)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${field.label} ${rowIndex + 1}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                if (buildGroupRowHeader != null)
-                                  ...[
-                                    const SizedBox(height: 4),
-                                    buildGroupRowHeader!(
-                                          context,
-                                          field,
-                                          rowIndex,
-                                        ) ??
-                                        const SizedBox.shrink(),
-                                  ],
-                              ],
-                            ),
+                    if (!isCompact)
+                      Expanded(
+                        child: Text(
+                          field.required ? '${field.label} *' : field.label,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                           ),
-                          if (controllerRows.length > 1)
-                            IconButton(
-                              onPressed: () => onRemoveGroupRow(field, rowIndex),
-                              icon: const Icon(Icons.delete_outline),
-                              tooltip: 'Remove',
-                            ),
-                        ],
+                        ),
+                      )
+                    else
+                      Text(
+                        field.required ? '${field.label} *' : field.label,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ...field.fields.map(
-                      (subField) => buildSubField(subField, rowIndex),
-                    ),
+                    if (field.repeatable) ...[
+                      if (isCompact) const SizedBox(height: 10),
+                      if (!isCompact) const SizedBox(width: 12),
+                      Align(
+                        alignment: isCompact
+                            ? Alignment.centerLeft
+                            : Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: field.maxItems != null &&
+                                  controllerRows.length >= field.maxItems!
+                              ? null
+                              : () => onAddGroupRow(field),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add'),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-              );
-            }),
-          ],
-        ),
+                const SizedBox(height: 12),
+                ...List.generate(controllerRows.length, (rowIndex) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (field.repeatable || controllerRows.length > 1)
+                          Flex(
+                            direction: isCompact ? Axis.vertical : Axis.horizontal,
+                            crossAxisAlignment: isCompact
+                                ? CrossAxisAlignment.stretch
+                                : CrossAxisAlignment.start,
+                            children: [
+                              if (!isCompact)
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${field.label} ${rowIndex + 1}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (buildGroupRowHeader != null)
+                                        ...[
+                                          const SizedBox(height: 4),
+                                          buildGroupRowHeader!(
+                                                context,
+                                                field,
+                                                rowIndex,
+                                              ) ??
+                                              const SizedBox.shrink(),
+                                        ],
+                                    ],
+                                  ),
+                                )
+                              else
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${field.label} ${rowIndex + 1}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    if (buildGroupRowHeader != null)
+                                      ...[
+                                        const SizedBox(height: 4),
+                                        buildGroupRowHeader!(
+                                              context,
+                                              field,
+                                              rowIndex,
+                                            ) ??
+                                            const SizedBox.shrink(),
+                                      ],
+                                  ],
+                                ),
+                              if (controllerRows.length > 1) ...[
+                                if (isCompact) const SizedBox(height: 8),
+                                if (!isCompact) const SizedBox(width: 8),
+                                Align(
+                                  alignment: isCompact
+                                      ? Alignment.centerRight
+                                      : Alignment.topRight,
+                                  child: IconButton(
+                                    onPressed: () =>
+                                        onRemoveGroupRow(field, rowIndex),
+                                    icon: const Icon(Icons.delete_outline),
+                                    tooltip: 'Remove',
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ...field.fields.map(
+                          (subField) => buildSubField(subField, rowIndex),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

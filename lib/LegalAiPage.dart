@@ -94,98 +94,149 @@ class _LegalAIPageState extends State<LegalAIPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.of(context).size.width < 640;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
       body: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(isCompact: isCompact),
           Expanded(
-            child: _messages.isEmpty ? _buildWelcome() : _buildMessages(),
+            child: _messages.isEmpty
+                ? _buildWelcome(isCompact: isCompact)
+                : _buildMessages(isCompact: isCompact),
           ),
-          _buildInputBar(),
+          _buildInputBar(isCompact: isCompact),
         ],
       ),
     );
   }
 
   // =================== HEADER ===================
-  Widget _buildHeader() {
+  Widget _buildHeader({bool isCompact = false}) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isCompact ? 16 : 20),
       alignment: Alignment.centerLeft,
-      child: const Text(
+      child: Text(
         "Legal AI Assistant",
-        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          fontSize: isCompact ? 20 : 22,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
 
   // =================== EMPTY CHAT (WELCOME) ===================
-  Widget _buildWelcome() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1F2A44),
-              shape: BoxShape.circle,
+  Widget _buildWelcome({bool isCompact = false}) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        isCompact ? 16 : 24,
+        12,
+        isCompact ? 16 : 24,
+        24,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(isCompact ? 18 : 20),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1F2A44),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.auto_awesome,
+                color: Colors.amber,
+                size: isCompact ? 34 : 40,
+              ),
             ),
-            child:
-                const Icon(Icons.auto_awesome, color: Colors.amber, size: 40),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "How can I help you today?",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "Ask me about Indian laws, recent court rulings, legal procedures, and updates from trusted legal sources.",
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 30),
-          Wrap(
-            spacing: 15,
-            runSpacing: 15,
-            children: [
-              _suggestionCard("Recent legal updates from Indian courts"),
-              _suggestionCard(
-                  "Summarize the recent judgement from Supreme Court Cases Online"),
-              _suggestionCard(
-                  "Explain Section 138 of the Negotiable Instruments Act"),
-              _suggestionCard("Explain the recent High Court ruling in India"),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "Powered by trusted legal sources ",
-            style: TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Text(
+              "How can I help you today?",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: isCompact ? 18 : 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Text(
+                "Ask me about Indian laws, recent court rulings, legal procedures, and updates from trusted legal sources.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: isCompact ? 13 : 14,
+                ),
+              ),
+            ),
+            SizedBox(height: isCompact ? 22 : 30),
+            Wrap(
+              spacing: 15,
+              runSpacing: 15,
+              children: [
+                _suggestionCard(
+                  "Recent legal updates from Indian courts",
+                  isCompact: isCompact,
+                ),
+                _suggestionCard(
+                  "Summarize the recent judgement from Supreme Court Cases Online",
+                  isCompact: isCompact,
+                ),
+                _suggestionCard(
+                  "Explain Section 138 of the Negotiable Instruments Act",
+                  isCompact: isCompact,
+                ),
+                _suggestionCard(
+                  "Explain the recent High Court ruling in India",
+                  isCompact: isCompact,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "Powered by trusted legal sources ",
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: isCompact ? 11 : 12,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // =================== SUGGESTION CARD (Interactive) ===================
-  Widget _suggestionCard(String text) {
+  Widget _suggestionCard(String text, {bool isCompact = false}) {
     return InkWell(
       onTap: () => _sendMessage(text),
       child: Container(
-        width: 300,
-        padding: const EdgeInsets.all(16),
+        width: isCompact ? double.infinity : 300,
+        constraints: isCompact ? const BoxConstraints(maxWidth: 520) : null,
+        padding: EdgeInsets.all(isCompact ? 14 : 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey.shade300),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Icon(Icons.lightbulb_outline, color: Colors.amber),
             const SizedBox(width: 10),
-            Expanded(child: Text(text)),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(fontSize: isCompact ? 13 : 14),
+              ),
+            ),
           ],
         ),
       ),
@@ -193,10 +244,10 @@ class _LegalAIPageState extends State<LegalAIPage> {
   }
 
   // =================== MESSAGES LIST ===================
-  Widget _buildMessages() {
+  Widget _buildMessages({bool isCompact = false}) {
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isCompact ? 12 : 20),
       itemCount: _messages.length + (_isLoading ? 1 : 0),
       itemBuilder: (context, index) {
         // Loading indicator at the end
@@ -215,8 +266,10 @@ class _LegalAIPageState extends State<LegalAIPage> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isCompact ? 14 : 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -243,8 +296,11 @@ class _LegalAIPageState extends State<LegalAIPage> {
         // User messages: no avatar
         if (isUser) {
           Widget messageContent = Container(
-            padding: const EdgeInsets.all(14),
-            constraints: const BoxConstraints(maxWidth: 500),
+            padding: EdgeInsets.all(isCompact ? 12 : 14),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width *
+                  (isCompact ? 0.82 : 0.62),
+            ),
             decoration: BoxDecoration(
               color: Colors.amber[300],
               borderRadius: BorderRadius.only(
@@ -264,7 +320,10 @@ class _LegalAIPageState extends State<LegalAIPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(message["text"] ?? ""),
+                Text(
+                  message["text"] ?? "",
+                  style: TextStyle(fontSize: isCompact ? 13 : 14),
+                ),
                 const SizedBox(height: 5),
                 Text(
                   _formatTimestamp(timestamp),
@@ -290,20 +349,25 @@ class _LegalAIPageState extends State<LegalAIPage> {
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.75,
+                maxWidth: MediaQuery.of(context).size.width *
+                    (isCompact ? 0.9 : 0.75),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CircleAvatar(
-                    radius: 16,
+                  CircleAvatar(
+                    radius: isCompact ? 14 : 16,
                     backgroundColor: Color(0xFF1F2A44),
-                    child: Icon(Icons.gavel, size: 16, color: Colors.white),
+                    child: Icon(
+                      Icons.gavel,
+                      size: isCompact ? 14 : 16,
+                      color: Colors.white,
+                    ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: isCompact ? 8 : 10),
                   Flexible(
                     child: Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: EdgeInsets.all(isCompact ? 12 : 14),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -322,7 +386,7 @@ class _LegalAIPageState extends State<LegalAIPage> {
                             data: message["text"] ?? "",
                             selectable: true,
                             styleSheet: MarkdownStyleSheet(
-                              p: const TextStyle(fontSize: 14),
+                              p: TextStyle(fontSize: isCompact ? 13 : 14),
                               strong:
                                   const TextStyle(fontWeight: FontWeight.bold),
                             ),
@@ -377,9 +441,12 @@ class _LegalAIPageState extends State<LegalAIPage> {
     }
   }
 
-  Widget _buildInputBar() {
+  Widget _buildInputBar({bool isCompact = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 12 : 15,
+        vertical: isCompact ? 8 : 10,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -389,33 +456,45 @@ class _LegalAIPageState extends State<LegalAIPage> {
           )
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                hintText: "Ask a legal question...",
-                filled: true,
-                fillColor: const Color(0xFFF1F3F6),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                minLines: 1,
+                maxLines: isCompact ? 4 : 5,
+                decoration: InputDecoration(
+                  hintText: "Ask a legal question...",
+                  filled: true,
+                  fillColor: const Color(0xFFF1F3F6),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: isCompact ? 16 : 20,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-          CircleAvatar(
-            backgroundColor: Colors.amber,
-            child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white),
-              onPressed: () => _sendMessage(),
+            const SizedBox(width: 10),
+            CircleAvatar(
+              radius: isCompact ? 22 : 24,
+              backgroundColor: Colors.amber,
+              child: IconButton(
+                icon: Icon(
+                  Icons.send,
+                  color: Colors.white,
+                  size: isCompact ? 18 : 20,
+                ),
+                onPressed: () => _sendMessage(),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

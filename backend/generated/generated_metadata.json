@@ -1520,5 +1520,113 @@
     "line_spacing": 1.5,
     "hidden_from_dashboard": true,
     "source": "edit_document"
+  },
+  "fmayuri_97d1b0a5.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-29T17:24:15.251174",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "fmayuri_97d1b0a5.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-29T17:24:15.251174",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "fmayuri_97d1b0a5.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-29T17:24:15.251174",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "fmayuri_72a5e864.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-30T15:48:15.123806",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "fmayuri_72a5e864.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-30T15:48:15.123806",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "fmayuri_72a5e864.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-30T15:48:15.123806",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "Client_offer_letter_20260430_155506_generated.editor.html": {
+    "owner_username": "Admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-30T15:56:56.129456",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0
+  },
+  "fmayuri_72a5e864_911b52fb.docx": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-30T17:58:10.793526",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "fmayuri_72a5e864_911b52fb.pdf": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-30T17:58:10.793526",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
+  },
+  "fmayuri_72a5e864_911b52fb.editor.html": {
+    "owner_username": "admin",
+    "firm_id": 1,
+    "firm_name": "Default Firm",
+    "timestamp": "2026-04-30T17:58:10.793526",
+    "font_family": "Times New Roman",
+    "font_size": 14,
+    "line_spacing": 1.0,
+    "hidden_from_dashboard": true,
+    "source": "edit_document"
   }
 }

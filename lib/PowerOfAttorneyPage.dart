@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'web_preview_iframe_stub.dart'
     if (dart.library.html) 'web_preview_iframe_web.dart' as web_preview;
+import 'widgets/responsive_document_layout.dart';
 
 // Simple model for a dynamic document field
 class DocumentField {
@@ -439,7 +440,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                                   title: Text(clientName),
                                   subtitle: subtitleParts.isEmpty
                                       ? null
-                                      : Text(subtitleParts.join(' • ')),
+                                      : Text(subtitleParts.join(' � ')),
                                   trailing: isAssignedElsewhere
                                       ? const Icon(Icons.block, color: Colors.grey)
                                       : const Icon(Icons.chevron_right),
@@ -1173,10 +1174,12 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
   Widget _buildDocumentLayoutSettings() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 720;
+
+          Widget buildPaperSizeField() {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Paper Size:'),
@@ -1202,11 +1205,11 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                   ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+            );
+          }
+
+          Widget buildLineSpacingField() {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Line Spacing:'),
@@ -1232,11 +1235,11 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                   ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+            );
+          }
+
+          Widget buildMarginField() {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Margin:'),
@@ -1262,9 +1265,33 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
+            );
+          }
+
+          if (isCompact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                buildPaperSizeField(),
+                const SizedBox(height: 12),
+                buildLineSpacingField(),
+                const SizedBox(height: 12),
+                buildMarginField(),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: buildPaperSizeField()),
+              const SizedBox(width: 12),
+              Expanded(child: buildLineSpacingField()),
+              const SizedBox(width: 12),
+              Expanded(child: buildMarginField()),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1286,15 +1313,8 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xfff5f6f8),
-      padding: const EdgeInsets.all(30),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Container(
+    return ResponsiveDocumentLayout(
+      leftPanel: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -1375,34 +1395,57 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                         const SizedBox(height: 16),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _pickFile,
-                                icon: const Icon(Icons.attach_file),
-                                label: Text(
-                                  _referenceFile != null
-                                      ? 'File: ${_referenceFile!.name}'
-                                      : 'Upload New Reference Document',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  side: BorderSide(color: accentColor, width: 1.5),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  foregroundColor: accentColor,
-                                ),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isCompact = constraints.maxWidth < 560;
+
+                            final uploadButton = OutlinedButton.icon(
+                              onPressed: _pickFile,
+                              icon: const Icon(Icons.attach_file),
+                              label: Text(
+                                _referenceFile != null
+                                    ? 'File: ${_referenceFile!.name}'
+                                    : 'Upload New Reference Document',
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                            if (_referenceFile != null)
-                              IconButton(
-                                icon: const Icon(Icons.close),
-                                onPressed: _clearFile,
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                side: BorderSide(color: accentColor, width: 1.5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                foregroundColor: accentColor,
                               ),
-                          ],
+                            );
+
+                            final clearButton = _referenceFile == null
+                                ? null
+                                : IconButton(
+                                    icon: const Icon(Icons.close),
+                                    onPressed: _clearFile,
+                                  );
+
+                            if (isCompact) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  uploadButton,
+                                  if (clearButton != null)
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: clearButton,
+                                    ),
+                                ],
+                              );
+                            }
+
+                            return Row(
+                              children: [
+                                Expanded(child: uploadButton),
+                                if (clearButton != null) clearButton,
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -1418,17 +1461,21 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                       ..._buildVisibleFields(),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Row(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            const Text('Document Format:'),
-                            const SizedBox(width: 16),
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8),
+                              child: Text('Document Format:'),
+                            ),
                             ChoiceChip(
                               label: const Text('Table Format'),
                               selected: _useTableFormat,
                               onSelected: (selected) =>
                                   setState(() => _useTableFormat = selected),
                             ),
-                            const SizedBox(width: 8),
                             ChoiceChip(
                               label: const Text('Blank Template'),
                               selected: !_useTableFormat,
@@ -1440,10 +1487,12 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isCompact = constraints.maxWidth < 720;
+
+                            Widget buildFontFamilyField() {
+                              return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text('Font Family:'),
@@ -1467,11 +1516,11 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                                     ),
                                   ),
                                 ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
+                              );
+                            }
+
+                            Widget buildFontSizeField() {
+                              return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text('Font Size:'),
@@ -1495,9 +1544,29 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                                     ),
                                   ),
                                 ],
-                              ),
-                            ),
-                          ],
+                              );
+                            }
+
+                            if (isCompact) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  buildFontFamilyField(),
+                                  const SizedBox(height: 12),
+                                  buildFontSizeField(),
+                                ],
+                              );
+                            }
+
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: buildFontFamilyField()),
+                                const SizedBox(width: 12),
+                                Expanded(child: buildFontSizeField()),
+                              ],
+                            );
+                          },
                         ),
                       ),
                       _buildDocumentLayoutSettings(),
@@ -1547,11 +1616,7 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 30),
-          Expanded(
-            flex: 2,
-            child: Container(
+      rightPanel: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -1568,9 +1633,6 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
                   ? _buildPlaceholder()
                   : _buildPdfViewer(),
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -2109,93 +2171,119 @@ class _PowerOfAttorneyPageState extends State<PowerOfAttorneyPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Generated Document Preview',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-            if (_generatedPdf != null)
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 560;
+            final actions = <Widget>[
+              if (_generatedPdf != null)
+                IconButton(
+                  tooltip: 'Download PDF',
+                  icon: const Icon(Icons.picture_as_pdf),
+                  onPressed: () async {
+                    await ApiService().downloadGeneratedDocument(_generatedPdf!);
+                  },
+                ),
+              if (_generatedDocx != null)
+                IconButton(
+                  tooltip: 'Download DOCX',
+                  icon: const Icon(Icons.description),
+                  onPressed: () async {
+                    await ApiService().downloadGeneratedDocument(_generatedDocx!);
+                  },
+                ),
+              if (_generatedDocx != null)
+                IconButton(
+                  tooltip: 'Edit document',
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () async {
+                    final wasUpdated = await Navigator.of(context).push<bool>(
+                      MaterialPageRoute(
+                        builder: (_) => GeneratedDocumentEditorPage(
+                          filename: _generatedDocx!,
+                          documentTitle: 'Edit Generated Document',
+                        ),
+                      ),
+                    );
+                    if (wasUpdated == true && mounted) {
+                      setState(() {
+                        _generatedPdfViewUrl = _generatedPdf == null
+                            ? null
+                            : "${ApiService.baseUrl}/view/${_generatedPdf!}?t=${DateTime.now().millisecondsSinceEpoch}";
+                        _generatedPdfViewType = _generatedPdf == null
+                            ? null
+                            : 'generated-preview-${DateTime.now().microsecondsSinceEpoch}';
+                        _pdfLoadFailed = false;
+                      });
+                      if (kIsWeb && _generatedPdfViewUrl != null && _generatedPdfViewType != null) {
+                        web_preview.registerPreviewIframe(
+                          _generatedPdfViewType!,
+                          _generatedPdfViewUrl!,
+                        );
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Document updated successfully.'),
+                        ),
+                      );
+                    }
+                  },
+                ),
               IconButton(
-                tooltip: 'Download PDF',
-                icon: const Icon(Icons.picture_as_pdf),
-                onPressed: () async {
-                  await ApiService().downloadGeneratedDocument(_generatedPdf!);
-                },
-              ),
-            if (_generatedDocx != null)
-              IconButton(
-                tooltip: 'Download DOCX',
-                icon: const Icon(Icons.description),
-                onPressed: () async {
-                  await ApiService().downloadGeneratedDocument(_generatedDocx!);
-                },
-              ),
-            if (_generatedDocx != null)
-              IconButton(
-                tooltip: 'Edit document',
-                icon: const Icon(Icons.edit_outlined),
-                onPressed: () async {
-                  final wasUpdated = await Navigator.of(context).push<bool>(
-                    MaterialPageRoute(
-                      builder: (_) => GeneratedDocumentEditorPage(
-                        filename: _generatedDocx!,
-                        documentTitle: 'Edit Generated Document',
+                tooltip: 'Open large preview',
+                icon: const Icon(Icons.open_in_full),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (dialogContext) => Dialog(
+                      insetPadding: const EdgeInsets.symmetric(horizontal: 80, vertical: 60),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: SizedBox(
+                        width: 900,
+                        height: 650,
+                        child: _GeneratedPreviewDialog(
+                          previewUrl: previewUrl,
+                          accentColor: accentColor,
+                          generatedPdf: _generatedPdf,
+                          generatedDocx: _generatedDocx,
+                        ),
                       ),
                     ),
                   );
-                  if (wasUpdated == true && mounted) {
-                    setState(() {
-                      _generatedPdfViewUrl = _generatedPdf == null
-                          ? null
-                          : "${ApiService.baseUrl}/view/${_generatedPdf!}?t=${DateTime.now().millisecondsSinceEpoch}";
-                      _generatedPdfViewType = _generatedPdf == null
-                          ? null
-                          : 'generated-preview-${DateTime.now().microsecondsSinceEpoch}';
-                      _pdfLoadFailed = false;
-                    });
-                    if (kIsWeb && _generatedPdfViewUrl != null && _generatedPdfViewType != null) {
-                      web_preview.registerPreviewIframe(
-                        _generatedPdfViewType!,
-                        _generatedPdfViewUrl!,
-                      );
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Document updated successfully.'),
-                      ),
-                    );
-                  }
                 },
               ),
-            IconButton(
-              tooltip: 'Open large preview',
-              icon: const Icon(Icons.open_in_full),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (dialogContext) => Dialog(
-                    insetPadding: const EdgeInsets.symmetric(horizontal: 80, vertical: 60),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: SizedBox(
-                      width: 900,
-                      height: 650,
-                      child: _GeneratedPreviewDialog(
-                        previewUrl: previewUrl,
-                        accentColor: accentColor,
-                        generatedPdf: _generatedPdf,
-                        generatedDocx: _generatedDocx,
-                      ),
-                    ),
+            ];
+
+            if (isCompact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Generated Document Preview',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                );
-              },
-            ),
-          ],
+                  const SizedBox(height: 8),
+                  Wrap(
+                    alignment: WrapAlignment.end,
+                    children: actions,
+                  ),
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Generated Document Preview',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ...actions,
+              ],
+            );
+          },
         ),
         const SizedBox(height: 12),
         Expanded(
@@ -2454,14 +2542,10 @@ class _GeneratedPreviewDialogState extends State<_GeneratedPreviewDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Generated Document',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
+          LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 560;
+            final actions = <Widget>[
               if (widget.generatedPdf != null)
                 IconButton(
                   tooltip: 'Download PDF',
@@ -2507,8 +2591,38 @@ class _GeneratedPreviewDialogState extends State<_GeneratedPreviewDialog> {
                 icon: const Icon(Icons.close),
                 tooltip: 'Close',
               ),
-            ],
-          ),
+            ];
+
+            if (isCompact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Generated Document',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    alignment: WrapAlignment.end,
+                    children: actions,
+                  ),
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Generated Document',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ...actions,
+              ],
+            );
+          },
+        ),
           const SizedBox(height: 12),
           Expanded(
             child: Container(
@@ -2577,6 +2691,11 @@ class _GeneratedPreviewDialogState extends State<_GeneratedPreviewDialog> {
     );
   }
 }
+
+
+
+
+
 
 
 

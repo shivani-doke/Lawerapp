@@ -82,6 +82,9 @@ class _RichEditorSurfaceState extends State<RichEditorSurface> {
       ..style.overflowX = 'hidden'
       ..style.backgroundColor = 'transparent';
     _container.style.setProperty('scrollbar-gutter', 'stable');
+    _container.style.setProperty('-webkit-overflow-scrolling', 'touch');
+    _container.style.setProperty('overscroll-behavior', 'contain');
+    _container.style.touchAction = 'pan-y';
     _editor = html.DivElement()
       ..contentEditable = 'true'
       ..tabIndex = 0
@@ -95,8 +98,9 @@ class _RichEditorSurfaceState extends State<RichEditorSurface> {
       ..style.paddingLeft = '24px'
       ..style.paddingRight = '44px'
       ..style.paddingTop = '24px'
-      ..style.paddingBottom = '48px'
+      ..style.paddingBottom = '140px'
       ..style.color = '#111827';
+    _editor.style.touchAction = 'pan-y';
     _container.children.add(_editor);
     _applyEditorSurfaceStyle();
 

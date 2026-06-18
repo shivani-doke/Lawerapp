@@ -20,6 +20,10 @@ class GeneratedDocumentEditorPage extends StatefulWidget {
 
 class _GeneratedDocumentEditorPageState
     extends State<GeneratedDocumentEditorPage> {
+  static const double _compactBreakpoint = 720;
+  static const double _desktopCanvasWidth = 824;
+  static const double _desktopCanvasHeight = 860;
+  static const double _desktopCanvasMinHeight = 980;
   static const List<double> _fontSizes = <double>[
     8,
     9,
@@ -163,7 +167,8 @@ class _GeneratedDocumentEditorPageState
     return textPages.map(_htmlFromPlainText).toList();
   }
 
-  List<String> _buildPlainTextPages(List<String> htmlPages, String fallbackText) {
+  List<String> _buildPlainTextPages(
+      List<String> htmlPages, String fallbackText) {
     final converted = htmlPages.map(_plainTextFromHtml).toList();
     if (converted.every((page) => page.trim().isEmpty) &&
         fallbackText.trim().isNotEmpty) {
@@ -185,9 +190,8 @@ class _GeneratedDocumentEditorPageState
       final paragraph = rawParagraph.trim();
       if (paragraph.isEmpty) continue;
 
-      final nextValue = buffer.isEmpty
-          ? paragraph
-          : '${buffer.toString()}\n\n$paragraph';
+      final nextValue =
+          buffer.isEmpty ? paragraph : '${buffer.toString()}\n\n$paragraph';
       if (nextValue.length > 1800 && buffer.isNotEmpty) {
         pages.add(buffer.toString());
         buffer
@@ -441,6 +445,12 @@ class _GeneratedDocumentEditorPageState
 
   int get _charCount => _pagePlainText.join('\n\n').length;
 
+  bool _isCompactLayout(BuildContext context) =>
+      MediaQuery.sizeOf(context).width < _compactBreakpoint;
+
+  double _pagePadding(BuildContext context) =>
+      _isCompactLayout(context) ? 12 : 20;
+
   Future<void> _saveDocument() async {
     setState(() {
       _isSaving = true;
@@ -517,7 +527,7 @@ class _GeneratedDocumentEditorPageState
       backgroundColor: const Color(0xffF8FAFC),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(_pagePadding(context)),
           child: _buildEditor(),
         ),
       ),
@@ -525,6 +535,7 @@ class _GeneratedDocumentEditorPageState
   }
 
   Widget _buildEditor() {
+    final isCompact = _isCompactLayout(context);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1060),
@@ -543,20 +554,20 @@ class _GeneratedDocumentEditorPageState
           ),
           child: Column(
             children: [
-              _buildHeader(),
+              _buildHeader(isCompact: isCompact),
               const Divider(height: 1),
               _buildToolbar(),
               if (_isFindReplaceOpen) ...[
                 const Divider(height: 1),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-                  child: _buildFindReplaceBar(),
+                  child: _buildFindReplaceBar(isCompact: isCompact),
                 ),
               ],
               const Divider(height: 1),
-              Expanded(child: _buildEditorCanvas()),
+              Expanded(child: _buildEditorCanvas(isCompact: isCompact)),
               const Divider(height: 1),
-              _buildFooter(),
+              _buildFooter(isCompact: isCompact),
             ],
           ),
         ),
@@ -564,53 +575,77 @@ class _GeneratedDocumentEditorPageState
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader({required bool isCompact}) {
+    final titleBlock = Flex(
+      direction: Axis.horizontal,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: const Color(0xffE0E7FF),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.description_outlined,
+            color: Color(0xff4F46E5),
+          ),
+        ),
+        const SizedBox(width: 14),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Document Editor',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xff0F172A),
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Edit text and export as PDF.',
+                style: TextStyle(
+                  color: Color(0xff64748B),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 18, 24, 16),
-      child: Row(
+      padding: EdgeInsets.fromLTRB(
+        isCompact ? 16 : 24,
+        18,
+        isCompact ? 16 : 24,
+        16,
+      ),
+      child: Flex(
+        direction: isCompact ? Axis.vertical : Axis.horizontal,
+        crossAxisAlignment:
+            isCompact ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xffE0E7FF),
-              borderRadius: BorderRadius.circular(12),
+          if (isCompact)
+            titleBlock
+          else
+            Flexible(
+              fit: FlexFit.loose,
+              child: titleBlock,
             ),
-            child: const Icon(
-              Icons.description_outlined,
-              color: Color(0xff4F46E5),
-            ),
-          ),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Document Editor',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xff0F172A),
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Edit text and export as PDF.',
-                  style: TextStyle(
-                    color: Color(0xff64748B),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          SizedBox(width: isCompact ? 0 : 12, height: isCompact ? 14 : 0),
           FilledButton(
             onPressed: _isSaving ? null : _saveDocument,
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xff4F46E5),
               foregroundColor: Colors.white,
               elevation: 0,
+              minimumSize: isCompact ? const Size(double.infinity, 48) : null,
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -861,7 +896,7 @@ class _GeneratedDocumentEditorPageState
     );
   }
 
-  Widget _buildFindReplaceBar() {
+  Widget _buildFindReplaceBar({required bool isCompact}) {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -869,144 +904,253 @@ class _GeneratedDocumentEditorPageState
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xffC7D2FE)),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _findController,
-              decoration: const InputDecoration(
-                hintText: 'Find...',
-                filled: true,
-                fillColor: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Text(
-            '->',
-            style: TextStyle(
-              color: Color(0xff64748B),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: _replaceController,
-              decoration: const InputDecoration(
-                hintText: 'Replace...',
-                filled: true,
-                fillColor: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          FilledButton(
-            onPressed: _replaceAll,
-            child: const Text('Replace All'),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _isFindReplaceOpen = false;
-              });
-            },
-            icon: const Icon(Icons.close),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEditorCanvas() {
-    return Container(
-      color: const Color(0xffF1F5F9),
-      padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              OutlinedButton(
-                onPressed:
-                    _currentPage == 0 ? null : () => _goToPage(_currentPage - 1),
-                child: const Text('Prev'),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Page ${_currentPage + 1} / ${_pageHtml.length}',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton(
-                onPressed: _currentPage == _pageHtml.length - 1
-                    ? null
-                    : () => _goToPage(_currentPage + 1),
-                child: const Text('Next'),
-              ),
-              const Spacer(),
-              OutlinedButton(
-                onPressed: _addPage,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xff4F46E5),
-                  side: const BorderSide(color: Color(0xffC7D2FE)),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
+      child: isCompact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _findController,
+                  decoration: const InputDecoration(
+                    hintText: 'Find...',
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
                 ),
-                child: const Text('+ Add Page'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: _pageHtml.length == 1 ? null : _deletePage,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xffDC2626),
-                  side: const BorderSide(color: Color(0xffFECACA)),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _replaceController,
+                  decoration: const InputDecoration(
+                    hintText: 'Replace...',
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
                 ),
-                child: const Text('- Delete Page'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                child: Container(
-                  width: 824,
-                  constraints: const BoxConstraints(minHeight: 980),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: _margin,
-                    vertical: 24,
+                const SizedBox(height: 10),
+                FilledButton(
+                  onPressed: _replaceAll,
+                  child: const Text('Replace All'),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _isFindReplaceOpen = false;
+                      });
+                    },
+                    icon: const Icon(Icons.close),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(2),
-                    boxShadow: const [
-                      BoxShadow(
-                        blurRadius: 10,
-                        color: Color(0x140F172A),
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: SizedBox(
-                    height: 860,
-                    child: RichEditorSurface(
-                      key: ValueKey(_currentPage),
-                      controller: _editorController,
-                      initialHtml: _pageHtml[_currentPage],
-                      fontFamily: _fontFamily,
-                      fontSize: _fontSize,
-                      lineSpacing: _lineSpacing,
-                      onChanged: _updateCurrentPage,
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _findController,
+                    decoration: const InputDecoration(
+                      hintText: 'Find...',
+                      filled: true,
+                      fillColor: Colors.white,
                     ),
                   ),
                 ),
+                const SizedBox(width: 12),
+                const Text(
+                  '->',
+                  style: TextStyle(
+                    color: Color(0xff64748B),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _replaceController,
+                    decoration: const InputDecoration(
+                      hintText: 'Replace...',
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                FilledButton(
+                  onPressed: _replaceAll,
+                  child: const Text('Replace All'),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _isFindReplaceOpen = false;
+                    });
+                  },
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildEditorCanvas({required bool isCompact}) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final availableCanvasWidth =
+        screenWidth - (_pagePadding(context) * 2) - (isCompact ? 24 : 76);
+    final canvasWidth = isCompact
+        ? availableCanvasWidth.clamp(300.0, _desktopCanvasWidth).toDouble()
+        : _desktopCanvasWidth;
+    final canvasHeight = isCompact
+        ? (canvasWidth * (_desktopCanvasHeight / _desktopCanvasWidth))
+            .clamp(540.0, _desktopCanvasHeight)
+            .toDouble()
+        : _desktopCanvasHeight;
+    final canvasMinHeight = isCompact
+        ? (canvasWidth * (_desktopCanvasMinHeight / _desktopCanvasWidth))
+            .clamp(620.0, _desktopCanvasMinHeight)
+            .toDouble()
+        : _desktopCanvasMinHeight;
+    final editorHeight =
+        isCompact ? canvasMinHeight : canvasHeight;
+    final sidePadding = isCompact ? 12.0 : 18.0;
+
+    return Container(
+      color: const Color(0xffF1F5F9),
+      padding: EdgeInsets.fromLTRB(sidePadding, 14, sidePadding, 10),
+      child: Column(
+        children: [
+          if (isCompact)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    OutlinedButton(
+                      onPressed: _currentPage == 0
+                          ? null
+                          : () => _goToPage(_currentPage - 1),
+                      child: const Text('Prev'),
+                    ),
+                    Text(
+                      'Page ${_currentPage + 1} / ${_pageHtml.length}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    OutlinedButton(
+                      onPressed: _currentPage == _pageHtml.length - 1
+                          ? null
+                          : () => _goToPage(_currentPage + 1),
+                      child: const Text('Next'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                FilledButton.tonal(
+                  onPressed: _addPage,
+                  style: FilledButton.styleFrom(
+                    foregroundColor: const Color(0xff4F46E5),
+                  ),
+                  child: const Text('+ Add Page'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: _pageHtml.length == 1 ? null : _deletePage,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xffDC2626),
+                    side: const BorderSide(color: Color(0xffFECACA)),
+                  ),
+                  child: const Text('- Delete Page'),
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                OutlinedButton(
+                  onPressed: _currentPage == 0
+                      ? null
+                      : () => _goToPage(_currentPage - 1),
+                  child: const Text('Prev'),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Page ${_currentPage + 1} / ${_pageHtml.length}',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton(
+                  onPressed: _currentPage == _pageHtml.length - 1
+                      ? null
+                      : () => _goToPage(_currentPage + 1),
+                  child: const Text('Next'),
+                ),
+                const Spacer(),
+                OutlinedButton(
+                  onPressed: _addPage,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xff4F46E5),
+                    side: const BorderSide(color: Color(0xffC7D2FE)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: const Text('+ Add Page'),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton(
+                  onPressed: _pageHtml.length == 1 ? null : _deletePage,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xffDC2626),
+                    side: const BorderSide(color: Color(0xffFECACA)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: const Text('- Delete Page'),
+                ),
+              ],
+            ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Container(
+                width: canvasWidth,
+                constraints: BoxConstraints(minHeight: canvasMinHeight),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isCompact
+                      ? _margin.clamp(12.0, 18.0).toDouble()
+                      : _margin,
+                  vertical: isCompact ? 18 : 24,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(2),
+                  boxShadow: const [
+                    BoxShadow(
+                      blurRadius: 10,
+                      color: Color(0x140F172A),
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: SizedBox(
+                  height: editorHeight,
+                  child: RichEditorSurface(
+                    key: ValueKey(_currentPage),
+                    controller: _editorController,
+                    initialHtml: _pageHtml[_currentPage],
+                    fontFamily: _fontFamily,
+                    fontSize: _fontSize,
+                    lineSpacing: _lineSpacing,
+                    onChanged: _updateCurrentPage,
+                  ),
+                ),
               ),
             ),
           ),
@@ -1015,10 +1159,13 @@ class _GeneratedDocumentEditorPageState
     );
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter({required bool isCompact}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-      child: Row(
+      child: Flex(
+        direction: isCompact ? Axis.vertical : Axis.horizontal,
+        crossAxisAlignment:
+            isCompact ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           Text(
             'Words: $_wordCount | Chars: $_charCount',
@@ -1092,11 +1239,9 @@ class _GeneratedDocumentEditorPageState
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(30, 32),
           side: BorderSide(
-            color:
-                active ? const Color(0xffA5B4FC) : const Color(0xffCBD5E1),
+            color: active ? const Color(0xffA5B4FC) : const Color(0xffCBD5E1),
           ),
-          backgroundColor:
-              active ? const Color(0xffEEF2FF) : Colors.white,
+          backgroundColor: active ? const Color(0xffEEF2FF) : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),

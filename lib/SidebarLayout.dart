@@ -54,6 +54,10 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
+  static const double _mobileBreakpoint = 900;
+  static const double _mobileMenuVerticalClearance = 76;
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int selectedIndex = 0;
   bool _isUpdatingLogin = false;
   late String? _currentUserEmail;
@@ -62,6 +66,7 @@ class _MainLayoutState extends State<MainLayout> {
   late String? _currentRole;
   late String? _appDisplayName;
   late String? _appLogoData;
+  late String? _overLimitMessage;
   late bool _canManageBilling;
   late bool _isPlatformAdmin;
 
@@ -71,18 +76,33 @@ class _MainLayoutState extends State<MainLayout> {
   void initState() {
     super.initState();
     _currentUserEmail = widget.session?['email']?.toString();
-    _currentDisplayName =
-        widget.session?['display_name']?.toString() ??
+    _currentDisplayName = widget.session?['display_name']?.toString() ??
         widget.session?['username']?.toString();
     _currentFirmName = widget.session?['firm_name']?.toString();
     _currentRole = widget.session?['role']?.toString();
     _appDisplayName = widget.session?['app_display_name']?.toString();
     _appLogoData = widget.session?['app_logo_data']?.toString();
+    _overLimitMessage = widget.session?['over_limit_message']?.toString();
     _isPlatformAdmin = widget.session?['is_platform_admin'] == true;
     _canManageBilling = widget.session?['can_manage_billing'] == true;
     if (!_isPlatformAdmin && _canManageBilling) {
       _refreshFirmBranding();
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final message = (_overLimitMessage ?? '').trim();
+      if (!mounted ||
+          message.isEmpty ||
+          !_canManageBilling ||
+          _isPlatformAdmin) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 6),
+        ),
+      );
+    });
     pages = [
       DashboardPage(onNavigate: _changePage),
       const LegalAIPage(),
@@ -120,11 +140,12 @@ class _MainLayoutState extends State<MainLayout> {
       const PatentFilingDocumentsPage(), // 33
       UploadsPage(onNavigate: _changePage), // 34
       const SmartLegalEditorPage(), // 35
-      const CaseStatusPage(), // 36
+      CaseStatusPage(onNavigate: _changePage), // 36
       FirmSettingsPage(
         isFirmAdmin: _canManageBilling && !_isPlatformAdmin,
         firmName: _currentFirmName,
         appDisplayName: _effectiveAppDisplayName,
+        overLimitMessage: _overLimitMessage,
         onOpenBranding: _showBrandingDialog,
         onOpenTeamManagement: _showManageTeamDialog,
         onLogout: widget.onLogout,
@@ -132,10 +153,27 @@ class _MainLayoutState extends State<MainLayout> {
     ];
   }
 
-  void _changePage(int index) {
+  void _changePage(int index, {bool closeDrawer = false}) {
     setState(() {
       selectedIndex = index;
     });
+    if (closeDrawer && mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  bool get _shouldApplyMobileMenuInset => selectedIndex != 3;
+
+  Widget _buildMobilePageContent() {
+    final page = pages[selectedIndex];
+    if (!_shouldApplyMobileMenuInset) {
+      return page;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: _mobileMenuVerticalClearance),
+      child: page,
+    );
   }
 
   Future<void> _showChangeLoginDialog() async {
@@ -144,8 +182,10 @@ class _MainLayoutState extends State<MainLayout> {
       text: _currentUserEmail ?? '',
     );
     final currentPasswordController = TextEditingController();
-    final newEmailController = TextEditingController(text: _currentUserEmail ?? '');
-    final newFullNameController = TextEditingController(text: _currentDisplayName ?? '');
+    final newEmailController =
+        TextEditingController(text: _currentUserEmail ?? '');
+    final newFullNameController =
+        TextEditingController(text: _currentDisplayName ?? '');
     final newUsernameController = TextEditingController();
     final newPasswordController = TextEditingController();
     bool obscureCurrent = true;
@@ -273,7 +313,8 @@ class _MainLayoutState extends State<MainLayout> {
                           }
                           setState(() => _isUpdatingLogin = true);
                           try {
-                            final result = await ApiService().updateAuthSettings(
+                            final result =
+                                await ApiService().updateAuthSettings(
                               currentUsername: '',
                               currentEmail: currentEmailController.text.trim(),
                               currentPassword: currentPasswordController.text,
@@ -285,14 +326,24 @@ class _MainLayoutState extends State<MainLayout> {
                             await SessionService.saveSession(result);
                             if (!mounted) return;
                             setState(() {
-                              _currentUserEmail =
-                                  (result['email'] ?? newEmailController.text.trim()).toString();
-                              _currentDisplayName =
-                                  (result['display_name'] ?? result['full_name'] ?? newFullNameController.text.trim()).toString();
-                              _currentFirmName = (result['firm_name'] ?? _currentFirmName ?? '').toString();
-                              _currentRole = (result['role'] ?? _currentRole ?? '').toString();
-                              _isPlatformAdmin = result['is_platform_admin'] == true;
-                              _canManageBilling = result['can_manage_billing'] == true;
+                              _currentUserEmail = (result['email'] ??
+                                      newEmailController.text.trim())
+                                  .toString();
+                              _currentDisplayName = (result['display_name'] ??
+                                      result['full_name'] ??
+                                      newFullNameController.text.trim())
+                                  .toString();
+                              _currentFirmName = (result['firm_name'] ??
+                                      _currentFirmName ??
+                                      '')
+                                  .toString();
+                              _currentRole =
+                                  (result['role'] ?? _currentRole ?? '')
+                                      .toString();
+                              _isPlatformAdmin =
+                                  result['is_platform_admin'] == true;
+                              _canManageBilling =
+                                  result['can_manage_billing'] == true;
                             });
                             Navigator.of(dialogContext).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -409,7 +460,8 @@ class _MainLayoutState extends State<MainLayout> {
           ? _appDisplayName!.trim()
           : _effectiveAppDisplayName,
     );
-    String? draftLogoData = (_appLogoData ?? '').trim().isEmpty ? null : _appLogoData;
+    String? draftLogoData =
+        (_appLogoData ?? '').trim().isEmpty ? null : _appLogoData;
     bool isSaving = false;
 
     await showDialog(
@@ -458,7 +510,8 @@ class _MainLayoutState extends State<MainLayout> {
                               radius: 28,
                               backgroundColor: const Color(0xff0f172a),
                               backgroundImage: previewBytes != null
-                                  ? MemoryImage(Uint8List.fromList(previewBytes))
+                                  ? MemoryImage(
+                                      Uint8List.fromList(previewBytes))
                                   : null,
                               child: previewBytes == null
                                   ? const Icon(
@@ -493,10 +546,10 @@ class _MainLayoutState extends State<MainLayout> {
                                       type: FileType.image,
                                       withData: true,
                                     );
-                                    final file = (result == null ||
-                                            result.files.isEmpty)
-                                        ? null
-                                        : result.files.first;
+                                    final file =
+                                        (result == null || result.files.isEmpty)
+                                            ? null
+                                            : result.files.first;
                                     final bytes = file?.bytes;
                                     if (file == null || bytes == null) {
                                       return;
@@ -542,7 +595,8 @@ class _MainLayoutState extends State<MainLayout> {
                           }
                           setDialogState(() => isSaving = true);
                           try {
-                            final result = await ApiService().updateFirmBranding(
+                            final result =
+                                await ApiService().updateFirmBranding(
                               appDisplayName: appNameController.text.trim(),
                               appLogoData: draftLogoData,
                               clearLogo: draftLogoData == null,
@@ -558,7 +612,8 @@ class _MainLayoutState extends State<MainLayout> {
                             setState(() {
                               _appDisplayName =
                                   result['app_display_name']?.toString();
-                              _appLogoData = result['app_logo_data']?.toString();
+                              _appLogoData =
+                                  result['app_logo_data']?.toString();
                             });
                             Navigator.of(dialogContext).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -600,27 +655,292 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     final brandLogoBytes = _logoBytesFromData(_appLogoData);
+    final isMobile = MediaQuery.of(context).size.width < _mobileBreakpoint;
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: const Color(0xfff5f6f8),
-      body: Row(
-        children: [
-          /// ================= SIDEBAR =================
-          Container(
-            width: 240,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xff0f172a), Color(0xff0b1a33)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                const SizedBox(height: 40),
+      drawer: isMobile
+          ? Drawer(
+              width: 280,
+              child: _buildSidebarContent(brandLogoBytes, isMobile: true),
+            )
+          : null,
+      body: isMobile
+          ? Stack(
+              children: [
+                Positioned.fill(child: _buildMobilePageContent()),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              color: const Color(0xff0f172a).withOpacity(0.92),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x22000000),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: Icon(
+                                Icons.menu_rounded,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                /// ================= SIDEBAR =================
+                Container(
+                  width: 240,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xff0f172a), Color(0xff0b1a33)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 40),
 
-                /// Logo
-                Row(
+                        /// Logo
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: const Color(0xff13233f),
+                              backgroundImage: brandLogoBytes != null
+                                  ? MemoryImage(
+                                      Uint8List.fromList(brandLogoBytes))
+                                  : null,
+                              child: brandLogoBytes == null
+                                  ? const Icon(
+                                      Icons.balance,
+                                      color: Colors.amber,
+                                      size: 22,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Text(
+                                _effectiveAppDisplayName,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 50),
+
+                        _navItem(Icons.dashboard, "Dashboard", 0),
+                        _navItem(Icons.chat_bubble_outline, "AI Chat", 1),
+                        _navItem(Icons.description_outlined, "Documents", 2),
+                        _navItem(Icons.people_outline, "Clients", 3),
+                        _navItem(Icons.upload_file_outlined, "Uploads", 34),
+                        _navItem(Icons.edit_note, "Edit Document", 35),
+                        _navItem(Icons.fact_check_outlined, "Case Status", 36),
+                        if (!_isPlatformAdmin)
+                          _navItem(Icons.settings_outlined, "Settings", 37),
+                        const SizedBox(height: 24),
+                        if ((_currentDisplayName ?? '').trim().isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: Colors.white12,
+                                  child: Text(
+                                    _currentDisplayName!.trim().isEmpty
+                                        ? '?'
+                                        : _currentDisplayName!
+                                            .trim()[0]
+                                            .toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _currentDisplayName!,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (((_currentRole ?? '')
+                                              .trim()
+                                              .isNotEmpty) ||
+                                          ((_currentFirmName ?? '')
+                                              .trim()
+                                              .isNotEmpty))
+                                        Text(
+                                          [
+                                            if ((_currentRole ?? '')
+                                                .trim()
+                                                .isNotEmpty)
+                                              _currentRole == 'platform_admin'
+                                                  ? 'Platform Admin'
+                                                  : _currentRole == 'firm_admin'
+                                                      ? 'Firm Admin'
+                                                      : 'Lawyer',
+                                            if ((_currentFirmName ?? '')
+                                                .trim()
+                                                .isNotEmpty)
+                                              _currentFirmName!,
+                                          ].join(' • '),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white54,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (_isPlatformAdmin)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: _showManageFirmsDialog,
+                                icon: const Icon(Icons.apartment_outlined),
+                                label: const Text('Manage Firms'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.white70,
+                                  side: const BorderSide(color: Colors.white24),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (_isPlatformAdmin)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: _isUpdatingLogin
+                                    ? null
+                                    : _showChangeLoginDialog,
+                                icon:
+                                    const Icon(Icons.manage_accounts_outlined),
+                                label: const Text('Change Login'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.white70,
+                                  side: const BorderSide(color: Colors.white24),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (widget.onLogout != null && _isPlatformAdmin)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: widget.onLogout == null
+                                    ? null
+                                    : () async => widget.onLogout!(),
+                                icon: const Icon(Icons.logout_rounded),
+                                label: const Text('Logout'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.white70,
+                                  side: const BorderSide(color: Colors.white24),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                /// ================= PAGE CONTENT =================
+                Expanded(child: pages[selectedIndex]),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildSidebarContent(
+    List<int>? brandLogoBytes, {
+    bool isMobile = false,
+  }) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xff0f172a), Color(0xff0b1a33)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     CircleAvatar(
@@ -652,162 +972,162 @@ class _MainLayoutState extends State<MainLayout> {
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 50),
-
-                _navItem(Icons.dashboard, "Dashboard", 0),
-                _navItem(Icons.chat_bubble_outline, "AI Chat", 1),
-                _navItem(Icons.description_outlined, "Documents", 2),
-                _navItem(Icons.people_outline, "Clients", 3),
-                _navItem(Icons.upload_file_outlined, "Uploads", 34),
-                _navItem(Icons.edit_note, "Edit Document", 35),
-                _navItem(Icons.fact_check_outlined, "Case Status", 36),
-                if (!_isPlatformAdmin)
-                  _navItem(Icons.settings_outlined, "Settings", 37),
-                const SizedBox(height: 24),
-                if ((_currentDisplayName ?? '').trim().isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.white12,
-                          child: Text(
-                            _currentDisplayName!.trim().isEmpty
-                                ? '?'
-                                : _currentDisplayName!.trim()[0].toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
+              ),
+              const SizedBox(height: 36),
+              _navItem(Icons.dashboard, "Dashboard", 0, isMobile: isMobile),
+              _navItem(Icons.chat_bubble_outline, "AI Chat", 1,
+                  isMobile: isMobile),
+              _navItem(Icons.description_outlined, "Documents", 2,
+                  isMobile: isMobile),
+              _navItem(Icons.people_outline, "Clients", 3, isMobile: isMobile),
+              _navItem(Icons.upload_file_outlined, "Uploads", 34,
+                  isMobile: isMobile),
+              _navItem(Icons.edit_note, "Edit Document", 35,
+                  isMobile: isMobile),
+              _navItem(Icons.fact_check_outlined, "Case Status", 36,
+                  isMobile: isMobile),
+              if (!_isPlatformAdmin)
+                _navItem(Icons.settings_outlined, "Settings", 37,
+                    isMobile: isMobile),
+              const SizedBox(height: 24),
+              if ((_currentDisplayName ?? '').trim().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.white12,
+                        child: Text(
+                          _currentDisplayName!.trim().isEmpty
+                              ? '?'
+                              : _currentDisplayName!.trim()[0].toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _currentDisplayName!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (((_currentRole ?? '').trim().isNotEmpty) ||
+                                ((_currentFirmName ?? '').trim().isNotEmpty))
                               Text(
-                                _currentDisplayName!,
+                                [
+                                  if ((_currentRole ?? '').trim().isNotEmpty)
+                                    _currentRole == 'platform_admin'
+                                        ? 'Platform Admin'
+                                        : _currentRole == 'firm_admin'
+                                            ? 'Firm Admin'
+                                            : 'Lawyer',
+                                  if ((_currentFirmName ?? '')
+                                      .trim()
+                                      .isNotEmpty)
+                                    _currentFirmName!,
+                                ].join(' • '),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white54,
+                                  fontSize: 11,
                                 ),
                               ),
-                              if (((_currentRole ?? '').trim().isNotEmpty) ||
-                                  ((_currentFirmName ?? '').trim().isNotEmpty))
-                                Text(
-                                  [
-                                    if ((_currentRole ?? '').trim().isNotEmpty)
-                                      _currentRole == 'platform_admin'
-                                          ? 'Platform Admin'
-                                          : _currentRole == 'firm_admin'
-                                              ? 'Firm Admin'
-                                              : 'Lawyer',
-                                    if ((_currentFirmName ?? '').trim().isNotEmpty)
-                                      _currentFirmName!,
-                                  ].join(' • '),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white54,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                            ],
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                if (_isPlatformAdmin)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _showManageFirmsDialog,
-                        icon: const Icon(Icons.apartment_outlined),
-                        label: const Text('Manage Firms'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                          side: const BorderSide(color: Colors.white24),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                ),
+              if (_isPlatformAdmin)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _showManageFirmsDialog,
+                      icon: const Icon(Icons.apartment_outlined),
+                      label: const Text('Manage Firms'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white24),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
                   ),
-                if (_isPlatformAdmin)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _isUpdatingLogin ? null : _showChangeLoginDialog,
-                        icon: const Icon(Icons.manage_accounts_outlined),
-                        label: const Text('Change Login'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                          side: const BorderSide(color: Colors.white24),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                ),
+              if (_isPlatformAdmin)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          _isUpdatingLogin ? null : _showChangeLoginDialog,
+                      icon: const Icon(Icons.manage_accounts_outlined),
+                      label: const Text('Change Login'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white24),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
                   ),
-                if (widget.onLogout != null && _isPlatformAdmin)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: widget.onLogout == null
-                            ? null
-                            : () async => widget.onLogout!(),
-                        icon: const Icon(Icons.logout_rounded),
-                        label: const Text('Logout'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                          side: const BorderSide(color: Colors.white24),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                ),
+              if (widget.onLogout != null && _isPlatformAdmin)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: widget.onLogout == null
+                          ? null
+                          : () async => widget.onLogout!(),
+                      icon: const Icon(Icons.logout_rounded),
+                      label: const Text('Logout'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white24),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
+            ],
           ),
-
-          /// ================= PAGE CONTENT =================
-          Expanded(child: pages[selectedIndex]),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _navItem(IconData icon, String title, int index) {
+  Widget _navItem(IconData icon, String title, int index,
+      {bool isMobile = false}) {
     bool active = selectedIndex == index;
 
     return InkWell(
-      onTap: () {
-        setState(() {
-          selectedIndex = index;
-        });
-      },
+      onTap: () => _changePage(index, closeDrawer: isMobile),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
@@ -995,14 +1315,19 @@ class _FirmManagementDialogState extends State<FirmManagementDialog> {
 
     setState(() => _busyFirmId = firmId);
     try {
-      await ApiService().updateFirm(
+      final result = await ApiService().updateFirm(
         firmId: firmId,
         maxTeamMembers: int.parse(controller.text.trim()),
       );
       await _loadFirms();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Firm team limit updated successfully.')),
+        SnackBar(
+          content: Text(
+            (result['message'] ?? 'Firm team limit updated successfully.')
+                .toString(),
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -1291,9 +1616,9 @@ class _FirmManagementDialogState extends State<FirmManagementDialog> {
                                   final isBusy = _busyFirmId == firmId;
                                   final isDefaultFirm =
                                       (firm['name'] ?? '').toString() ==
-                                      'Default Firm';
-                                  final primaryAdmin =
-                                      firm['primary_admin'] as Map<String, dynamic>?;
+                                          'Default Firm';
+                                  final primaryAdmin = firm['primary_admin']
+                                      as Map<String, dynamic>?;
                                   final adminName = primaryAdmin == null
                                       ? 'No admin yet'
                                       : (primaryAdmin['display_name'] ??
@@ -1303,19 +1628,27 @@ class _FirmManagementDialogState extends State<FirmManagementDialog> {
                                           .toString();
                                   final adminEmail = primaryAdmin == null
                                       ? ''
-                                      : (primaryAdmin['email'] ?? '').toString();
+                                      : (primaryAdmin['email'] ?? '')
+                                          .toString();
                                   final teamCount =
                                       (firm['user_count'] ?? 0).toString();
                                   final teamLimit =
-                                      (firm['max_team_members'] ?? 0).toString();
+                                      (firm['max_team_members'] ?? 0)
+                                          .toString();
+                                  final isOverLimit =
+                                      firm['is_over_limit'] == true;
+                                  final overLimitBy =
+                                      (firm['over_limit_by'] ?? 0).toString();
                                   final createdLabel =
                                       _createdAtLabel(firm['created_at']);
                                   return ListTile(
-                                    onTap: isBusy ? null : () => _updateFirmLimit(firm),
+                                    onTap: isBusy
+                                        ? null
+                                        : () => _updateFirmLimit(firm),
                                     contentPadding: EdgeInsets.zero,
                                     leading: CircleAvatar(
-                                      backgroundColor:
-                                          const Color(0xff0f172a).withOpacity(0.08),
+                                      backgroundColor: const Color(0xff0f172a)
+                                          .withOpacity(0.08),
                                       child: const Icon(
                                         Icons.business_outlined,
                                         color: Color(0xff0f172a),
@@ -1356,7 +1689,8 @@ class _FirmManagementDialogState extends State<FirmManagementDialog> {
                                                   color: const Color(0xff0f172a)
                                                       .withOpacity(0.06),
                                                   borderRadius:
-                                                      BorderRadius.circular(999),
+                                                      BorderRadius.circular(
+                                                          999),
                                                 ),
                                                 child: Text(
                                                   'Limit $teamLimit',
@@ -1367,6 +1701,33 @@ class _FirmManagementDialogState extends State<FirmManagementDialog> {
                                                   ),
                                                 ),
                                               ),
+                                              if (isOverLimit) ...[
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 6,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        const Color(0xfffee2e2),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                      999,
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    'Remove $overLimitBy user${overLimitBy == '1' ? '' : 's'}',
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: Color(0xffb91c1c),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                               if (!isDefaultFirm) ...[
                                                 const SizedBox(width: 8),
                                                 TextButton.icon(
@@ -1732,6 +2093,33 @@ class _TeamManagementDialogState extends State<TeamManagementDialog> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            if (((_teamSummary?['over_limit_message'] ?? '')
+                                    .toString())
+                                .trim()
+                                .isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xfffef2f2),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xfffecaca),
+                                  ),
+                                ),
+                                child: Text(
+                                  (_teamSummary?['over_limit_message'] ?? '')
+                                      .toString(),
+                                  style: const TextStyle(
+                                    color: Color(0xff991b1b),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 12),
                             SizedBox(
                               height: 280,
@@ -1744,15 +2132,19 @@ class _TeamManagementDialogState extends State<TeamManagementDialog> {
                                   return ListTile(
                                     contentPadding: EdgeInsets.zero,
                                     leading: CircleAvatar(
-                                      backgroundColor:
-                                          const Color(0xff0f172a).withOpacity(0.08),
+                                      backgroundColor: const Color(0xff0f172a)
+                                          .withOpacity(0.08),
                                       child: const Icon(
                                         Icons.person_outline,
                                         color: Color(0xff0f172a),
                                       ),
                                     ),
                                     title: Text(
-                                      (member['display_name'] ?? member['full_name'] ?? member['username'] ?? '').toString(),
+                                      (member['display_name'] ??
+                                              member['full_name'] ??
+                                              member['username'] ??
+                                              '')
+                                          .toString(),
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -1763,7 +2155,8 @@ class _TeamManagementDialogState extends State<TeamManagementDialog> {
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        if (member['can_manage_billing'] == true)
+                                        if (member['can_manage_billing'] ==
+                                            true)
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 10,
@@ -1815,6 +2208,7 @@ class FirmSettingsPage extends StatelessWidget {
     required this.isFirmAdmin,
     required this.firmName,
     required this.appDisplayName,
+    required this.overLimitMessage,
     required this.onOpenBranding,
     required this.onOpenTeamManagement,
     required this.onLogout,
@@ -1823,6 +2217,7 @@ class FirmSettingsPage extends StatelessWidget {
   final bool isFirmAdmin;
   final String? firmName;
   final String appDisplayName;
+  final String? overLimitMessage;
   final Future<void> Function() onOpenBranding;
   final Future<void> Function() onOpenTeamManagement;
   final Future<void> Function()? onLogout;
@@ -1931,6 +2326,7 @@ class _SettingsActionCard extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.isDestructive = false,
+    this.extraContent,
   });
 
   final String title;
@@ -1938,6 +2334,7 @@ class _SettingsActionCard extends StatelessWidget {
   final IconData icon;
   final Future<void> Function()? onTap;
   final bool isDestructive;
+  final Widget? extraContent;
 
   @override
   Widget build(BuildContext context) {
@@ -1954,47 +2351,53 @@ class _SettingsActionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xffE5E7EB)),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: accentColor),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
+            Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      color: Color(0xff64748B),
-                      height: 1.4,
-                    ),
+                  child: Icon(icon, color: accentColor),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        description,
+                        style: const TextStyle(
+                          color: Color(0xff64748B),
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 16),
+                Icon(
+                  isDestructive
+                      ? Icons.logout_rounded
+                      : Icons.chevron_right_rounded,
+                  color: accentColor,
+                ),
+              ],
             ),
-            const SizedBox(width: 16),
-            Icon(
-              isDestructive
-                  ? Icons.logout_rounded
-                  : Icons.chevron_right_rounded,
-              color: accentColor,
-            ),
+            if (extraContent != null) extraContent!,
           ],
         ),
       ),

@@ -1,9 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'services/api_service.dart';
 
 class CaseStatusPage extends StatefulWidget {
-  const CaseStatusPage({super.key});
+  final Function(int)? onNavigate;
+
+  const CaseStatusPage({super.key, this.onNavigate});
 
   @override
   State<CaseStatusPage> createState() => _CaseStatusPageState();
@@ -16,6 +21,64 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
     'DISPOSED',
     'PENDING',
   ];
+  static const String _cnrCacheKeyPrefix = 'case_status_cnr_cache_';
+
+  static const Map<String, int> _documentRouteByType = <String, int>{
+    'gift_deed': 4,
+    'rental_agreement': 5,
+    'power_of_attorney': 6,
+    'partnership_deed': 7,
+    'affidavit': 8,
+    'will_and_testament': 9,
+    'bail_application': 10,
+    'loan_agreement': 11,
+    'divorce_paper': 12,
+    'sale_deed': 13,
+    'mortgage_deed': 14,
+    'non_disclosure_agreement': 15,
+    'employment_contract': 16,
+    'offer_letter': 17,
+    'service_agreement': 18,
+    'child_custody_agreement': 19,
+    'adoption_papers': 20,
+    'partition_deed': 21,
+    'trust_deed': 22,
+    'memorandum_of_understanding': 23,
+    'vendor_agreement': 24,
+    'non_compete_agreement': 25,
+    'indemnity_agreement': 26,
+    'joint_venture_agreement': 27,
+    'licensing_agreement': 28,
+    'assignment_agreement': 29,
+    'settlement_agreement': 30,
+    'trademark_application': 31,
+    'copyright_agreement': 32,
+    'patent_filing_documents': 33,
+  };
+
+  bool _isCompactLayout(BuildContext context) =>
+      MediaQuery.sizeOf(context).width < 720;
+
+  double _pageHorizontalPadding(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width < 600) {
+      return 16;
+    }
+    if (width < 1024) {
+      return 20;
+    }
+    return 30;
+  }
+
+  double _responsiveFieldWidth(BuildContext context, double preferredWidth) {
+    if (!_isCompactLayout(context)) {
+      return preferredWidth;
+    }
+
+    final width = MediaQuery.sizeOf(context).width;
+    final available = width - (_pageHorizontalPadding(context) * 2) - 48;
+    return available.clamp(220.0, 520.0).toDouble();
+  }
 
   final ApiService _apiService = ApiService();
   final TextEditingController _advocateController = TextEditingController();
@@ -36,6 +99,40 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
   Map<String, dynamic> _pagination = <String, dynamic>{};
   Map<String, dynamic> _facets = <String, dynamic>{};
   Map<String, dynamic>? _caseDetail;
+
+  String _normalizeCnr(String cnr) => cnr.trim().toUpperCase();
+
+  String _cnrCacheKey(String cnr) => '$_cnrCacheKeyPrefix${_normalizeCnr(cnr)}';
+
+  Future<Map<String, dynamic>?> _readCachedCnrResponse(String cnr) async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getString(_cnrCacheKey(cnr));
+    if (cached == null || cached.trim().isEmpty) {
+      return null;
+    }
+
+    try {
+      final decoded = jsonDecode(cached);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+    } catch (_) {
+      await prefs.remove(_cnrCacheKey(cnr));
+    }
+
+    return null;
+  }
+
+  Future<void> _writeCachedCnrResponse(
+    String cnr,
+    Map<String, dynamic> response,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_cnrCacheKey(cnr), jsonEncode(response));
+  }
 
   @override
   void dispose() {
@@ -105,7 +202,7 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
   }
 
   Future<void> _searchByCnr() async {
-    final cnr = _cnrController.text.trim();
+    final cnr = _normalizeCnr(_cnrController.text);
     if (cnr.isEmpty) {
       setState(() {
         _errorMessage = 'Enter a CNR number to load case detail.';
@@ -122,7 +219,22 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
     });
 
     try {
+      _cnrController.value = _cnrController.value.copyWith(
+        text: cnr,
+        selection: TextSelection.collapsed(offset: cnr.length),
+        composing: TextRange.empty,
+      );
+
+      final cachedResponse = await _readCachedCnrResponse(cnr);
+      if (cachedResponse != null) {
+        setState(() {
+          _caseDetail = cachedResponse;
+        });
+        return;
+      }
+
       final response = await _apiService.fetchCaseByCnr(cnr);
+      await _writeCachedCnrResponse(cnr, response);
       setState(() {
         _caseDetail = response;
       });
@@ -218,8 +330,10 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
   Widget _buildSearchCard() {
     final caseStatusOptions = _caseStatusOptions();
     final isAdvocateMode = _searchMode == _CaseSearchMode.advocate;
+    final isCompact = _isCompactLayout(context);
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -248,13 +362,13 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
           ),
           const SizedBox(height: 18),
           Container(
+            width: isCompact ? double.infinity : null,
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: const Color(0xfff3f4f6),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Wrap(
               children: [
                 _buildModeButton(
                   label: 'By CNR',
@@ -278,31 +392,31 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
                   controller: _advocateController,
                   label: 'Advocate Name',
                   hint: 'Adv. Rahul Sharma',
-                  width: 320,
+                  width: _responsiveFieldWidth(context, 320),
                 ),
                 _buildInputField(
                   controller: _courtCodeController,
                   label: 'Court Code',
                   hint: 'DLHC01',
-                  width: 180,
+                  width: _responsiveFieldWidth(context, 180),
                 ),
                 _buildInputField(
                   controller: _filingDateFromController,
                   label: 'Filing Date From',
                   hint: '2024-01-01',
-                  width: 170,
+                  width: _responsiveFieldWidth(context, 170),
                 ),
                 _buildInputField(
                   controller: _filingDateToController,
                   label: 'Filing Date To',
                   hint: '2024-12-31',
-                  width: 170,
+                  width: _responsiveFieldWidth(context, 170),
                 ),
                 _buildDropdownField(
                   label: 'Case Status',
                   value: _selectedCaseStatus,
                   options: caseStatusOptions,
-                  width: 180,
+                  width: _responsiveFieldWidth(context, 180),
                   onChanged: (value) {
                     setState(() {
                       _selectedCaseStatus = value;
@@ -316,41 +430,48 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
               controller: _cnrController,
               label: 'CNR Number',
               hint: 'DLHC010001232024',
-              width: 320,
+              width: _responsiveFieldWidth(context, 320),
             ),
           const SizedBox(height: 20),
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
             children: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff111827),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
+              SizedBox(
+                width: isCompact ? double.infinity : null,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff111827),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
+                  ),
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          if (isAdvocateMode) {
+                            _searchCases(page: 1);
+                          } else {
+                            _searchByCnr();
+                          }
+                        },
+                  icon: Icon(
+                    isAdvocateMode ? Icons.search : Icons.find_in_page_outlined,
+                  ),
+                  label: Text(
+                    isAdvocateMode ? 'Search Cases' : 'Load Case Detail',
                   ),
                 ),
-                onPressed: _isLoading
-                    ? null
-                    : () {
-                        if (isAdvocateMode) {
-                          _searchCases(page: 1);
-                        } else {
-                          _searchByCnr();
-                        }
-                      },
-                icon: Icon(
-                  isAdvocateMode ? Icons.search : Icons.find_in_page_outlined,
-                ),
-                label: Text(
-                  isAdvocateMode ? 'Search Cases' : 'Load Case Detail',
-                ),
               ),
-              const SizedBox(width: 12),
-              OutlinedButton.icon(
-                onPressed: _isLoading ? null : _resetFilters,
-                icon: const Icon(Icons.restart_alt),
-                label: const Text('Reset'),
+              SizedBox(
+                width: isCompact ? double.infinity : null,
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _resetFilters,
+                  icon: const Icon(Icons.restart_alt),
+                  label: const Text('Reset'),
+                ),
               ),
             ],
           ),
@@ -465,7 +586,9 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
     final totalHits = (_pagination['totalHits'] as num?)?.toInt() ?? 0;
     final totalPages = (_pagination['totalPages'] as num?)?.toInt() ?? 0;
 
-    return Row(
+    return Wrap(
+      spacing: 12,
+      runSpacing: 6,
       children: [
         Text(
           '$totalHits matches found',
@@ -474,13 +597,11 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
             color: Color(0xff111827),
           ),
         ),
-        if (totalPages > 0) ...[
-          const SizedBox(width: 12),
+        if (totalPages > 0)
           Text(
             'Page $_currentPage of $totalPages',
             style: const TextStyle(color: Color(0xff6b7280)),
           ),
-        ],
       ],
     );
   }
@@ -537,9 +658,49 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
     );
   }
 
+  Widget _buildCompactResultsBody() {
+    if (_errorMessage != null) {
+      return _buildStateCard(
+        icon: Icons.error_outline,
+        title: 'Search unavailable',
+        message: _errorMessage!,
+      );
+    }
+
+    if (_isLoading && _results.isEmpty && _caseDetail == null) {
+      return _buildStateCard(
+        icon: Icons.hourglass_top_rounded,
+        title: 'Searching eCourts',
+        message: 'Fetching case data from the partner API.',
+        isLoading: true,
+      );
+    }
+
+    if (_results.isEmpty) {
+      return _buildStateCard(
+        icon: Icons.fact_check_outlined,
+        title: 'No results yet',
+        message:
+            'Run an advocate search or enter a CNR number to view case status, hearing dates, parties, and detailed case material here.',
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildResultsSummary(),
+        const SizedBox(height: 16),
+        ..._results.map(_buildResultCard),
+        const SizedBox(height: 16),
+        _buildPaginationControls(),
+      ],
+    );
+  }
+
   Widget _buildResultCard(Map<String, dynamic> item) {
     final statusLabel =
         (item['caseStatusLabel'] ?? item['caseStatus'] ?? 'Unknown').toString();
+    final isCompact = _isCompactLayout(context);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -551,7 +712,32 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          if (isCompact)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  (item['cnr'] ?? 'Unknown CNR').toString(),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xff111827),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${(item['caseTypeLabel'] ?? item['caseType'] ?? 'Unknown').toString()} • ${(item['courtCodeLabel'] ?? item['courtCode'] ?? 'Unknown court').toString()}',
+                  style: const TextStyle(
+                    color: Color(0xff6b7280),
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildStatusChip(statusLabel),
+              ],
+            )
+          else
+            Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
@@ -576,8 +762,8 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
               ),
               _buildStatusChip(statusLabel),
             ],
-          ),
-          const SizedBox(height: 16),
+            ),
+          SizedBox(height: isCompact ? 14 : 16),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -993,6 +1179,7 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
     final actsParts = actsAndSections == 'Not available'
         ? <String, String>{'acts': 'Not available', 'sections': 'Not available'}
         : _splitActsAndSections(actsAndSections);
+    final isCompact = _isCompactLayout(context);
 
     return ListView(
       children: [
@@ -1005,11 +1192,8 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
+              isCompact
+                  ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         OutlinedButton.icon(
@@ -1031,24 +1215,64 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
                         const SizedBox(height: 12),
                         Text(
                           _formatDisplayValue(caseData['courtName']),
-                          textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w500,
                             color: Color(0xff111827),
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        _buildStatusChip(
+                          _formatDisplayValue(
+                            caseData['caseStatusLabel'] ?? caseData['caseStatus'],
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    _caseDetail = null;
+                                    _errorMessage = null;
+                                  });
+                                },
+                                icon: const Icon(Icons.arrow_back, size: 18),
+                                label: const Text('Back to Search'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                _formatDisplayValue(caseData['courtName']),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xff111827),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        _buildStatusChip(
+                          _formatDisplayValue(
+                            caseData['caseStatusLabel'] ?? caseData['caseStatus'],
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  _buildStatusChip(
-                    _formatDisplayValue(
-                      caseData['caseStatusLabel'] ?? caseData['caseStatus'],
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 12),
               _buildSectionHeading('Case Details'),
               _buildStructuredTable(
@@ -1825,45 +2049,95 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
   }
 
   Widget _buildStructuredTable({required List<_StructuredRow> rows}) {
-    return Table(
-      columnWidths: const <int, TableColumnWidth>{
-        0: FlexColumnWidth(1.2),
-        1: FlexColumnWidth(1.6),
-        2: FlexColumnWidth(1.2),
-        3: FlexColumnWidth(1.5),
-      },
-      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-      border: TableBorder.all(color: const Color(0xffd1d5db)),
-      children: rows.map((row) {
-        if (row.mode == _StructuredRowMode.full) {
-          return TableRow(
-            children: [
-              _StructuredLabelCell(row.label1),
-              _StructuredValueCell(row.value1, colSpan: false),
-              const SizedBox.shrink(),
-              const SizedBox.shrink(),
-            ],
+    if (_isCompactLayout(context)) {
+      return Column(
+        children: rows
+            .map(
+              (row) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildStructuredCard(row),
+              ),
+            )
+            .toList(),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 640),
+        child: Table(
+          columnWidths: const <int, TableColumnWidth>{
+            0: FlexColumnWidth(1.2),
+            1: FlexColumnWidth(1.6),
+            2: FlexColumnWidth(1.2),
+            3: FlexColumnWidth(1.5),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          border: TableBorder.all(color: const Color(0xffd1d5db)),
+          children: rows.map((row) {
+            if (row.mode == _StructuredRowMode.full) {
+              return TableRow(
+                children: [
+                  _StructuredLabelCell(row.label1),
+                  _StructuredValueCell(row.value1, colSpan: false),
+                  const SizedBox.shrink(),
+                  const SizedBox.shrink(),
+                ],
+              );
+            }
+            if (row.mode == _StructuredRowMode.single) {
+              return TableRow(
+                children: [
+                  _StructuredLabelCell(row.label1),
+                  _StructuredValueCell(row.value1),
+                  const SizedBox.shrink(),
+                  const SizedBox.shrink(),
+                ],
+              );
+            }
+            return TableRow(
+              children: [
+                _StructuredLabelCell(row.label1),
+                _StructuredValueCell(row.value1),
+                _StructuredLabelCell(row.label2 ?? ''),
+                _StructuredValueCell(row.value2 ?? ''),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStructuredCard(_StructuredRow row) {
+    final items = <MapEntry<String, String>>[
+      MapEntry<String, String>(row.label1, row.value1),
+      if (row.mode == _StructuredRowMode.pair &&
+          (row.label2 ?? '').trim().isNotEmpty)
+        MapEntry<String, String>(row.label2!, row.value2 ?? 'Not available'),
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xfff8fafc),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xffd1d5db)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: items.asMap().entries.map((entry) {
+          final item = entry.value;
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: entry.key == items.length - 1 ? 0 : 12,
+            ),
+            child: _buildLabeledText(item.key, item.value),
           );
-        }
-        if (row.mode == _StructuredRowMode.single) {
-          return TableRow(
-            children: [
-              _StructuredLabelCell(row.label1),
-              _StructuredValueCell(row.value1),
-              const SizedBox.shrink(),
-              const SizedBox.shrink(),
-            ],
-          );
-        }
-        return TableRow(
-          children: [
-            _StructuredLabelCell(row.label1),
-            _StructuredValueCell(row.value1),
-            _StructuredLabelCell(row.label2 ?? ''),
-            _StructuredValueCell(row.value2 ?? ''),
-          ],
-        );
-      }).toList(),
+        }).toList(),
+      ),
     );
   }
 
@@ -1930,6 +2204,7 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
 
   Widget _buildHearingHistoryCard(List<Map<String, dynamic>> hearingHistory) {
     final rows = hearingHistory.reversed.toList();
+    final isCompact = _isCompactLayout(context);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1945,60 +2220,105 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xffc7df90)),
-              ),
-              child: Table(
-                columnWidths: const <int, TableColumnWidth>{
-                  0: FlexColumnWidth(2.4),
-                  1: FlexColumnWidth(1.2),
-                  2: FlexColumnWidth(1.2),
-                  3: FlexColumnWidth(1.5),
-                },
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                children: [
-                  const TableRow(
-                    decoration: BoxDecoration(
-                      color: Color(0xfff8fbef),
-                    ),
+          if (isCompact)
+            Column(
+              children: rows.asMap().entries.map((entry) {
+                final row = entry.value;
+                return Container(
+                  width: double.infinity,
+                  margin: EdgeInsets.only(
+                    bottom: entry.key == rows.length - 1 ? 0 : 12,
+                  ),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: entry.key.isEven
+                        ? const Color(0xffdff0b6)
+                        : const Color(0xffeef7d2),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xffc7df90)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _HistoryHeaderCell('Judge'),
-                      _HistoryHeaderCell('Business on Date'),
-                      _HistoryHeaderCell('Hearing Date'),
-                      _HistoryHeaderCell('Purpose of Hearing'),
+                      _buildLabeledText('Judge', _formatDisplayValue(row['judge'])),
+                      const SizedBox(height: 10),
+                      _buildLabeledText(
+                        'Business on Date',
+                        _formatDisplayValue(row['businessOnDate']),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildLabeledText(
+                        'Hearing Date',
+                        _formatDisplayValue(row['hearingDate']),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildLabeledText(
+                        'Purpose of Hearing',
+                        _formatDisplayValue(row['purposeOfListing']),
+                      ),
                     ],
                   ),
-                  ...rows.asMap().entries.map(
-                    (entry) => TableRow(
-                      decoration: BoxDecoration(
-                        color: entry.key.isEven
-                            ? const Color(0xffdff0b6)
-                            : const Color(0xffeef7d2),
-                      ),
-                      children: [
-                        _HistoryValueCell(
-                          _formatDisplayValue(entry.value['judge']),
-                        ),
-                        _HistoryValueCell(
-                          _formatDisplayValue(entry.value['businessOnDate']),
-                        ),
-                        _HistoryValueCell(
-                          _formatDisplayValue(entry.value['hearingDate']),
-                        ),
-                        _HistoryValueCell(
-                          _formatDisplayValue(entry.value['purposeOfListing']),
-                        ),
-                      ],
-                    ),
+                );
+              }).toList(),
+            )
+          else
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 760),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xffc7df90)),
                   ),
-                ],
+                  child: Table(
+                    columnWidths: const <int, TableColumnWidth>{
+                      0: FlexColumnWidth(2.4),
+                      1: FlexColumnWidth(1.2),
+                      2: FlexColumnWidth(1.2),
+                      3: FlexColumnWidth(1.5),
+                    },
+                    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                    children: [
+                      const TableRow(
+                        decoration: BoxDecoration(
+                          color: Color(0xfff8fbef),
+                        ),
+                        children: [
+                          _HistoryHeaderCell('Judge'),
+                          _HistoryHeaderCell('Business on Date'),
+                          _HistoryHeaderCell('Hearing Date'),
+                          _HistoryHeaderCell('Purpose of Hearing'),
+                        ],
+                      ),
+                      ...rows.asMap().entries.map(
+                        (entry) => TableRow(
+                          decoration: BoxDecoration(
+                            color: entry.key.isEven
+                                ? const Color(0xffdff0b6)
+                                : const Color(0xffeef7d2),
+                          ),
+                          children: [
+                            _HistoryValueCell(
+                              _formatDisplayValue(entry.value['judge']),
+                            ),
+                            _HistoryValueCell(
+                              _formatDisplayValue(entry.value['businessOnDate']),
+                            ),
+                            _HistoryValueCell(
+                              _formatDisplayValue(entry.value['hearingDate']),
+                            ),
+                            _HistoryValueCell(
+                              _formatDisplayValue(entry.value['purposeOfListing']),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -2008,66 +2328,92 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
     final reasons = item['reasons'] is List
         ? (item['reasons'] as List).map((reason) => reason.toString()).toList()
         : <String>[];
+    final documentType = (item['documentType'] ?? '').toString().trim();
+    final destinationIndex = _documentRouteByType[documentType];
+    final canNavigate = widget.onNavigate != null && destinationIndex != null;
+    final navigateToDocument = canNavigate
+        ? () => widget.onNavigate!(destinationIndex!)
+        : null;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xfffbbf24)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  (item['title'] ?? 'Suggested Document').toString(),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xff111827),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: navigateToDocument,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xfffbbf24)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    (item['title'] ?? 'Suggested Document').toString(),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xff111827),
+                    ),
+                  ),
+                ),
+                _buildConfidenceChip(
+                  (item['confidence'] ?? 'Medium').toString(),
+                ),
+              ],
+            ),
+            if (reasons.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ...reasons.map(
+                (reason) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 5, right: 8),
+                        child: Icon(
+                          Icons.circle,
+                          size: 7,
+                          color: Color(0xff6b7280),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          reason,
+                          style: const TextStyle(
+                            color: Color(0xff374151),
+                            height: 1.45,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              _buildConfidenceChip(
-                (item['confidence'] ?? 'Medium').toString(),
-              ),
             ],
-          ),
-          if (reasons.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ...reasons.map(
-              (reason) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 5, right: 8),
-                      child: Icon(
-                        Icons.circle,
-                        size: 7,
-                        color: Color(0xff6b7280),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        reason,
-                        style: const TextStyle(
-                          color: Color(0xff374151),
-                          height: 1.45,
-                        ),
-                      ),
-                    ),
-                  ],
+            if (canNavigate) ...[
+              const SizedBox(height: 14),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: navigateToDocument,
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                  label: const Text('Generate this document'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xff92400e),
+                    padding: EdgeInsets.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -2100,8 +2446,17 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
 
   Widget _buildInfoTile(String label, dynamic value) {
     final text = _formatDisplayValue(value);
+    final isCompact = _isCompactLayout(context);
+    final tileWidth = isCompact
+        ? ((MediaQuery.sizeOf(context).width -
+                    (_pageHorizontalPadding(context) * 2) -
+                    52) /
+                2)
+            .clamp(120.0, 220.0)
+            .toDouble()
+        : 170.0;
     return Container(
-      width: 170,
+      width: tileWidth,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xfff8fafc),
@@ -2190,8 +2545,12 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
   Widget _buildPaginationControls() {
     final hasPrevious = _pagination['hasPreviousPage'] == true;
     final hasNext = _pagination['hasNextPage'] == true;
+    final isCompact = _isCompactLayout(context);
 
-    return Row(
+    return Flex(
+      direction: isCompact ? Axis.vertical : Axis.horizontal,
+      crossAxisAlignment:
+          isCompact ? CrossAxisAlignment.stretch : CrossAxisAlignment.start,
       children: [
         OutlinedButton.icon(
           onPressed: (!_isLoading && hasPrevious)
@@ -2200,7 +2559,7 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
           icon: const Icon(Icons.chevron_left),
           label: const Text('Previous'),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: isCompact ? 0 : 12, height: isCompact ? 12 : 0),
         OutlinedButton.icon(
           onPressed: (!_isLoading && hasNext)
               ? () => _searchCases(page: _currentPage + 1)
@@ -2218,6 +2577,7 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
     required String message,
     bool isLoading = false,
   }) {
+    final isCompact = _isCompactLayout(context);
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -2226,7 +2586,7 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
       ),
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: EdgeInsets.all(isCompact ? 24 : 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -2262,31 +2622,79 @@ class _CaseStatusPageState extends State<CaseStatusPage> {
   Widget build(BuildContext context) {
     final shouldHideSearchCard =
         _caseDetail != null && _searchMode == _CaseSearchMode.cnr;
+    final isCompact = _isCompactLayout(context);
+    final horizontalPadding = _pageHorizontalPadding(context);
+
+    if (isCompact && _caseDetail == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xfff5f6fa),
+        body: SafeArea(
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              18,
+              horizontalPadding,
+              18,
+            ),
+            children: [
+              Text(
+                'Case Status',
+                style: TextStyle(
+                  fontSize: isCompact ? 24 : 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Search eCourts by advocate or load a complete case detail directly from a CNR number.',
+                style: TextStyle(color: Color(0xff6b7280)),
+              ),
+              if (!shouldHideSearchCard) ...[
+                const SizedBox(height: 16),
+                _buildSearchCard(),
+                const SizedBox(height: 16),
+              ],
+              _buildCompactResultsBody(),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xfff5f6fa),
-      body: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Case Status',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Search eCourts by advocate or load a complete case detail directly from a CNR number.',
-              style: TextStyle(color: Color(0xff6b7280)),
-            ),
-            if (!shouldHideSearchCard) ...[
-              const SizedBox(height: 20),
-              _buildSearchCard(),
-              const SizedBox(height: 20),
-            ] else
-              const SizedBox(height: 20),
-            Expanded(child: _buildResultsBody()),
-          ],
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            isCompact ? 18 : 30,
+            horizontalPadding,
+            isCompact ? 18 : 30,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Case Status',
+                style: TextStyle(
+                  fontSize: isCompact ? 24 : 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Search eCourts by advocate or load a complete case detail directly from a CNR number.',
+                style: TextStyle(color: Color(0xff6b7280)),
+              ),
+              if (!shouldHideSearchCard) ...[
+                SizedBox(height: isCompact ? 16 : 20),
+                _buildSearchCard(),
+                SizedBox(height: isCompact ? 16 : 20),
+              ] else
+                SizedBox(height: isCompact ? 16 : 20),
+              Expanded(child: _buildResultsBody()),
+            ],
+          ),
         ),
       ),
     );

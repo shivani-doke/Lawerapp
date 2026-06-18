@@ -24,6 +24,8 @@ dependencies:
   webview_windows: ^0.4.0
   speech_to_text: ^7.0.0
   shared_preferences: ^2.3.2
+  font_awesome_flutter: ^10.8.0
+  flutter_svg: ^2.0.10+1
   
 
   
@@ -37,3 +39,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/templates/poa_template.docx
+    - assets/icons/whatsapp.svg
+    - assets/icons/whatsapp.png

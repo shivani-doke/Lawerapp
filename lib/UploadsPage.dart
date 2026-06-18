@@ -155,94 +155,110 @@ class UploadsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffF8F9FB),
-      body: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Uploads",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              "Choose a document type to add a reference document",
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: ListView.separated(
-                itemCount: uploadTargets.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final item = uploadTargets[index];
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      UploadNavigationContext.openReferenceOnly(
-                        item["documentType"] as String,
-                      );
-                      onNavigate?.call(item["pageIndex"] as int);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 640;
+          final pagePadding = isCompact ? 16.0 : 30.0;
+
+          return Padding(
+            padding: EdgeInsets.all(pagePadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Uploads",
+                  style: TextStyle(
+                    fontSize: isCompact ? 24 : 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "Choose a document type to add a reference document",
+                  style: TextStyle(
+                    fontSize: isCompact ? 13 : 14,
+                    color: Colors.grey,
+                  ),
+                ),
+                SizedBox(height: isCompact ? 18 : 24),
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: uploadTargets.length,
+                    separatorBuilder: (_, __) => SizedBox(height: isCompact ? 10 : 12),
+                    itemBuilder: (context, index) {
+                      final item = uploadTargets[index];
+                      return InkWell(
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.upload_file_outlined,
-                              color: Colors.black54,
-                            ),
+                        onTap: () {
+                          UploadNavigationContext.openReferenceOnly(
+                            item["documentType"] as String,
+                          );
+                          onNavigate?.call(item["pageIndex"] as int);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isCompact ? 14 : 16,
+                            vertical: isCompact ? 12 : 14,
                           ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item["title"] as String,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(isCompact ? 9 : 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                const SizedBox(height: 3),
-                                const Text(
-                                  "Add Reference Document",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey,
-                                  ),
+                                child: const Icon(
+                                  Icons.upload_file_outlined,
+                                  color: Colors.black54,
                                 ),
-                              ],
-                            ),
+                              ),
+                              SizedBox(width: isCompact ? 12 : 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item["title"] as String,
+                                      maxLines: isCompact ? 2 : 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: isCompact ? 15 : 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      "Add Reference Document",
+                                      style: TextStyle(
+                                        fontSize: isCompact ? 12 : 13,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(
+                                Icons.chevron_right_rounded,
+                                color: Colors.black45,
+                              ),
+                            ],
                           ),
-                          const Icon(
-                            Icons.chevron_right_rounded,
-                            color: Colors.black45,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

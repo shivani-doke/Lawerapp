@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 from database import db
 from models.app_user_model import AppUser
@@ -6,6 +6,13 @@ from models.client_model import Client
 from models.firm_model import Firm
 from models.payment_model import Payment
 from services.auth_context import get_current_user
+from services.gmail_service import (
+    build_google_connect_url,
+    connect_gmail_account,
+    disconnect_gmail_account,
+    gmail_mailbox_status,
+    parse_signed_state,
+)
 
 auth_bp = Blueprint("auth_bp", __name__, url_prefix="/auth")
 
@@ -67,6 +74,14 @@ def normalize_team_limit(value, default=DEFAULT_MAX_TEAM_MEMBERS):
 
 def serialize_user_session(user):
     firm = Firm.query.filter_by(id=user.firm_id).first() if user.firm_id else None
+    team_count = firm_user_count(user.firm_id) if user.firm_id else 0
+    over_limit_message = None
+    if user and not user.is_platform_admin and user.can_manage_billing:
+        over_limit_message = build_over_limit_message(
+            firm,
+            team_count,
+            admin_view=True,
+        )
     return {
         **user.to_public_dict(),
         "firm": firm.to_dict() if firm else None,
@@ -75,11 +90,69 @@ def serialize_user_session(user):
         "max_team_members": (
             firm.max_team_members if firm and firm.max_team_members else DEFAULT_MAX_TEAM_MEMBERS
         ),
+        "over_limit_message": over_limit_message,
     }
 
 
 def firm_user_count(firm_id):
     return AppUser.query.filter_by(firm_id=firm_id).count()
+
+
+def build_team_capacity_payload(firm, team_count):
+    max_team_members = (
+        firm.max_team_members if firm and firm.max_team_members else DEFAULT_MAX_TEAM_MEMBERS
+    )
+    remaining_slots = max_team_members - team_count
+    over_limit_by = max(team_count - max_team_members, 0)
+    return {
+        "max_team_members": max_team_members,
+        "team_count": team_count,
+        "remaining_slots": remaining_slots if remaining_slots > 0 else 0,
+        "is_over_limit": over_limit_by > 0,
+        "over_limit_by": over_limit_by,
+        "over_limit_message": build_over_limit_message(
+            firm,
+            team_count,
+            max_team_members=max_team_members,
+            admin_view=True,
+        ),
+    }
+
+
+def firm_is_over_limit_for_user(user):
+    if user is None or user.firm_id is None:
+        return False
+    firm = Firm.query.filter_by(id=user.firm_id).first()
+    if not firm:
+        return False
+    return firm_user_count(user.firm_id) > (firm.max_team_members or DEFAULT_MAX_TEAM_MEMBERS)
+
+
+def build_over_limit_message(firm, team_count, max_team_members=None, admin_view=False):
+    if not firm:
+        return None
+
+    limit = (
+        max_team_members
+        if max_team_members is not None
+        else (firm.max_team_members or DEFAULT_MAX_TEAM_MEMBERS)
+    )
+    over_limit_by = max(team_count - limit, 0)
+    if over_limit_by <= 0:
+        return None
+
+    user_label = "user" if over_limit_by == 1 else "users"
+    if admin_view:
+        return (
+            f"{firm.name} has {team_count} active users, but the limit is {limit}. "
+            f"Delete {over_limit_by} {user_label} from this firm. "
+            "Until then, non-admin users in this firm will not be able to sign in."
+        )
+
+    return (
+        f"Your firm has {team_count} active users, but the limit is {limit}. "
+        f"Your firm admin must delete {over_limit_by} {user_label} before you can sign in."
+    )
 
 
 def get_or_create_admin_user():
@@ -144,6 +217,16 @@ def login():
 
     if not user or not user.verify_password(password):
         return jsonify({"error": "Invalid email or password"}), 401
+    if (
+        not user.is_platform_admin
+        and not user.can_manage_billing
+        and firm_is_over_limit_for_user(user)
+    ):
+        firm = Firm.query.filter_by(id=user.firm_id).first() if user.firm_id else None
+        team_count = firm_user_count(user.firm_id) if user.firm_id else 0
+        return jsonify({
+            "error": build_over_limit_message(firm, team_count),
+        }), 403
 
     return jsonify({
         "message": "Login successful",
@@ -220,6 +303,7 @@ def list_firms():
         lawyer_users = [user for user in users if normalize_role(user.role) == "lawyer"]
         client_count = Client.query.filter_by(firm_id=firm.id).count()
         payment_count = Payment.query.filter_by(firm_id=firm.id).count()
+        capacity = build_team_capacity_payload(firm, len(users))
         firm_payload.append({
             **firm.to_dict(),
             "user_count": len(users),
@@ -227,6 +311,9 @@ def list_firms():
             "lawyer_count": len(lawyer_users),
             "client_count": client_count,
             "payment_count": payment_count,
+            "remaining_slots": capacity["remaining_slots"],
+            "is_over_limit": capacity["is_over_limit"],
+            "over_limit_by": capacity["over_limit_by"],
             "primary_admin": admin_users[0].to_public_dict() if admin_users else None,
         })
 
@@ -307,18 +394,17 @@ def update_firm(firm_id):
     if max_team_members is None:
         return jsonify({"error": "Max team member limit must be at least 1"}), 400
 
-    current_users = firm_user_count(firm.id)
-    if max_team_members < current_users:
-        return jsonify({
-            "error": f"Limit cannot be lower than the current team size ({current_users})",
-        }), 400
-
     firm.max_team_members = max_team_members
     db.session.commit()
+    current_users = firm_user_count(firm.id)
+    capacity = build_team_capacity_payload(firm, current_users)
+    warning = capacity.get("over_limit_message")
 
     return jsonify({
         "message": "Firm updated successfully",
         "firm": firm.to_dict(),
+        "team_capacity": capacity,
+        "warning": warning,
     })
 
 
@@ -364,10 +450,14 @@ def get_team_summary():
 
     firm = Firm.query.filter_by(id=current_user.firm_id).first()
     team_count = firm_user_count(current_user.firm_id)
+    capacity = build_team_capacity_payload(firm, team_count)
     return jsonify({
         "firm": firm.to_dict() if firm else None,
         "team_count": team_count,
-        "remaining_slots": max((firm.max_team_members if firm else 0) - team_count, 0),
+        "remaining_slots": capacity["remaining_slots"],
+        "is_over_limit": capacity["is_over_limit"],
+        "over_limit_by": capacity["over_limit_by"],
+        "over_limit_message": capacity["over_limit_message"],
     })
 
 
@@ -387,6 +477,101 @@ def get_firm_branding():
         "app_display_name": firm.app_display_name,
         "app_logo_data": firm.app_logo_data,
     })
+
+
+@auth_bp.route("/mailbox/status", methods=["GET"])
+def get_mailbox_status():
+    current_user, error_response = require_firm_admin()
+    if error_response:
+        return error_response
+
+    firm = Firm.query.filter_by(id=current_user.firm_id).first()
+    if not firm:
+        return jsonify({"error": "Firm not found"}), 404
+
+    return jsonify(gmail_mailbox_status(firm))
+
+
+@auth_bp.route("/mailbox/google/connect-url", methods=["GET"])
+def get_google_mailbox_connect_url():
+    current_user, error_response = require_firm_admin()
+    if error_response:
+        return error_response
+
+    firm = Firm.query.filter_by(id=current_user.firm_id).first()
+    if not firm:
+        return jsonify({"error": "Firm not found"}), 404
+
+    try:
+        auth_url = build_google_connect_url(current_user, firm)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify({"auth_url": auth_url})
+
+
+@auth_bp.route("/mailbox/google/callback", methods=["GET"])
+def gmail_mailbox_callback():
+    error = (request.args.get("error") or "").strip()
+    if error:
+        return Response(
+            _mailbox_callback_page(
+                "Google connection failed",
+                f"Google returned: {error}",
+                is_error=True,
+            ),
+            mimetype="text/html",
+        )
+
+    code = (request.args.get("code") or "").strip()
+    state = (request.args.get("state") or "").strip()
+    if not code or not state:
+        return Response(
+            _mailbox_callback_page(
+                "Google connection failed",
+                "Missing OAuth callback details.",
+                is_error=True,
+            ),
+            mimetype="text/html",
+        )
+
+    try:
+        parsed_state = parse_signed_state(state)
+        firm = Firm.query.filter_by(id=parsed_state.get("firm_id")).first()
+        if not firm:
+            raise ValueError("Firm not found for this mailbox connection.")
+        sender_email = connect_gmail_account(firm, code)
+    except Exception as exc:
+        return Response(
+            _mailbox_callback_page(
+                "Google connection failed",
+                str(exc),
+                is_error=True,
+            ),
+            mimetype="text/html",
+        )
+
+    return Response(
+        _mailbox_callback_page(
+            "Mailbox connected",
+            f"{sender_email} is now ready for automatic client updates. You can close this tab and return to the app.",
+        ),
+        mimetype="text/html",
+    )
+
+
+@auth_bp.route("/mailbox", methods=["DELETE"])
+def disconnect_mailbox():
+    current_user, error_response = require_firm_admin()
+    if error_response:
+        return error_response
+
+    firm = Firm.query.filter_by(id=current_user.firm_id).first()
+    if not firm:
+        return jsonify({"error": "Firm not found"}), 404
+
+    disconnect_gmail_account(firm)
+    return jsonify({"message": "Mailbox disconnected successfully"})
 
 
 @auth_bp.route("/firm-branding", methods=["PUT"])
@@ -464,8 +649,20 @@ def create_team_member():
 
     current_team_count = firm_user_count(current_user.firm_id)
     if current_team_count >= (firm.max_team_members or DEFAULT_MAX_TEAM_MEMBERS):
+        over_limit_by = max(
+            current_team_count - (firm.max_team_members or DEFAULT_MAX_TEAM_MEMBERS),
+            0,
+        )
         return jsonify({
-            "error": f"Team limit reached for {firm.name}. Increase the limit from the master panel to add more members.",
+            "error": (
+                f"Team limit reached for {firm.name}. "
+                + (
+                    f"This firm is currently over limit by {over_limit_by} user(s). "
+                    if over_limit_by > 0
+                    else ""
+                )
+                + "Reduce the team size or increase the limit before adding more members."
+            ),
         }), 409
 
     user = AppUser(
@@ -576,3 +773,70 @@ def update_auth_settings():
         "message": "Login credentials updated successfully",
         **serialize_user_session(user),
     })
+
+
+def _mailbox_callback_page(title, message, is_error=False):
+    border_color = "#fecaca" if is_error else "#bbf7d0"
+    badge_color = "#b91c1c" if is_error else "#166534"
+    badge_text = "Failed" if is_error else "Connected"
+    return f"""
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <style>
+      body {{
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f8fafc;
+        color: #0f172a;
+      }}
+      .wrap {{
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }}
+      .card {{
+        width: min(540px, 100%);
+        background: white;
+        border: 1px solid {border_color};
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08);
+      }}
+      .badge {{
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: {badge_color};
+        font-weight: 700;
+        font-size: 12px;
+        margin-bottom: 14px;
+      }}
+      h1 {{
+        margin: 0 0 10px;
+        font-size: 28px;
+      }}
+      p {{
+        margin: 0;
+        line-height: 1.6;
+        color: #475569;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <div class="badge">{badge_text}</div>
+        <h1>{title}</h1>
+        <p>{message}</p>
+      </div>
+    </div>
+  </body>
+</html>
+"""

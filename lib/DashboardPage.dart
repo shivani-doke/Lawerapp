@@ -21,6 +21,7 @@ class _DashboardPageState extends State<DashboardPage> {
   bool isLoading = true;
   bool showAllDocuments = false;
   bool _canManageBilling = false;
+  String _documentSearchQuery = '';
 
   String? _editableFilenameFor(String? filename) {
     if (filename == null || filename.isEmpty) {
@@ -182,89 +183,113 @@ class _DashboardPageState extends State<DashboardPage> {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    return Padding(
-      padding: const EdgeInsets.all(40),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// ================= WELCOME =================
-            const Text(
-              "Welcome back, Advocate",
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Here's an overview of your legal practice today.",
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 16,
-              ),
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 900;
+        final isCompact = constraints.maxWidth < 600;
+        final pagePadding = isCompact ? 16.0 : (isMobile ? 24.0 : 40.0);
+        final statsSpacing = isCompact ? 12.0 : 20.0;
+        final contentWidth = constraints.maxWidth - (pagePadding * 2);
+        final statCardWidth = isCompact
+            ? contentWidth
+            : isMobile
+                ? (contentWidth - statsSpacing) / 2
+                : 250.0;
 
-            const SizedBox(height: 30),
-
-            /// ================= STATS =================
-            Wrap(
-              spacing: 20,
-              runSpacing: 20,
+        return Padding(
+          padding: EdgeInsets.all(pagePadding),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // _StatCard(
-                //     "Active Chats",
-                //     data?["stats"]["chats"].toString() ?? "0",
-                //     Icons.chat_bubble),
-                _StatCard(
-                    "Documents",
-                    data?["stats"]["documents"].toString() ?? "0",
-                    Icons.description),
-                _StatCard("Clients",
-                    data?["stats"]["clients"].toString() ?? "0", Icons.people),
-                _StatCard(
-                    "Cases Active",
-                    data?["stats"]["active_cases"].toString() ?? "0",
-                    Icons.trending_up),
-                if (_canManageBilling)
-                  _StatCard(
-                    "Finance",
-                    _formatCurrency(data?["stats"]["total_received"] ?? 0),
-                    Icons.account_balance_wallet_outlined,
-                    onTap: _showFinanceReportDialog,
+                Text(
+                  "Welcome back, Advocate",
+                  style: TextStyle(
+                    fontSize: isCompact ? 24 : 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Here's an overview of your legal practice today.",
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: isCompact ? 14 : 16,
+                  ),
+                ),
+                SizedBox(height: isCompact ? 20 : 30),
+                Wrap(
+                  spacing: statsSpacing,
+                  runSpacing: statsSpacing,
+                  children: [
+                    _StatCard(
+                      "Documents",
+                      data?["stats"]["documents"].toString() ?? "0",
+                      Icons.description,
+                      width: statCardWidth,
+                    ),
+                    _StatCard(
+                      "Clients",
+                      data?["stats"]["clients"].toString() ?? "0",
+                      Icons.people,
+                      width: statCardWidth,
+                    ),
+                    _StatCard(
+                      "Cases Active",
+                      data?["stats"]["active_cases"].toString() ?? "0",
+                      Icons.trending_up,
+                      width: statCardWidth,
+                    ),
+                    if (_canManageBilling)
+                      _StatCard(
+                        "Finance",
+                        _formatCurrency(data?["stats"]["total_received"] ?? 0),
+                        Icons.account_balance_wallet_outlined,
+                        onTap: _showFinanceReportDialog,
+                        width: statCardWidth,
+                      ),
+                  ],
+                ),
+                SizedBox(height: isCompact ? 20 : 30),
+                if (isMobile) ...[
+                  _recentDocuments(isMobile: true),
+                  const SizedBox(height: 20),
+                  _quickActions(context),
+                ] else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _recentDocuments(),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: _quickActions(context),
+                      ),
+                    ],
                   ),
               ],
             ),
-
-            const SizedBox(height: 30),
-
-            /// ================= LOWER SECTION =================
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /// Recent Documents
-                Expanded(
-                  flex: 2,
-                  child: _recentDocuments(),
-                ),
-
-                const SizedBox(width: 20),
-
-                /// Quick Actions
-                Expanded(
-                  child: _quickActions(context),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   /// ================= RECENT DOCUMENTS =================
-  Widget _recentDocuments() {
+  Widget _recentDocuments({bool isMobile = false}) {
     final List docs = data?["recent_documents"] ?? [];
+    final normalizedQuery = _documentSearchQuery.trim().toLowerCase();
+    final filteredDocs = docs.where((doc) {
+      if (normalizedQuery.isEmpty) return true;
+      final title = (doc["title"] ?? "").toString().toLowerCase();
+      final filename = (doc["filename"] ?? "").toString().toLowerCase();
+      final date = (doc["date"] ?? "").toString().toLowerCase();
+      return title.contains(normalizedQuery) ||
+          filename.contains(normalizedQuery) ||
+          date.contains(normalizedQuery);
+    }).toList();
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -280,6 +305,58 @@ class _DashboardPageState extends State<DashboardPage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
+          TextField(
+            onChanged: (value) {
+              setState(() {
+                _documentSearchQuery = value;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: "Search documents...",
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _documentSearchQuery.isNotEmpty
+                  ? IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _documentSearchQuery = '';
+                        });
+                      },
+                      icon: const Icon(Icons.clear),
+                    )
+                  : null,
+              filled: true,
+              fillColor: const Color(0xffF8FAFC),
+              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (filteredDocs.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xffF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.search_off_outlined, color: Colors.grey, size: 34),
+                  SizedBox(height: 10),
+                  Text(
+                    "No matching documents found.",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
           SizedBox(
             height: showAllDocuments ? 400 : null,
             child: ListView(
@@ -287,7 +364,7 @@ class _DashboardPageState extends State<DashboardPage> {
               physics: showAllDocuments
                   ? const AlwaysScrollableScrollPhysics()
                   : const NeverScrollableScrollPhysics(),
-              children: docs.map<Widget>((doc) {
+              children: filteredDocs.map<Widget>((doc) {
                 final editableFilename =
                     _editableFilenameFor(doc["filename"]?.toString());
 
@@ -295,64 +372,22 @@ class _DashboardPageState extends State<DashboardPage> {
                   children: [
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(doc["title"]),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(doc["date"]),
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert),
-                            onSelected: (value) async {
-                              final filename = doc["filename"];
-
-                              if (value == "rename") {
-                                _showRenameDialog(filename);
-                              } else if (value == "delete") {
-                                _confirmDelete(filename);
-                              } else if (value == "edit") {
-                                await _openDocumentEditor(doc);
-                              } else if (value == "download") {
-                                final username =
-                                    await SessionService.getLoggedInUsername();
-                                final firmName =
-                                    await SessionService.getFirmName();
-                                final url =
-                                    "${AppConfig.backendBaseUrl}/dashboard/download/$filename?username=$username&firm_name=$firmName";
-
-                                final uri = Uri.parse(url);
-
-                                if (await canLaunchUrl(uri)) {
-                                  await launchUrl(
-                                    uri,
-                                    mode: LaunchMode.externalApplication,
-                                  );
-                                } else {
-                                  print("Download failed");
-                                }
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              if (editableFilename != null)
-                                const PopupMenuItem(
-                                  value: "edit",
-                                  child: Text("Edit"),
-                                ),
-                              const PopupMenuItem(
-                                value: "rename",
-                                child: Text("Rename"),
-                              ),
-                              const PopupMenuItem(
-                                value: "delete",
-                                child: Text("Delete"),
-                              ),
-                              const PopupMenuItem(
-                                value: "download",
-                                child: Text("Download"),
-                              ),
-                            ],
-                          )
-                        ],
+                      title: Text(
+                        doc["title"],
+                        maxLines: isMobile ? 2 : 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      subtitle: isMobile ? Text(doc["date"]) : null,
+                      isThreeLine: isMobile,
+                      trailing: isMobile
+                          ? _documentActions(doc, editableFilename)
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(doc["date"]),
+                                _documentActions(doc, editableFilename),
+                              ],
+                            ),
                       onTap: () async {
                         final filename = doc["filename"];
                         if (filename == null) return;
@@ -454,6 +489,61 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Widget _documentActions(
+    Map<String, dynamic> doc,
+    String? editableFilename,
+  ) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      onSelected: (value) async {
+        final filename = doc["filename"];
+
+        if (value == "rename") {
+          _showRenameDialog(filename);
+        } else if (value == "delete") {
+          _confirmDelete(filename);
+        } else if (value == "edit") {
+          await _openDocumentEditor(doc);
+        } else if (value == "download") {
+          final username = await SessionService.getLoggedInUsername();
+          final firmName = await SessionService.getFirmName();
+          final url =
+              "${AppConfig.backendBaseUrl}/dashboard/download/$filename?username=$username&firm_name=$firmName";
+
+          final uri = Uri.parse(url);
+
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(
+              uri,
+              mode: LaunchMode.externalApplication,
+            );
+          } else {
+            print("Download failed");
+          }
+        }
+      },
+      itemBuilder: (context) => [
+        if (editableFilename != null)
+          const PopupMenuItem(
+            value: "edit",
+            child: Text("Edit"),
+          ),
+        const PopupMenuItem(
+          value: "rename",
+          child: Text("Rename"),
+        ),
+        const PopupMenuItem(
+          value: "delete",
+          child: Text("Delete"),
+        ),
+        const PopupMenuItem(
+          value: "download",
+          child: Text("Download"),
+        ),
+      ],
+    );
+  }
+
   Future<void> _showFinanceReportDialog() async {
     if (!_canManageBilling) {
       return;
@@ -461,12 +551,13 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog(
       context: context,
       builder: (context) {
+        final dialogWidth = MediaQuery.of(context).size.width;
         return Dialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           child: Container(
-            width: 980,
-            padding: const EdgeInsets.all(24),
+            width: dialogWidth < 1100 ? dialogWidth * 0.92 : 980,
+            padding: EdgeInsets.all(dialogWidth < 600 ? 16 : 24),
             child: FutureBuilder<Map<String, dynamic>>(
               future: DashboardService.fetchFinanceReport(),
               builder: (context, snapshot) {
@@ -760,8 +851,9 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final VoidCallback? onTap;
+  final double? width;
 
-  const _StatCard(this.title, this.value, this.icon, {this.onTap});
+  const _StatCard(this.title, this.value, this.icon, {this.onTap, this.width});
 
   @override
   Widget build(BuildContext context) {
@@ -769,7 +861,7 @@ class _StatCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        width: 250,
+        width: width ?? 250,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,

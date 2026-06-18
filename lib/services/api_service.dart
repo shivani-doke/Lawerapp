@@ -553,6 +553,51 @@ class ApiService {
     return Map<String, dynamic>.from(jsonDecode(response.body));
   }
 
+  Future<Map<String, dynamic>> getMailboxStatus() async {
+    final response = await http.get(
+      await _authorizedUri('/auth/mailbox/status'),
+      headers: await _authHeaders(),
+    );
+    final data = _decodeJsonObject(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(
+        (data['error'] ?? 'Failed to load mailbox status').toString(),
+      );
+    }
+    return data;
+  }
+
+  Future<String> getGoogleMailboxConnectUrl() async {
+    final response = await http.get(
+      await _authorizedUri('/auth/mailbox/google/connect-url'),
+      headers: await _authHeaders(),
+    );
+    final data = _decodeJsonObject(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(
+        (data['error'] ?? 'Failed to start Gmail connection').toString(),
+      );
+    }
+    final authUrl = (data['auth_url'] ?? '').toString();
+    if (authUrl.trim().isEmpty) {
+      throw Exception('The server did not return a Gmail connect URL.');
+    }
+    return authUrl;
+  }
+
+  Future<void> disconnectMailbox() async {
+    final response = await http.delete(
+      await _authorizedUri('/auth/mailbox'),
+      headers: await _authHeaders(),
+    );
+    if (response.statusCode != 200) {
+      final data = _decodeJsonObject(response.body);
+      throw Exception(
+        (data['error'] ?? 'Failed to disconnect mailbox').toString(),
+      );
+    }
+  }
+
   Future<Map<String, dynamic>> updateFirmBranding({
     required String appDisplayName,
     String? appLogoData,

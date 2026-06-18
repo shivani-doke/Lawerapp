@@ -20,6 +20,40 @@ from models.payment_model import Payment
 from services.auth_context import get_request_firm_name, get_request_username
 
 
+def firm_is_over_limit(user):
+    if user is None or user.firm_id is None:
+        return False
+
+    firm = Firm.query.filter_by(id=user.firm_id).first()
+    if not firm:
+        return False
+
+    max_team_members = firm.max_team_members or 0
+    team_count = AppUser.query.filter_by(firm_id=user.firm_id).count()
+    return team_count > max_team_members
+
+
+def firm_over_limit_message(user):
+    if user is None or user.firm_id is None:
+        return None
+
+    firm = Firm.query.filter_by(id=user.firm_id).first()
+    if not firm:
+        return None
+
+    max_team_members = firm.max_team_members or 0
+    team_count = AppUser.query.filter_by(firm_id=user.firm_id).count()
+    over_limit_by = max(team_count - max_team_members, 0)
+    if over_limit_by <= 0:
+        return None
+
+    user_label = "user" if over_limit_by == 1 else "users"
+    return (
+        f"Your firm has {team_count} active users, but the limit is {max_team_members}. "
+        f"Your firm admin must delete {over_limit_by} {user_label} before you can continue."
+    )
+
+
 def ensure_firms():
     default_firm = Firm.query.filter_by(name="Default Firm").first()
     if not default_firm:
@@ -48,6 +82,12 @@ def ensure_firm_columns():
         "max_team_members": "ALTER TABLE firms ADD COLUMN max_team_members INTEGER DEFAULT 10",
         "app_display_name": "ALTER TABLE firms ADD COLUMN app_display_name VARCHAR(200)",
         "app_logo_data": "ALTER TABLE firms ADD COLUMN app_logo_data TEXT",
+        "gmail_sender_email": "ALTER TABLE firms ADD COLUMN gmail_sender_email VARCHAR(255)",
+        "gmail_refresh_token": "ALTER TABLE firms ADD COLUMN gmail_refresh_token TEXT",
+        "gmail_access_token": "ALTER TABLE firms ADD COLUMN gmail_access_token TEXT",
+        "gmail_token_expiry": "ALTER TABLE firms ADD COLUMN gmail_token_expiry DATETIME",
+        "gmail_scopes": "ALTER TABLE firms ADD COLUMN gmail_scopes TEXT",
+        "gmail_connected_at": "ALTER TABLE firms ADD COLUMN gmail_connected_at DATETIME",
     }
 
     for column_name, ddl in required_columns.items():
@@ -376,7 +416,13 @@ def create_app():
             return None
 
         endpoint = request.endpoint or ""
-        if endpoint in {"auth_bp.login", "auth_bp.master_login", "auth_bp.signup", "static"}:
+        if endpoint in {
+            "auth_bp.login",
+            "auth_bp.master_login",
+            "auth_bp.signup",
+            "auth_bp.gmail_mailbox_callback",
+            "static",
+        }:
             return None
 
         username = get_request_username(default=None)
@@ -404,6 +450,14 @@ def create_app():
             return jsonify({
                 "error": "This request does not belong to your firm workspace.",
             }), 403
+        if (
+            not user.is_platform_admin
+            and not user.can_manage_billing
+            and firm_is_over_limit(user)
+        ):
+            return jsonify({
+                "error": firm_over_limit_message(user),
+            }), 403
 
     # Register blueprints
     app.register_blueprint(email_bp)
@@ -421,4 +475,4 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
